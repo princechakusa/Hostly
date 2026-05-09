@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 (function (H) {
   const pages = H.pages;
 
@@ -274,76 +274,241 @@
       <div class="doc-content">
         <div class="doc-section">
           <h2>Terms & Conditions</h2>
-          <h3>1. Acceptance of Terms</h3>
-          <p>By using the Hostly app and website, you agree to these terms and conditions. If you don't agree, please don't use our services.</p>
-          <h3>2. User Responsibilities</h3>
-          <p>Users are responsible for all content they post. You agree not to post illegal, defamatory, or infringing content.</p>
-          <h3>3. Listing Guidelines</h3>
-          <p>All listings must comply with Zimbabwean law. Prohibited items include weapons, counterfeit goods, and stolen property.</p>
-          <h3>4. Payment Terms</h3>
-          <p>All transactions between buyers and sellers are their responsibility. Hostly is not liable for disputed transactions.</p>
-          <h3>5. Intellectual Property</h3>
-          <p>All content on Hostly, including design and logos, is owned by Hostly and protected by copyright.</p>
-          <h3>6. Limitation of Liability</h3>
-          <p>Hostly is provided "as is" without warranties. We're not liable for indirect or consequential damages.</p>
-          <h3>7. Changes to Terms</h3>
-          <p>We reserve the right to modify these terms. Changes take effect immediately upon posting.</p>
+          <p style="color:var(--ash);font-size:12px">Last updated: May 2026 · Effective immediately</p>
+
+          <h2>1. Acceptance</h2>
+          <p>By downloading, installing, or using Hostly ("the App"), you agree to be bound by these Terms and Conditions. If you do not agree, do not use the App. These terms apply to all users including buyers, sellers, and visitors.</p>
+
+          <h2>2. Eligibility</h2>
+          <p>You must be at least 18 years old to use Hostly. By using the App you confirm that you are 18 or older and legally capable of entering into binding contracts under Zimbabwean law.</p>
+
+          <h2>3. Account Registration</h2>
+          <p>You must provide accurate, current, and complete information when creating an account. You are responsible for maintaining the confidentiality of your password and for all activity under your account. Notify us immediately at support@hostly.co.zw if you suspect unauthorized access.</p>
+
+          <h2>4. Listing Rules</h2>
+          <p>All listings must be accurate, legal, and comply with Zimbabwean law. You must own or have the right to sell any item you list. The following are strictly prohibited:</p>
+          <ul>
+            <li>Stolen, counterfeit, or fraudulent goods</li>
+            <li>Weapons, ammunition, or explosive devices</li>
+            <li>Illegal drugs or controlled substances</li>
+            <li>Adult or sexually explicit content</li>
+            <li>Wildlife or protected animal products</li>
+            <li>Pyramid schemes, MLM, or investment fraud</li>
+            <li>Fake job listings or recruitment scams</li>
+            <li>Misleading rental listings or deposit scams</li>
+          </ul>
+
+          <h2>5. Transactions</h2>
+          <p>Hostly is a marketplace platform. All transactions are directly between buyers and sellers. Hostly is not a party to any transaction and accepts no liability for disputes, non-delivery, fraud, or any loss arising from transactions. We strongly recommend meeting in safe public places and verifying items before payment.</p>
+
+          <h2>6. Fees</h2>
+          <p>Basic listing is free. Optional paid features including listing boosts are available. All fees are clearly displayed before purchase. All payments are final and non-refundable unless required by law.</p>
+
+          <h2>7. Intellectual Property</h2>
+          <p>All content, design, logos, and technology in Hostly are owned by Hostly and protected by copyright law. You may not copy, reproduce, or distribute any part of the App without written permission.</p>
+
+          <h2>8. User Content</h2>
+          <p>By posting content on Hostly you grant us a non-exclusive, royalty-free license to display and distribute that content within the App. You confirm that you own or have rights to all content you post.</p>
+
+          <h2>9. Prohibited Conduct</h2>
+          <ul>
+            <li>Harassment, threats, or abuse of other users</li>
+            <li>Posting false or misleading information</li>
+            <li>Spamming or posting duplicate listings</li>
+            <li>Attempting to bypass our security systems</li>
+            <li>Using the App for any illegal purpose</li>
+            <li>Impersonating another person or business</li>
+          </ul>
+
+          <h2>10. Moderation & Enforcement</h2>
+          <p>We reserve the right to remove any listing, suspend, or permanently ban any account that violates these terms without notice. Repeated violations will result in permanent account termination and may be reported to relevant authorities.</p>
+
+          <h2>11. Limitation of Liability</h2>
+          <p>Hostly is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the App, including loss of data, money, or business opportunities.</p>
+
+          <h2>12. Governing Law</h2>
+          <p>These Terms are governed by the laws of Zimbabwe. Any disputes shall be subject to the exclusive jurisdiction of the courts of Zimbabwe.</p>
+
+          <h2>13. Changes to Terms</h2>
+          <p>We reserve the right to modify these Terms at any time. Continued use of the App after changes constitutes acceptance of the new Terms.</p>
+
+          <h2>14. Contact</h2>
+          <p>For legal queries: legal@hostly.co.zw</p>
         </div>
       </div>
     </div>`;
   };
-
-  // --- Privacy Policy --------------------------------------
-  pages.HelpPrivacy = function () {
+pages.HelpPrivacy = function () {
     return `<div class="page active">
       ${H.innerTopbar('Privacy Policy')}
       <div class="doc-content">
         <div class="doc-section">
           <h2>Privacy Policy</h2>
-          <h3>1. Information We Collect</h3>
-          <p>We collect: name, phone, email, profile information, listing details, payment information, and usage data.</p>
-          <h3>2. How We Use Your Information</h3>
-          <p>We use your information to: provide services, process payments, prevent fraud, and improve our platform.</p>
-          <h3>3. Data Protection</h3>
-          <p>We use industry-standard encryption and security measures to protect your data. Your data is not shared with third parties without consent.</p>
-          <h3>4. Your Rights</h3>
-          <p>You have the right to access, modify, and delete your personal data. Contact support@hostly.co.zw to exercise these rights.</p>
-          <h3>5. Cookies & Tracking</h3>
-          <p>We use cookies to enhance your experience. You can disable cookies in your browser settings.</p>
-          <h3>6. Third-Party Services</h3>
-          <p>We use payment processors and analytics services. They process data according to their privacy policies.</p>
-          <h3>7. Children's Privacy</h3>
-          <p>Hostly is not intended for users under 18. We don't knowingly collect data from minors.</p>
-          <h3>8. Contact Us</h3>
-          <p>Questions about privacy? Contact us at privacy@hostly.co.zw</p>
+          <p style="color:var(--ash);font-size:12px">Last updated: May 2026</p>
+
+          <h2>1. Who We Are</h2>
+          <p>Hostly is a Zimbabwean marketplace application. We are committed to protecting your privacy and handling your data responsibly. This policy explains what data we collect, why we collect it, and how we protect it.</p>
+
+          <h2>2. Data We Collect</h2>
+          <ul>
+            <li><strong>Account data:</strong> Name, email, phone number, password (encrypted)</li>
+            <li><strong>Profile data:</strong> Profile photo, bio, location (city/province)</li>
+            <li><strong>Listing data:</strong> Photos, descriptions, prices, location</li>
+            <li><strong>Messages:</strong> Conversations between users on our platform</li>
+            <li><strong>Payment data:</strong> Wallet balance and transaction history</li>
+            <li><strong>Device data:</strong> Device type, OS version, app version</li>
+            <li><strong>Usage data:</strong> Pages viewed, searches, listing interactions</li>
+          </ul>
+
+          <h2>3. Why We Collect It</h2>
+          <ul>
+            <li>To create and manage your account</li>
+            <li>To display your listings to potential buyers</li>
+            <li>To facilitate communication between buyers and sellers</li>
+            <li>To process wallet transactions and payments</li>
+            <li>To detect and prevent fraud and policy violations</li>
+            <li>To improve the App and user experience</li>
+            <li>To send important notifications about your account</li>
+          </ul>
+
+          <h2>4. Data Sharing</h2>
+          <p>We do not sell your personal data. We may share data with:</p>
+          <ul>
+            <li><strong>Other users:</strong> Your public profile and listings are visible to all users</li>
+            <li><strong>Supabase:</strong> Our database and authentication provider</li>
+            <li><strong>Payment processors:</strong> EcoCash, OneMoney for transaction processing</li>
+            <li><strong>Legal authorities:</strong> When required by Zimbabwean law or court order</li>
+          </ul>
+
+          <h2>5. Data Security</h2>
+          <p>We use industry-standard security measures including encrypted storage, secure HTTPS connections, and access controls. Your password is never stored in plain text. However no system is 100% secure and we cannot guarantee absolute security.</p>
+
+          <h2>6. Camera & Photos</h2>
+          <p>We request camera and photo library access only when you choose to upload photos for listings or your profile. We never access your camera or photos without your explicit action. Photos are compressed and stored securely.</p>
+
+          <h2>7. Location Data</h2>
+          <p>We collect your general location (city/province) for listing purposes. We do not track your precise GPS location without your permission.</p>
+
+          <h2>8. Data Retention</h2>
+          <p>We retain your data for as long as your account is active. When you delete your account all your personal data, listings, and messages are permanently deleted within 30 days.</p>
+
+          <h2>9. Your Rights</h2>
+          <ul>
+            <li>Access your personal data at any time via your profile</li>
+            <li>Correct inaccurate information in your profile settings</li>
+            <li>Delete your account and all associated data</li>
+            <li>Opt out of promotional notifications in settings</li>
+            <li>Request a copy of your data by emailing privacy@hostly.co.zw</li>
+          </ul>
+
+          <h2>10. Children</h2>
+          <p>Hostly is strictly for users 18 and older. We do not knowingly collect data from minors. If we discover a minor has registered we will immediately delete their account and data.</p>
+
+          <h2>11. Changes</h2>
+          <p>We will notify you of significant changes to this policy through the App. Continued use after changes constitutes acceptance.</p>
+
+          <h2>12. Contact</h2>
+          <p>Privacy concerns: privacy@hostly.co.zw</p>
         </div>
       </div>
     </div>`;
   };
-
-  // --- Community Guidelines --------------------------------
-  pages.HelpCommunity = function () {
+pages.HelpCommunity = function () {
     return `<div class="page active">
       ${H.innerTopbar('Community Guidelines')}
       <div class="doc-content">
         <div class="doc-section">
           <h2>Community Guidelines</h2>
-          <h3>Be Honest</h3>
-          <p>Provide accurate descriptions and photos. Misleading listings will be removed and may result in suspension.</p>
-          <h3>Be Respectful</h3>
-          <p>Treat other users with respect. Harassment, discrimination, and hate speech are not tolerated.</p>
-          <h3>Be Safe</h3>
-          <p>Use secure payment methods. Never send money before seeing the item. Meet in public places.</p>
-          <h3>No Spam or Fraud</h3>
-          <p>Don't spam, scam, or post duplicate listings. Violators will be permanently banned.</p>
-          <h3>No Prohibited Items</h3>
-          <p>Don't sell weapons, counterfeit goods, stolen property, or illegal items.</p>
-          <h3>Respect Privacy</h3>
-          <p>Don't share others' personal information. Respect confidentiality in private messages.</p>
-          <h3>Report Violations</h3>
-          <p>See something wrong? Use the Report button. We investigate all reports within 24h.</p>
-          <h3>Consequences</h3>
-          <p>Violations result in warnings, listing removal, temporary suspension, or permanent ban depending on severity.</p>
+          <p style="color:var(--ash);font-size:12px">Last updated: May 2026</p>
+          <p>Hostly is built on trust. These guidelines exist to keep our marketplace safe, fair, and beneficial for every Zimbabwean. Violations result in warnings, listing removal, suspension, or permanent bans.</p>
+
+          <h2>1. Be Honest</h2>
+          <p>Accuracy is everything in a marketplace. You must:</p>
+          <ul>
+            <li>Post accurate titles, descriptions, and photos of your actual item</li>
+            <li>Disclose any defects, damage, or issues with items</li>
+            <li>Only post items you genuinely have available for sale</li>
+            <li>Set fair prices and honor agreed prices</li>
+            <li>Never use misleading photos or stolen images</li>
+          </ul>
+
+          <h2>2. Be Safe</h2>
+          <ul>
+            <li>Meet buyers and sellers in safe, public locations</li>
+            <li>Never send money before inspecting an item in person</li>
+            <li>Be cautious of buyers who pressure you to accept unusual payment methods</li>
+            <li>Never share your OTP, PIN, or banking passwords with anyone</li>
+            <li>Trust your instincts — if something feels wrong, walk away</li>
+          </ul>
+
+          <h2>3. Be Respectful</h2>
+          <ul>
+            <li>Treat all users with dignity and respect</li>
+            <li>No harassment, threats, bullying, or abusive language</li>
+            <li>No discrimination based on race, gender, religion, tribe, or disability</li>
+            <li>No unsolicited messages or spam to other users</li>
+            <li>Respect others privacy — never share personal information without consent</li>
+          </ul>
+
+          <h2>4. No Fraud or Scams</h2>
+          <p>Zero tolerance for fraud. The following will result in immediate permanent ban:</p>
+          <ul>
+            <li>Advance fee fraud ("send deposit first")</li>
+            <li>Fake job listings designed to collect personal information</li>
+            <li>Fake rental listings with non-existent properties</li>
+            <li>Selling items you do not own or have no right to sell</li>
+            <li>Creating multiple accounts to evade bans</li>
+            <li>Any form of identity theft or impersonation</li>
+          </ul>
+
+          <h2>5. Prohibited Items</h2>
+          <p>The following may never be listed on Hostly:</p>
+          <ul>
+            <li>Stolen goods of any kind</li>
+            <li>Counterfeit or fake branded products</li>
+            <li>Weapons, ammunition, or explosives</li>
+            <li>Illegal drugs or controlled substances</li>
+            <li>Adult or sexually explicit content</li>
+            <li>Protected wildlife or animal products</li>
+            <li>Pyramid schemes or investment fraud</li>
+            <li>Human trafficking or exploitation</li>
+          </ul>
+
+          <h2>6. Jobs & Rentals</h2>
+          <p>High-risk categories require extra responsibility:</p>
+          <ul>
+            <li>Job listings must be genuine with real contact details</li>
+            <li>Never charge job seekers an application or registration fee</li>
+            <li>Rental listings must describe real, available properties</li>
+            <li>Never request rental deposits before viewing a property</li>
+            <li>Salary and rent amounts must be realistic and accurate</li>
+          </ul>
+
+          <h2>7. Reporting Violations</h2>
+          <p>If you see something suspicious:</p>
+          <ul>
+            <li>Use the Report button on any listing or user profile</li>
+            <li>Email us at safety@hostly.co.zw for urgent matters</li>
+            <li>All reports are reviewed within 24 hours</li>
+            <li>3 or more reports on a listing triggers automatic review</li>
+            <li>False reports made in bad faith will result in action against the reporter</li>
+          </ul>
+
+          <h2>8. Enforcement</h2>
+          <ul>
+            <li><strong>Warning:</strong> First minor violation</li>
+            <li><strong>Listing removal:</strong> Content that violates guidelines</li>
+            <li><strong>Temporary suspension (24-72 hours):</strong> Repeated minor violations</li>
+            <li><strong>7-day suspension:</strong> Serious violations</li>
+            <li><strong>Permanent ban:</strong> Fraud, scams, or 3+ serious violations</li>
+          </ul>
+          <p>Banned users may appeal by emailing appeals@hostly.co.zw with evidence. We review all appeals within 7 days.</p>
+
+          <h2>9. Our Commitment</h2>
+          <p>We are committed to making Hostly Zimbabwe's most trusted marketplace. We review all reports, take action on violations, and continuously improve our safety systems. Together we can build a marketplace that works for everyone.</p>
+
+          <h2>Contact Safety Team</h2>
+          <p>safety@hostly.co.zw</p>
         </div>
       </div>
     </div>`;
