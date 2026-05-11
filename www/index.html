@@ -3,135 +3,142 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#2D6A4F">
+  <meta name="theme-color" content="#1A3A8F">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Hostly">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="description" content="Hostly "” Zimbabwe's marketplace.">
-  <title>Hostly "” Zimbabwe Marketplace</title>
+  <meta name="description" content="Hostly — Zimbabwe's trusted marketplace.">
+  <title>Hostly</title>
 
-  <link rel="icon" href="/img/icon-192.png" type="image/png">
-  <link rel="apple-touch-icon" href="/img/icon-192.png">
+  <link rel="icon" href="img/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Inter font — display=swap saves data, only loads what's needed -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <!-- Main stylesheet -->
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/pages-patch.css">
 
-  <!-- Splash animation -->
   <style>
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to   { opacity: 1; transform: translateY(0); }
+    /* Splash */
+    #hostlySplash {
+      position: fixed; inset: 0;
+      background: #1A3A8F;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 99999;
+      transition: opacity .3s ease;
+      font-family: 'Inter', sans-serif;
     }
-    .splash-logo    { animation: fadeInUp 0.8s ease-out both; }
-    .splash-tagline { animation: fadeInUp 0.8s 0.3s ease-out both; }
+    .splash-logo {
+      width: 96px; height: 96px;
+      border-radius: 22px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.25);
+      animation: splashIn .6s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .splash-wordmark {
+      font-size: 36px; font-weight: 900;
+      color: #fff; letter-spacing: -1px;
+      margin-top: 16px;
+      animation: splashIn .6s .15s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .splash-wordmark span { color: #F5A623; }
+    @keyframes splashIn {
+      from { opacity: 0; transform: translateY(20px) scale(.95); }
+      to   { opacity: 1; transform: none; }
+    }
 
-    /* ===== ACTION SHEET STYLES (inline "“ guarantees the account menu works) ===== */
+    /* Action sheet — inline to guarantee it always works */
     .action-sheet {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      position: fixed; left: 0; right: 0; bottom: 0;
       background: #fff;
       border-radius: 22px 22px 0 0;
       padding: 22px 16px calc(22px + env(safe-area-inset-bottom));
       z-index: 9100;
       transform: translateY(100%);
       transition: transform .28s cubic-bezier(0.16,1,0.3,1);
-      box-shadow: 0 -10px 40px rgba(44,62,80,.14);
+      box-shadow: 0 -8px 30px rgba(16,24,40,.12);
+      border-top: 1px solid #E4E8F0;
+      font-family: 'Inter', sans-serif;
     }
-    .action-sheet.open {
-      transform: translateY(0) !important;
-    }
-
+    .action-sheet.open { transform: translateY(0); }
     .sheet-bg {
-      position: fixed;
-      inset: 0;
-      background: rgba(44,62,80,.4);
-      z-index: 9050;
-      display: none;
+      position: fixed; inset: 0;
+      background: rgba(16,24,40,.4);
+      z-index: 9050; display: none;
       backdrop-filter: blur(2px);
       -webkit-backdrop-filter: blur(2px);
     }
-    .sheet-bg.open {
-      display: block;
-    }
-
+    .sheet-bg.open { display: block; }
     .sheet-header {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 18px;
-      text-align: center;
-      color: #2C3E50;
-      padding: 8px 0;
+      font-size: 17px; font-weight: 800;
+      margin-bottom: 18px; text-align: center;
+      color: #101828; padding: 8px 0;
+      letter-spacing: -.3px;
     }
     .sheet-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 16px 14px;
-      border-bottom: 1px solid rgba(44,62,80,.08);
-      cursor: pointer;
-      font-size: 15px;
-      width: 100%;
-      text-align: left;
-      background: none;
-      border: none;
-      border-bottom: 1px solid rgba(44,62,80,.08);
+      display: flex; align-items: center; gap: 14px;
+      padding: 15px 14px;
+      border-bottom: 1px solid #E4E8F0;
+      cursor: pointer; font-size: 15px;
+      width: 100%; text-align: left;
+      background: none; border-top: none;
+      border-left: none; border-right: none;
       transition: background .15s;
+      font-family: 'Inter', sans-serif;
     }
-    .sheet-item:active { background: #F7F4EF; }
+    .sheet-item:active { background: #F5F7FF; }
     .sheet-item:last-of-type { border-bottom: none; }
-    .sheet-item.danger { color: #C0392B; }
-    .sheet-icon {
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .sheet-label { flex: 1; font-weight: 500; color: #2C3E50; }
-    .sheet-item.danger .sheet-label { color: #C0392B; font-weight: 700; }
+    .sheet-item.danger { color: #B42318; }
+    .sheet-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .sheet-label { flex: 1; font-weight: 500; color: #101828; }
+    .sheet-item.danger .sheet-label { color: #B42318; font-weight: 700; }
     .sheet-close {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      padding: 14px;
-      margin-top: 12px;
-      border: 1px solid rgba(44,62,80,.15);
-      background: transparent;
-      border-radius: 16px;
-      cursor: pointer;
-      font-size: 15px;
-      font-weight: 600;
-      color: #4A5568;
-      transition: all .2s;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; padding: 14px; margin-top: 12px;
+      border: 1.5px solid #E4E8F0; background: transparent;
+      border-radius: 12px; cursor: pointer;
+      font-size: 15px; font-weight: 600; color: #344054;
+      transition: all .2s; font-family: 'Inter', sans-serif;
     }
-    .sheet-close:active { background: rgba(44,62,80,.04); }
+    .sheet-close:active { background: #F5F6FA; }
   </style>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div id="hostlySplash" style="position:fixed;inset:0;background:#1A0E08;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.3s ease-in-out;font-family:'Montserrat',sans-serif;">
-    <img src="/img/icon-192.png" alt="Hostly" class="splash-logo" style="width:110px;height:110px;border-radius:24px;margin-bottom:24px;" />
-    <div class="splash-tagline" style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.02em;">Zimbabwe's #1 Marketplace</div>
+
+  <!-- Splash -->
+  <div id="hostlySplash">
+    <img src="img/icon-192.png" alt="Hostly" class="splash-logo">
+    <div class="splash-wordmark">Host<span>ly</span></div>
   </div>
 
   <div id="app">
     <div class="scroll-area" id="mainArea"></div>
     <div class="bottom-nav" id="bottomNav" style="display:none">
-      <button class="nav-btn active" data-nav="Home"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></button>
-      <button class="nav-btn" data-nav="Browse"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Search</span></button>
-      <div class="post-fab-wrap"><button class="post-fab active" data-nav="Post" title="Post an Ad"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button><span class="fab-lbl">Post Ad</span></div>
-      <button class="nav-btn" data-nav="Messages"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></button>
-      <button class="nav-btn" data-nav="Account"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></button>
+      <button class="nav-btn active" data-nav="Home">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" data-nav="Browse">
+        <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Search</span>
+      </button>
+      <div class="post-fab-wrap">
+        <button class="post-fab" data-nav="Post" title="Post an Ad">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <span class="fab-lbl">Post Ad</span>
+      </div>
+      <button class="nav-btn" data-nav="Messages">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Messages</span>
+      </button>
+      <button class="nav-btn" data-nav="Account">
+        <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Account</span>
+      </button>
     </div>
   </div>
 
@@ -141,21 +148,15 @@
   <div class="action-sheet" id="actionSheet"></div>
   <div class="ban-screen" id="banScreen"></div>
 
-  <!-- ========== SCRIPTS ========== -->
-
-  <!-- Supabase CDN -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Supabase credentials (inline "“ safe, anon key is public) -->
   <script>
     window.SUPABASE_URL = 'https://gxgytumhknmnwspxjzxw.supabase.co';
     window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z3l0dW1oa25tbndzcHhqenh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzMwNDUsImV4cCI6MjA5MzY0OTA0NX0.ddJhWdUy7JVrSfdaSK8a0On3zuwssY2H4DWsxBhgbJs';
   </script>
-
-  <!-- Supabase client initialisation -->
   <script src="js/supabase.js"></script>
 
-  <!-- Application scripts (order matters) -->
+  <!-- App scripts -->
   <script src="js/moderation.js"></script>
   <script src="js/app.js"></script>
   <script src="js/auth.js"></script>
@@ -175,48 +176,33 @@
   <script src="js/verify.js"></script>
   <script src="js/admin.js"></script>
 
-  <!-- Splash removal + Service Worker -->
   <script>
     window.addEventListener('load', () => {
       setTimeout(() => {
-        const splash = document.getElementById('hostlySplash');
-        if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 300); }
-      }, 2000);
-
+        const s = document.getElementById('hostlySplash');
+        if (s) { s.style.opacity = '0'; setTimeout(() => s.remove(), 300); }
+      }, 1800);
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(err => {
-          console.warn('Service Worker registration failed:', err.message);
-        });
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
       }
     });
+
+    window.addEventListener('load', () => {
+      H.authAdminSignInPage = async function () {
+        const email = document.getElementById('admEmailPage')?.value.trim();
+        const pass  = document.getElementById('admPassPage')?.value.trim();
+        if (!email || !pass) { H.toast('Enter admin credentials'); return; }
+        const u = (H.state.users || []).find(x =>
+          (x.email || '').toLowerCase() === email.toLowerCase() &&
+          x._localPassword === pass && x.role === 'admin'
+        );
+        if (u) {
+          H.state.currentUserId = u.id;
+          H.state.adminSession = { at: Date.now(), via: 'local' };
+          H.saveState(); H.boot();
+        } else { H.toast('Invalid admin credentials'); }
+      };
+    });
   </script>
-<script>
-window.addEventListener("load", () => {
-  H.authAdminSignInPage = async function () {
-    const email = document.getElementById("admEmailPage")?.value.trim();
-    const pass  = document.getElementById("admPassPage")?.value.trim();
-    if (!email || !pass) { H.toast("Enter admin credentials"); return; }
-    const u = (H.state.users || []).find(x =>
-      (x.email || "").toLowerCase() === email.toLowerCase() &&
-      x._localPassword === pass &&
-      x.role === "admin"
-    );
-    if (u) {
-      H.state.currentUserId = u.id;
-      H.state.adminSession = { at: Date.now(), via: "local" };
-      H.saveState();
-      H.boot();
-    } else {
-      H.toast("Invalid admin credentials");
-    }
-  };
-});
-</script>
 </body>
 </html>
-
-
-
-
-
-

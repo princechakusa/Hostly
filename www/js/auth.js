@@ -414,3 +414,12 @@ H.authAdminSignInPage = async function () {
     H.toast('Invalid admin credentials');
   }
 };
+
+// Email verification message override
+H._checkEmailVerified = function(error) {
+  if (error && error.message && error.message.toLowerCase().includes('email')) {
+    H.toast('Please verify your email before signing in. Check your inbox.');
+    return true;
+  }
+  return false;
+};
