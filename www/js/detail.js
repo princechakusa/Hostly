@@ -28,7 +28,7 @@
     const l = state.listings.find(x => x.id === id);
     if (!l) return `<div class="page active">${innerTopbar('Listing')}<div class="empty-state"><div class="empty-icon">${S.crossCircle}</div><div class="empty-title">Listing not found</div></div></div>`;
 
-    const seller = state.users.find(u => u.id === l.sellerId) || { id: l.sellerId, name: l.sellerName || 'Unknown', phone: '', verified: false, joinedAt: Date.now() };
+    const seller = state.users.find(u => u.id === l.sellerId) || { id: l.sellerId, name: l.sellerName || 'Seller', phone: l.sellerPhone || '', verified: false, joinedAt: Date.now() };
     const u      = currentUser();
     const saved = u && u.id ? (state.saves[u.id] || []).includes(id) : false;
     const isMine = u && u.id && seller.id && seller.id === u.id;
@@ -272,7 +272,7 @@
     if (!u) {
       var listing = (H.state.listings||[]).find(function(l){ return String(l.sellerId)===id; });
       if (listing && listing.sellerName) {
-        u = { id: id, name: listing.sellerName, phone: listing.sellerPhone || '', verified: false, joinedAt: Date.now(), avatar: null };
+        u = { id: id, name: listing.sellerName || 'Seller', phone: listing.sellerPhone || '', verified: false, joinedAt: Date.now(), avatar: null };
       } else {
         return '<div class="page active">' + H.innerTopbar('User') + '<div class="empty-state"><div class="empty-title">User not found</div></div></div>';
       }

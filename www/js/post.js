@@ -135,7 +135,7 @@
 
   // Namespace for onclick calls
   H._post = {
-    setCat(c)    { postState.cat = c; refreshBody(); },
+    setCat(c)    { if(c==='jobs'){H.openInner('PostJob');return;} postState.cat = c; refreshBody(); },
     setCur(c)    { postState.currency = c; refreshBody(); },
     onProv(p)    { postState.prov = p; postState.city = CITIES_BY_PROV[p][0]; refreshBody(); },
     removePhoto(i) { postState.photos.splice(i, 1); document.getElementById('photoGrid').innerHTML = renderPhotoGrid(); },
@@ -182,7 +182,7 @@
         price: s.price, currency: s.currency, cat: s.cat,
         prov: s.prov, city: s.city, suburb: s.suburb,
         photos: s.photos, createdAt: Date.now(),
-        status: H.state.requireListingApproval ? 'pending' : 'active',
+        status: (H.state.requireListingApproval || s.cat === 'jobs') ? 'pending' : 'active',
         boost: null, views: 0
       };
       H.state.listings.unshift(l);

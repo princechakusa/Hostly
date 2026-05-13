@@ -361,6 +361,22 @@ window.H = {
     document.getElementById("bottomNav").style.display="flex";
     await this.navTo('Home');
     try { await this.fetchListingsFromSupabase(); await this.renderPage(this.currentPageName, this.currentPageParams); } catch(e) { console.warn('Fetch on boot failed:', e); }
+    if (window._autoRefresh) clearInterval(window._autoRefresh);
+    window._autoRefresh = setInterval(async function() {
+      try {
+        if (!H.currentUser()) return;
+        if (H.currentPageName === 'Home' || H.currentPageName === 'Browse') {
+          await H.fetchListingsFromSupabase();
+          // Only refresh silently - don't re-render if user is scrolling
+          if (document.getElementById('mainArea').scrollTop < 100) {
+            await H.renderPage(H.currentPageName, H.currentPageParams);
+            document.getElementById('bottomNav').style.display = 'flex';
+          }
+        }
+      } catch(e) {}
+    }, 60000);
+    if (typeof H._setupRealtimeMessages === 'function') H._setupRealtimeMessages();
+    if (typeof H.syncConversations === 'function') H.syncConversations();
   },
 
   authPage() {
@@ -368,7 +384,7 @@ window.H = {
     document.getElementById('mainArea').innerHTML = `
       <div class="auth-wrap">
         <div class="auth-logo">
-          <img src="img/icon-192.png" alt="Hostly" onclick="H.authLogoTap && H.authLogoTap()" style="width:90px;height:90px;border-radius:22px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer">
+          <img src="img/icon-192.png" alt="Hostly" onclick="H.logoTap()" style="width:90px;height:90px;border-radius:22px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer">
           <div>Host<em>ly</em></div>
         </div>
         <div class="auth-tag">Zimbabwe's #1 Free Marketplace</div>
@@ -541,6 +557,7 @@ window.H = {
     this.logoTaps++;
     clearTimeout(this.logoTapsTimer);
     this.logoTapsTimer = setTimeout(() => { this.logoTaps = 0; }, 4000);
+    H.toast && H.toast('Tap ' + this.logoTaps + ' of 7');
     if (this.logoTaps >= 7) {
       this.logoTaps = 0;
       if (this.isAdmin()) this.openInner('Admin');
@@ -661,6 +678,132 @@ window.H = {
       H.saveState();
       console.log('Fetched', cloudListings.length, 'listings from cloud');
     } catch(e) { console.warn('fetchListingsFromSupabase error:', e.message); }
+  },
+
+
+  _registerJobPage() {
+    H.pages.PostJob = function() {
+      var u = H.currentUser();
+      if (!u) return '<div class="page active">' + H.innerTopbar('Post a Job') + H.emptyState('Sign in required','Please sign in to post jobs',null,null) + '</div>';
+      return '<div class="page active">' + H.innerTopbar('Post a Job')
+        + '<div class="form-wrap" style="padding-bottom:40px">'
+        + '<div style="background:linear-gradient(135deg,#1A3A8F,#2952cc);border-radius:16px;padding:20px;margin-bottom:20px;color:#fff">'
+        + '<div style="font-size:18px;font-weight:800;margin-bottom:4px">Post a Job Opening</div>'
+        + '<div style="font-size:13px;opacity:.85">Jobs are reviewed by admin within 24hrs before going live</div>'
+        + '</div>'
+        + '<div class="fg"><div class="fl">Company Name <span style="color:red">*</span></div><input class="fi" id="jCompany" placeholder="e.g. TechZim Solutions"></div>'
+        + '<div class="fg"><div class="fl">Job Title <span style="color:red">*</span></div><input class="fi" id="jTitle" placeholder="e.g. Software Developer, Sales Manager"></div>'
+        + '<div class="fg"><div class="fl">Job Type <span style="color:red">*</span></div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">'
+        + ['Full Time','Part Time','Contract','Freelance','Internship','Volunteer'].map(function(t){ var tid='jt_'+t.replace(' ','_'); return '<button class="filter-opt" id="'+tid+'" onclick="H._selectJobType(\"'+t+'\")" style="padding:10px;border-radius:10px;border:2px solid var(--border);background:var(--card);font-size:13px;font-weight:600;cursor:pointer">'+t+'</button>'; }).join('')
+        + '</div></div>'
+        + '<div class="fg"><div class="fl">Industry <span style="color:red">*</span></div><select class="fi" id="jIndustry"><option value="">Select industry...</option>'
+        + ['IT & Technology','Finance & Banking','Healthcare','Education','Construction','Hospitality & Tourism','Sales & Marketing','Admin & Office','Agriculture','Transport & Logistics','Manufacturing','Media & Communications','Legal','NGO & Non-profit','Other'].map(function(i){ return '<option>'+i+'</option>'; }).join('')
+        + '</select></div>'
+        + '<div class="fg"><div class="fl">Location <span style="color:red">*</span></div><select class="fi" id="jProv">'
+        + H.PROVINCES.map(function(p){ return '<option>'+p+'</option>'; }).join('')
+        + '</select></div>'
+        + '<div class="fg"><div class="fl">Salary / Compensation</div>'
+        + '<div style="display:flex;gap:8px">'
+        + '<input class="fi" id="jSalaryMin" type="number" placeholder="Min (USD)" style="flex:1">'
+        + '<input class="fi" id="jSalaryMax" type="number" placeholder="Max (USD)" style="flex:1">'
+        + '</div>'
+        + '<label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px"><input type="checkbox" id="jNegotiable" onchange="H._toggleNegotiable(this)"> Negotiable / Not disclosed</label>'
+        + '</div>'
+        + '<div class="fg"><div class="fl">Job Description <span style="color:red">*</span></div><textarea class="fi" rows="5" id="jDesc" placeholder="Describe the role and responsibilities..."></textarea></div>'
+        + '<div class="fg"><div class="fl">Requirements & Qualifications <span style="color:red">*</span></div><textarea class="fi" rows="4" id="jReqs" placeholder="e.g. Degree in Computer Science, 2+ years experience..."></textarea></div>'
+        + '<div class="fg"><div class="fl">Application Deadline</div><input class="fi" id="jDeadline" type="date"></div>'
+        + '<div class="fg"><div class="fl">How to Apply <span style="color:red">*</span></div><select class="fi" id="jApplyType" onchange="H._toggleApplyFields()">'
+        + '<option value="email">Via Email</option><option value="whatsapp">Via WhatsApp</option><option value="both">Email & WhatsApp</option>'
+        + '</select></div>'
+        + '<div class="fg" id="jEmailWrap"><div class="fl">Contact Email</div><input class="fi" id="jEmail" type="email" placeholder="careers@company.com" value="'+H.escHtml(u.email||'')+'"></div>'
+        + '<div class="fg" id="jPhoneWrap" style="display:none"><div class="fl">WhatsApp Number</div><input class="fi" id="jPhone" type="tel" placeholder="+263 77 123 4567" value="'+H.escHtml(u.phone||'')+'"></div>'
+        + '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:14px;margin:16px 0;font-size:13px;color:#856404">'
+        + '&#9888; By posting a job, you confirm this is a legitimate opportunity. Fraudulent postings will result in permanent account ban.'
+        + '</div>'
+        + '<button onclick="H._submitJob()" style="width:100%;padding:15px;background:#1A3A8F;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer">Submit for Review</button>'
+        + '<div style="font-size:12px;color:var(--sub);text-align:center;margin-top:10px">Jobs are reviewed within 24 hours</div>'
+        + '</div></div>';
+    };
+
+    H._selectedJobType = '';
+    H._selectJobType = function(type) {
+      H._selectedJobType = type;
+      document.querySelectorAll('[id^="jt_"]').forEach(function(b){ b.style.background='var(--card)'; b.style.color='var(--text)'; b.style.borderColor='var(--border)'; });
+      var btn = document.getElementById('jt_'+type.replace(' ','_'));
+      if (btn) { btn.style.background='#1A3A8F'; btn.style.color='#fff'; btn.style.borderColor='#1A3A8F'; }
+    };
+
+    H._toggleNegotiable = function(cb) { var d=cb.checked; document.getElementById('jSalaryMin').disabled=d; document.getElementById('jSalaryMax').disabled=d; };
+
+    H._toggleApplyFields = function() {
+      var type = document.getElementById('jApplyType').value;
+      document.getElementById('jEmailWrap').style.display = type==='whatsapp' ? 'none' : '';
+      document.getElementById('jPhoneWrap').style.display = type==='email' ? 'none' : '';
+    };
+
+    H._submitJob = function() {
+      var u = H.currentUser();
+      if (!u) { H.requireAuth('Sign in to post jobs'); return; }
+      var company  = (document.getElementById('jCompany').value||'').trim();
+      var title    = (document.getElementById('jTitle').value||'').trim();
+      var type     = H._selectedJobType;
+      var industry = (document.getElementById('jIndustry').value||'').trim();
+      var prov     = (document.getElementById('jProv').value||'').trim();
+      var salMin   = (document.getElementById('jSalaryMin').value||'').trim();
+      var salMax   = (document.getElementById('jSalaryMax').value||'').trim();
+      var negotiable = document.getElementById('jNegotiable').checked;
+      var desc     = (document.getElementById('jDesc').value||'').trim();
+      var reqs     = (document.getElementById('jReqs').value||'').trim();
+      var deadline = (document.getElementById('jDeadline').value||'').trim();
+      var applyType = document.getElementById('jApplyType').value;
+      var email    = (document.getElementById('jEmail').value||'').trim();
+      var phone    = (document.getElementById('jPhone').value||'').trim();
+      if (!company)  { H.toast('Company name is required'); return; }
+      if (!title)    { H.toast('Job title is required'); return; }
+      if (!type)     { H.toast('Please select job type'); return; }
+      if (!industry) { H.toast('Please select an industry'); return; }
+      if (!desc)     { H.toast('Job description is required'); return; }
+      if (!reqs)     { H.toast('Requirements are required'); return; }
+      if (applyType !== 'whatsapp' && !email) { H.toast('Contact email is required'); return; }
+      if (applyType !== 'email' && !phone)    { H.toast('WhatsApp number is required'); return; }
+      var salary = negotiable ? 'Negotiable' : (salMin && salMax ? 'USD '+salMin+' - '+salMax : salMin ? 'From USD '+salMin : 'Not disclosed');
+      var fullDesc = 'COMPANY: ' + company
+        + '\nJOB TYPE: ' + type
+        + '\nINDUSTRY: ' + industry
+        + '\nSALARY: ' + salary
+        + (deadline ? '\nDEADLINE: ' + deadline : '')
+        + '\n\nDESCRIPTION:\n' + desc
+        + '\n\nREQUIREMENTS:\n' + reqs
+        + '\n\nHOW TO APPLY:'
+        + (applyType !== 'whatsapp' ? '\nEmail: ' + email : '')
+        + (applyType !== 'email' ? '\nWhatsApp: ' + phone : '');
+      var job = {
+        id: H.uid(),
+        sellerId: u.id,
+        sellerName: company,
+        sellerPhone: phone || u.phone || '',
+        title: title,
+        desc: fullDesc,
+        price: negotiable ? 0 : (parseInt(salMin)||0),
+        currency: 'USD',
+        cat: 'jobs',
+        prov: prov,
+        city: prov,
+        suburb: company,
+        photos: [],
+        createdAt: Date.now(),
+        status: 'pending',
+        boost: null,
+        views: 0,
+        jobData: { company, type, industry, salary, email, phone, deadline }
+      };
+      H.state.listings.unshift(job);
+      H.saveState();
+      if (typeof H.saveListingToCloud === 'function') H.saveListingToCloud(job);
+      H.toast('Job submitted for review!');
+      H.goBack();
+    };
   },
 
   _registerCategoryView() {
@@ -820,6 +963,7 @@ return `<div class="page active">${H.innerTopbar(cat.icon + ' ' + cat.name, fals
   init() {
     this.state = this.loadState();
     this._registerCategoryView();
+    this._registerJobPage();
     this._registerExtraPages();
     this._seedDemoData();
     setTimeout(()=>this._showOnboarding(),800);
