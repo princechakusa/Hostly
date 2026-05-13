@@ -39,7 +39,7 @@
     </div>`;
   };
 
-  H.openChat = function (id) { openInner('Chat', { id }); };
+  H.openChat = function (id) { H.openInner('Chat', { id }); };
 
   H.startChatWith = function (otherId, listingId) {
     const u = currentUser();
@@ -49,7 +49,7 @@
       c = { id: uid(), members: [u.id, otherId], listingId, messages: [] };
       state.conversations.push(c); saveState();
     }
-    openInner('Chat', { id: c.id });
+    H.openInner('Chat', { id: c.id });
   };
 
   // ---------------------------------------------------
@@ -110,7 +110,7 @@
     c.messages.push({ from: u.id, text, t: Date.now(), read: false });
     saveState();
     inp.value = '';
-    renderPage('Chat', { id: c.id });
+    H.renderPage('Chat', { id: c.id });
   };
 
 })(window.H);

@@ -93,7 +93,7 @@ window.H = {
   },
 
   // Attempt to push state to Supabase if client exists
-  async syncToSupabase() { return; // disabled
+  async syncToSupabase() { return; // state sync disabled - using per-listing sync instead
     const root = window.H || this;
     if (!window.supabase || typeof window.supabase.from !== 'function') return;
     try {
@@ -108,7 +108,7 @@ window.H = {
   },
 
   // â”€â”€â”€ Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  uid()        { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); },
+  uid()        { if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID(); return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r=Math.random()*16|0; return (c=='x'?r:(r&0x3|0x8)).toString(16); }); },
   currentUser(){
     const root = window.H || this;
     return ((root.state && root.state.users) || []).find(u => u.id === (root.state && root.state.currentUserId)) || null;
@@ -334,8 +334,8 @@ window.H = {
     return ['Admin'].includes(name);
   },
   canAccessPage(name) {
-        if (this.isAdminPage(name) && !this.isAdmin()) return false;
-    if (this.isAdminPage(name) && !this.state.adminSession) return false;
+    const root = window.H || this;
+    if (root.isAdminPage(name) && (!root.isAdmin() || !root.state.adminSession)) return false;
     return true;
   },
   adminLog(action, meta = {}) {
@@ -357,10 +357,10 @@ window.H = {
   async boot() {
     this.applyTheme();
     this.applyLanguage();
-    // guest browse enabled
     if(this.state.currentUserId && this.checkBan()) return;
     document.getElementById("bottomNav").style.display="flex";
     await this.navTo('Home');
+    try { await this.fetchListingsFromSupabase(); await this.renderPage(this.currentPageName, this.currentPageParams); } catch(e) { console.warn('Fetch on boot failed:', e); }
   },
 
   authPage() {
@@ -383,15 +383,16 @@ window.H = {
   },
 
   async navTo(name, btn) {
-    if(["Post"].includes(name)&&!this.currentUser()){this.requireAuth("Log in to post an ad");return;}
-    if(name==="Account"&&!this.currentUser()){this.requireAuth("Sign in to your account");return;}
-    if (this.isAdminPage(name) && (!this.isAdmin() || !this.state.adminSession)) { this.toast('Admin login required'); return; }
-    this.pageStack = [];
-    document.getElementById('bottomNav').style.display = 'flex';
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    const target = btn || document.querySelector(`[data-nav="${name}"]`);
-    if (target) target.classList.add('active');
-    await this.renderPage(name);
+    const _h = window.H;
+    if(['Post'].includes(name)&&!_h.currentUser()){_h.requireAuth('Log in to post an ad');return;}
+    if(name==='Account'&&!_h.currentUser()){_h.requireAuth('Sign in to your account');return;}
+    if(_h.isAdminPage(name)&&(!_h.isAdmin()||!_h.state.adminSession)){_h.toast('Admin login required');return;}
+    _h.pageStack=[];
+    document.getElementById('bottomNav').style.display='flex';
+    document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+    const target=btn||document.querySelector('[data-nav="'+name+'"]');
+    if(target)target.classList.add('active');
+    await _h.renderPage(name);
   },
 
   async openInner(name, params) {
@@ -405,6 +406,7 @@ window.H = {
   },
 
   async goBack() {
+    if (H.state._backToAccount) { H.state._backToAccount = false; this.pageStack.pop(); H.showAccountMenu(); return; }
     this.stopCam();
     if (this.pageStack.length) {
       const p = this.pageStack.pop();
@@ -422,8 +424,10 @@ window.H = {
   },
 
   async renderPage(name, params) {
+    const _fadeEl = document.getElementById('mainArea');
+    if (_fadeEl) { _fadeEl.style.opacity='0'; await new Promise(function(r){ setTimeout(r,80); }); _fadeEl.style.opacity='1'; }
     // guest browse enabled
-    if (!this.canAccessPage(name)) { this.toast('Access denied'); await this.navTo('Home'); return; }
+    if (this.canAccessPage && !this.canAccessPage(name)) { this.toast('Access denied'); await this.navTo('Home'); return; }
     this.currentPageName = name; this.currentPageParams = params || {};
     const fn  = this.pages[name] || this.pages.Home;
     const res = fn(params || {});
@@ -544,6 +548,121 @@ window.H = {
   },
 
   // â”€â”€â”€ CategoryView stub â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  _registerExtraPages() {
+    H.pages.About = function() {
+      return '<div class="page active">' + H.innerTopbar('About Hostly')
+        + '<div class="about-wrap">'
+        + '<div class="about-hero"><div class="about-brand">Host<em>ly</em></div><div class="about-tag">Zimbabwe&#39;s #1 Free Marketplace</div></div>'
+        + '<div class="about-card"><div class="about-sec-title">Our Mission</div><div class="about-body">Hostly connects buyers and sellers across Zimbabwe, making it easy to buy, sell, and discover products and services in your local community. We believe commerce should be simple, safe, and accessible to everyone.</div></div>'
+        + '<div class="about-card"><div class="about-sec-title">What We Offer</div><div class="about-grid">'
+        + ['Free Listings','Secure Messaging','WhatsApp Connect','All Categories','Province Filters','Boost Your Ads'].map(function(f){ return '<div class="about-feat">'+f+'</div>'; }).join('')
+        + '</div></div>'
+        + '<div class="about-card"><div class="about-sec-title">Contact Us</div>'
+        + '<div class="about-contact-row" onclick="window.location.href=\'mailto:chakusaprince@gmail.com\'"><div class="about-contact-ic email-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div class="about-contact-label">Support Email</div><div class="about-contact-val">chakusaprince@gmail.com</div></div></div>'
+        + '<div class="about-contact-row" onclick="window.open(\'https://wa.me/971589772645\')"><div class="about-contact-ic wa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg></div><div><div class="about-contact-label">WhatsApp Support</div><div class="about-contact-val">+971 589 772 645</div></div></div>'
+        + '</div>'
+        + '<div class="about-ads-banner"><div class="about-ads-title">Advertise with Hostly</div><div class="about-ads-sub">Reach thousands of buyers across Zimbabwe</div><button class="about-ads-btn" onclick="H.openInner(\'Ads\')">View Packages</button></div>'
+        + '</div></div>';
+    };
+
+    H.pages.Ads = function() {
+      return '<div class="page active">' + H.innerTopbar('Advertise with Hostly')
+        + '<div class="about-wrap">'
+        + '<div class="ads-hero"><div class="ads-hero-title">Grow Your Business</div><div class="ads-hero-sub">Reach thousands of active buyers across all provinces of Zimbabwe</div></div>'
+        + '<div class="ads-pkg"><div class="ads-pkg-name">Standard</div><div class="ads-pkg-price">$10/week</div><div class="ads-pkg-feat">&#10003; Featured listing for 7 days</div><div class="ads-pkg-feat">&#10003; Category placement</div><div class="ads-pkg-feat">&#10003; Basic analytics</div><button class="ads-pkg-btn" onclick="window.location.href=\'mailto:chakusaprince@gmail.com?subject=Standard Package\'">Get Started</button></div>'
+        + '<div class="ads-pkg ads-pkg-hot"><div class="ads-pkg-badge">MOST POPULAR</div><div class="ads-pkg-name">Premium</div><div class="ads-pkg-price">$30/month</div><div class="ads-pkg-feat">&#10003; 30-day featured listing</div><div class="ads-pkg-feat">&#10003; Homepage banner</div><div class="ads-pkg-feat">&#10003; Priority support</div><div class="ads-pkg-feat">&#10003; Advanced analytics</div><button class="ads-pkg-btn ads-pkg-btn-hot" onclick="window.location.href=\'mailto:chakusaprince@gmail.com?subject=Premium Package\'">Get Started</button></div>'
+        + '<div class="ads-pkg"><div class="ads-pkg-name">Enterprise</div><div class="ads-pkg-price">Contact Us</div><div class="ads-pkg-feat">&#10003; Custom campaign</div><div class="ads-pkg-feat">&#10003; All platforms</div><div class="ads-pkg-feat">&#10003; Dedicated manager</div><div class="ads-pkg-feat">&#10003; Full analytics</div><button class="ads-pkg-btn" onclick="window.location.href=\'mailto:chakusaprince@gmail.com?subject=Enterprise Package\'">Get Started</button></div>'
+        + '<div class="ads-contact">Questions? <span onclick="window.location.href=\'mailto:chakusaprince@gmail.com\'" style="color:#1A3A8F;font-weight:600">chakusaprince@gmail.com</span> or <span onclick="window.open(\'https://wa.me/971589772645\')" style="color:#25D366;font-weight:600">WhatsApp us</span></div>'
+        + '</div></div>';
+    };
+  },
+
+
+
+  async saveListingToCloud(listing) {
+    try {
+      if (!window.supabase || typeof window.supabase.from !== 'function') return;
+      const row = {
+        id: listing.id,
+        seller_id: listing.sellerId,
+        seller_name: listing.sellerName || '',
+        seller_phone: listing.sellerPhone || '',
+        seller_phone: listing.sellerPhone || '',
+        title: listing.title,
+        description: listing.desc || '',
+        price: listing.price || 0,
+        currency: listing.currency || 'USD',
+        category: listing.cat || 'other',
+        province: listing.prov || '',
+        city: listing.city || '',
+        suburb: listing.suburb || '',
+        photos: listing.photos || [],
+        status: listing.status || 'active',
+        boost: listing.boost || null,
+        views: listing.views || 0,
+        created_at: listing.createdAt ? new Date(listing.createdAt).toISOString() : new Date().toISOString()
+      };
+      const { error } = await window.supabase.from('listings').upsert(row);
+      if (error) console.warn('Cloud save failed:', error.message);
+      else console.log('Listing saved to cloud:', listing.id);
+    } catch(e) { console.warn('saveListingToCloud error:', e.message); }
+  },
+
+  async deleteListingFromCloud(id) {
+    try {
+      if (!window.supabase || typeof window.supabase.from !== 'function') return;
+      await window.supabase.from('listings').delete().eq('id', id);
+      console.log('Listing deleted from cloud:', id);
+    } catch(e) { console.warn('deleteListingFromCloud error:', e.message); }
+  },
+
+  async fetchListingsFromSupabase() {
+    try {
+      if (!window.supabase || typeof window.supabase.from !== 'function') return;
+      const { data, error } = await window.supabase
+        .from('listings')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (error) { console.warn('Fetch failed:', error.message); return; }
+      if (!data || !data.length) return;
+      const cloudListings = data.map(function(r) {
+        return {
+          id: r.id,
+          sellerId: r.seller_id,
+          sellerName: r.seller_name || '',
+          sellerPhone: r.seller_phone || '',
+          sellerPhone: r.seller_phone || '',
+          title: r.title,
+          desc: r.description,
+          price: r.price,
+          currency: r.currency,
+          cat: r.category,
+          prov: r.province,
+          city: r.city,
+          suburb: r.suburb,
+          photos: Array.isArray(r.photos) ? r.photos : (r.photos ? [r.photos] : []),
+          status: r.status,
+          boost: r.boost,
+          views: r.views || 0,
+          createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now()
+        };
+      });
+      const localIds = new Set((H.state.listings||[]).map(function(l){ return l.id; }));
+      cloudListings.forEach(function(cl) {
+        if (!localIds.has(cl.id)) {
+          H.state.listings.push(cl);
+        } else {
+          var idx = H.state.listings.findIndex(function(l){ return l.id===cl.id; });
+          if (idx !== -1) H.state.listings[idx] = Object.assign(H.state.listings[idx], cl);
+        }
+      });
+      H.saveState();
+      console.log('Fetched', cloudListings.length, 'listings from cloud');
+    } catch(e) { console.warn('fetchListingsFromSupabase error:', e.message); }
+  },
+
   _registerCategoryView() {
     this.pages.CategoryView = function ({ cid }) {
       const cat  = H.CATEGORIES.find(c => c.id === cid) || { name: 'Category', icon: H.ICONS.close };
@@ -565,29 +684,37 @@ return `<div class="page active">${H.innerTopbar(cat.icon + ' ' + cat.name, fals
 
     sheet.innerHTML = `
       <div class="sheet-header">Account Menu</div>
-      <button class="sheet-item" onclick="H.closeSheet(); setTimeout(()=>H.openInner('Profile'),50)">
+      <button class="sheet-item" onclick="H.closeSheet(); H.state._backToAccount=true; setTimeout(()=>H.openInner('Profile'),50)">
         <span class="sheet-icon">${I.user}</span>
         <span class="sheet-label">My Profile</span>
       </button>
-      <button class="sheet-item" onclick="H.closeSheet(); setTimeout(()=>H.openInner('MyListings'),50)">
+      <button class="sheet-item" onclick="H.closeSheet(); H.state._backToAccount=true; setTimeout(()=>H.openInner('MyListings'),50)">
         <span class="sheet-icon">${I.doc}</span>
         <span class="sheet-label">My Listings</span>
       </button>
-      <button class="sheet-item" onclick="H.closeSheet(); setTimeout(()=>H.openInner('Favorites'),50)">
+      <button class="sheet-item" onclick="H.closeSheet(); H.state._backToAccount=true; setTimeout(()=>H.openInner('Favorites'),50)">
         <span class="sheet-icon">${I.heart}</span>
         <span class="sheet-label">Saved & Favorites</span>
       </button>
-      <button class="sheet-item" onclick="H.closeSheet(); setTimeout(()=>H.openInner('Wallet'),50)">
+      <button class="sheet-item" onclick="H.closeSheet(); H.state._backToAccount=true; setTimeout(()=>H.openInner('Wallet'),50)">
         <span class="sheet-icon">${I.wallet}</span>
         <span class="sheet-label">Wallet & Payments</span>
       </button>
-      <button class="sheet-item" onclick="H.closeSheet(); setTimeout(()=>H.openInner('Settings'),50)">
+      <button class="sheet-item" onclick="H.closeSheet(); H.state._backToAccount=true; setTimeout(()=>H.openInner('Settings'),50)">
         <span class="sheet-icon">${I.settings}</span>
         <span class="sheet-label">Settings</span>
       </button>
-      <button class="sheet-item" onclick="H.closeSheet(); setTimeout(()=>H.openInner('Help'),50)">
+      <button class="sheet-item" onclick="H.closeSheet(); H.state._backToAccount=true; setTimeout(()=>H.openInner('Help'),50)">
         <span class="sheet-icon">${I.help}</span>
         <span class="sheet-label">Help & Support</span>
+      </button>
+      <button class="sheet-item" onclick="H.closeSheet(); H.state._backToAccount=true; setTimeout(function(){H.openInner('About');},50)">
+        <span class="sheet-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+        <span class="sheet-label">About Hostly</span>
+      </button>
+      <button class="sheet-item" onclick="H.closeSheet(); H.state._backToAccount=true; setTimeout(function(){H.openInner('Ads');},50)">
+        <span class="sheet-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+        <span class="sheet-label">Advertise with Us</span>
       </button>
       <button class="sheet-item danger" onclick="H.logout(); H.closeSheet()">
         <span class="sheet-icon">${I.logout}</span>
@@ -693,6 +820,7 @@ return `<div class="page active">${H.innerTopbar(cat.icon + ' ' + cat.name, fals
   init() {
     this.state = this.loadState();
     this._registerCategoryView();
+    this._registerExtraPages();
     this._seedDemoData();
     setTimeout(()=>this._showOnboarding(),800);
 

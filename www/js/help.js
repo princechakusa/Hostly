@@ -515,3 +515,29 @@ pages.HelpCommunity = function () {
   };
 
 })(window.H = window.H || {});
+
+H.pages.LegalHub = function() {
+  var sections = [
+    { title: 'Terms', items: ['Terms of Use','Acceptable Use Policy','Seller Terms','Buyer Protection','Boost Terms'] },
+    { title: 'Privacy', items: ['Privacy Policy','Cookie Policy','Data Deletion','GDPR Compliance'] },
+    { title: 'Platform Policies', items: ['Community Guidelines','Prohibited Items','Anti-Fraud Policy','Dispute Resolution'] }
+  ];
+  var emailLink = 'mailto:chakusaprince@gmail.com';
+  var waLink = 'https://wa.me/971589772645';
+  var html = '<div class="page active">' + H.innerTopbar('Legal Hub');
+  html += '<div class="legal-hero"><div class="legal-hero-title">Welcome to<br><strong>Hostly Legal Hub</strong></div><div class="legal-hero-sub">Legal information for Hostly products and services</div></div>';
+  sections.forEach(function(sec) {
+    html += '<div class="legal-section-title">' + sec.title + '</div><div class="legal-list">';
+    sec.items.forEach(function(item) { html += '<div class="legal-item"><div class="legal-item-title">' + item + '</div><div class="legal-item-arrow">&rsaquo;</div></div>'; });
+    html += '</div>';
+  });
+  html += '<div class="legal-contact"><div class="legal-contact-title">Need to contact us?</div>';
+  html += '<div class="legal-contact-body">Email: <span onclick="window.open(emailLink)" style="color:#1A3A8F;font-weight:600;cursor:pointer">chakusaprince@gmail.com</span></div>';
+  html += '<div class="legal-contact-body" style="margin-top:6px">WhatsApp: <span onclick="window.open(waLink)" style="color:#25D366;font-weight:600;cursor:pointer">+971 589 772 645</span></div>';
+  html += '</div>';
+  html += '<div class="legal-footer"><div class="legal-footer-links">';
+  ['About Us','Advertise','Terms of Use','Privacy Policy'].forEach(function(l) { html += '<span class="legal-footer-link" onclick="H.openInner(\x27About\x27)">' + l + '</span>'; });
+  html += '</div><div class="legal-footer-copy">Hostly &copy; 2026 &middot; Zimbabwe\'s #1 Free Marketplace</div></div>';
+  html += '</div></div>';
+  return html;
+};

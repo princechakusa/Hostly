@@ -20,9 +20,10 @@
   };
 
   // --- Profile Page -----------------------------------------
-  pages.Profile = function () {
-    const u = H.currentUser();
-    if (!u) return H.emptyState('Not logged in', 'Please sign in to continue', 'Go Home', "H.navTo('Home')");
+  pages.Profile = function (params) {
+    const viewId = params && params.id;
+    const u = viewId ? (H.state.users || []).find(function(x){ return x.id === viewId; }) : H.currentUser();
+    const isOwnProfile = !viewId || (H.currentUser() && viewId === H.currentUser().id);
 
     const verifiedBadge = u.verified
       ? `<span class="verified">${icons.check} Verified</span>`

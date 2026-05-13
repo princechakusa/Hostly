@@ -1,14 +1,13 @@
 'use strict';
 (function (H) {
   const pages = H.pages;
-  const state = H.state;
-  const { currentUser, escHtml, uid, toast, navTo, saveState,
-          fmtPrice, CATEGORIES, PROVINCES, CITIES_BY_PROV } = H;
+  
+  const { CATEGORIES, PROVINCES, CITIES_BY_PROV } = H;
 
   let postState = {};
 
   pages.Post = function () {
-    if (!currentUser()) {
+    if (!H.currentUser()) {
       return `<div class="page active">${H.innerTopbar('Post a Listing')}<div style="padding: 20px;">${H.emptyState('Sign In Required', 'Sign in to post listings and reach millions of buyers.', 'Sign In', 'H.requireLogin(\"post listings\")')}</div></div>`;
     }
     postState = {
@@ -46,17 +45,17 @@
         </div>
       </div>
       <div class="fg"><div class="fl">Title</div>
-        <input class="fi" id="postTitle" value="${escHtml(s.title)}" placeholder="e.g. 3 Bedroom Flat in Avondale" maxlength="80">
+        <input class="fi" id="postTitle" value="${H.escHtml(s.title)}" placeholder="e.g. 3 Bedroom Flat in Avondale" maxlength="80">
       </div>
       <div class="fg"><div class="fl">Description</div>
-        <textarea class="fi" rows="4" id="postDesc" placeholder="Describe what you're selling · condition, features, why you're selling..." maxlength="2000">${escHtml(s.desc)}</textarea>
+        <textarea class="fi" rows="4" id="postDesc" placeholder="Describe what you're selling · condition, features, why you're selling..." maxlength="2000">${H.escHtml(s.desc)}</textarea>
       </div>
       <div class="step-btns"><button class="btn-next" onclick="H._post.next()">Continue ?</button></div>`;
 
     if (s.step === 2) return `
       <div class="fg"><div class="fl">Price</div>
         <div class="price-row">
-          <input class="fi" style="flex:1" type="number" placeholder="0" id="priceInput" value="${escHtml(s.price)}" min="0">
+          <input class="fi" style="flex:1" type="number" placeholder="0" id="priceInput" value="${H.escHtml(s.price)}" min="0">
           <div class="cur-toggle">
             <button class="cur ${s.currency === 'USD' ? 'on' : ''}" onclick="H._post.setCur('USD')">USD</button>
             <button class="cur ${s.currency === 'ZiG' ? 'on' : ''}" onclick="H._post.setCur('ZiG')">ZiG</button>
@@ -74,7 +73,7 @@
         </select>
       </div>
       <div class="fg"><div class="fl">Suburb / Area (optional)</div>
-        <input class="fi" id="suburbIn" value="${escHtml(s.suburb)}" placeholder="e.g. Avondale West">
+        <input class="fi" id="suburbIn" value="${H.escHtml(s.suburb)}" placeholder="e.g. Avondale West">
       </div>
       <div class="step-btns">
         <button class="btn-prev" onclick="H._post.prev()">? Back</button>
@@ -104,9 +103,9 @@
     if (s.step === 4) return `
       <div class="preview-card">
         <div class="preview-label">? Ad Preview</div>
-        <div class="preview-title">${escHtml(s.title || 'Untitled')}</div>
-        <div class="preview-price">${escHtml(fmtPrice(s.price, s.currency))}</div>
-        <div class="preview-meta">?? ${escHtml(s.suburb || s.city)}, ${escHtml(s.prov)} · ${(CATEGORIES.find(c => c.id === s.cat) || {}).name || 'Other'} · ${s.photos.length} photo${s.photos.length === 1 ? '' : 's'}</div>
+        <div class="preview-title">${H.escHtml(s.title || 'Untitled')}</div>
+        <div class="preview-price">${H.escHtml(H.fmtPrice(s.price, s.currency))}</div>
+        <div class="preview-meta">?? ${H.escHtml(s.suburb || s.city)}, ${H.escHtml(s.prov)} · ${(CATEGORIES.find(c => c.id === s.cat) || {}).name || 'Other'} · ${s.photos.length} photo${s.photos.length === 1 ? '' : 's'}</div>
       </div>
       <div class="tip-box">
         <div class="tip-title">?? Listing Rules</div>
@@ -156,17 +155,17 @@
       if (s.step === 1) {
         s.title = document.getElementById('postTitle').value.trim();
         s.desc  = document.getElementById('postDesc').value.trim();
-        if (!s.cat)               { toast('Pick a category'); return; }
-        if (s.title.length < 5)   { toast('Title needs at least 5 characters'); return; }
-        if (s.desc.length < 10)   { toast('Description needs at least 10 characters'); return; }
+        if (!s.cat)               { H.toast('Pick a category'); return; }
+        if (s.title.length < 5)   { H.toast('Title needs at least 5 characters'); return; }
+        if (s.desc.length < 10)   { H.toast('Description needs at least 10 characters'); return; }
       } else if (s.step === 2) {
         s.price  = document.getElementById('priceInput').value;
         s.prov   = document.getElementById('provinceSel').value;
         s.city   = document.getElementById('citySel').value;
         s.suburb = document.getElementById('suburbIn').value.trim();
-        if (!s.price || Number(s.price) <= 0) { toast('Enter a valid price'); return; }
+        if (!s.price || Number(s.price) <= 0) { H.toast('Enter a valid price'); return; }
       } else if (s.step === 3) {
-        if (!s.photos.length) { toast('Add at least one photo'); return; }
+        if (!s.photos.length) { H.toast('Add at least one photo'); return; }
       }
       s.step++;
       refreshSteps();
@@ -177,19 +176,20 @@
     },
     submit() {
       const s = postState;
-      const u = currentUser();
+      const u = H.currentUser();
       const l = {
-        id: uid(), sellerId: u.id, title: s.title, desc: s.desc,
+        id: H.uid(), sellerId: u.id, sellerName: u.name || '', sellerPhone: u.phone || '', title: s.title, desc: s.desc,
         price: s.price, currency: s.currency, cat: s.cat,
         prov: s.prov, city: s.city, suburb: s.suburb,
         photos: s.photos, createdAt: Date.now(),
-        status: state.requireListingApproval ? 'pending' : 'active',
+        status: H.state.requireListingApproval ? 'pending' : 'active',
         boost: null, views: 0
       };
-      state.listings.unshift(l);
-      saveState();
-      toast(state.requireListingApproval ? 'Ad submitted for admin approval' : '?? Your ad is live!');
-      navTo('Home', document.querySelector('[data-nav="Home"]'));
+      H.state.listings.unshift(l);
+      H.saveState();
+      if (typeof H.saveListingToCloud === "function") H.saveListingToCloud(l);
+      H.toast(H.state.requireListingApproval ? 'Ad submitted for admin approval' : '?? Your ad is live!');
+      H.navTo('Home', document.querySelector('[data-nav="Home"]'));
     }
   };
 

@@ -28,7 +28,7 @@
     const l = state.listings.find(x => x.id === id);
     if (!l) return `<div class="page active">${innerTopbar('Listing')}<div class="empty-state"><div class="empty-icon">${S.crossCircle}</div><div class="empty-title">Listing not found</div></div></div>`;
 
-    const seller = state.users.find(u => u.id === l.sellerId) || { id: null, name: 'Unknown', phone: '', verified: false, joinedAt: Date.now() };
+    const seller = state.users.find(u => u.id === l.sellerId) || { id: l.sellerId, name: l.sellerName || 'Unknown', phone: '', verified: false, joinedAt: Date.now() };
     const u      = currentUser();
     const saved = u && u.id ? (state.saves[u.id] || []).includes(id) : false;
     const isMine = u && u.id && seller.id && seller.id === u.id;
@@ -50,7 +50,7 @@
       </div>
 
       <div class="det-photo" id="dPhoto">
-        ${photos.length ? `<img src="${photos[0]}" id="dPhotoImg">` : `<div class="ph">${H.H.categoryIcon(l.cat)}</div>`}
+        ${photos.length ? `<img src="${photos[0]}" id="dPhotoImg">` : `<div class="ph">${H.categoryIcon(l.cat)}</div>`}
         ${photos.length > 1 ? `<div class="photo-dots">${photos.map((_, i) =>
           `<div class="pdot ${i === 0 ? 'on' : ''}" onclick="H.setPhoto('${l.id}',${i})"></div>`).join('')}</div>` : ''}
       </div>
@@ -61,7 +61,7 @@
           <div class="nego-pill">Negotiable</div>
         </div>
         <div class="det-listing-title">${escHtml(l.title)}</div>
-        <div class="det-loc-row">${S.location} ${escHtml(l.suburb || l.city)}, ${escHtml(l.prov)} Â· ${timeAgo(l.createdAt)} Â· ${S.eye} ${l.views || 0}</div>
+        <div class="det-loc-row">${S.location} ${escHtml(l.suburb || l.city)}, ${escHtml(l.prov)} · ${timeAgo(l.createdAt)} · ${S.eye} ${l.views || 0}</div>
 
         <div class="seller-card" onclick="H.openUserProfile('${seller.id}')">
           ${seller.avatar
@@ -74,7 +74,7 @@
                 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>` : ''}
             </div>
             <div class="seller-phone">${escHtml(seller.phone)}</div>
-            <div class="seller-meta">Member since ${new Date(seller.joinedAt).toLocaleDateString()}${seller.verified ? ' Â· ID Verified' : ''}</div>
+            <div class="seller-meta">Member since ${new Date(seller.joinedAt).toLocaleDateString()}${seller.verified ? ' · ID Verified' : ''}</div>
           </div>
           <div class="mi-arrow">â€º</div>
         </div>
@@ -89,7 +89,7 @@
             <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
             Chat on WhatsApp
           </button>
-          <button class="msg-btn" onclick="H.currentUser()?H.startChatWith('${seller.id}','${l.id}'):H.requireAuth('Sign in to message sellers')">${S.message} Message in App</button>
+          <button class="msg-btn" onclick="if(H.currentUser()){H.startChatWith('${seller.id}','${l.id}');}else{H.requireAuth('Sign in to message sellers');}">${S.message} Message in App</button>
           <button class="call-btn" onclick="H.callSeller('${seller.phone}')">${S.phone} Call ${escHtml(seller.phone)}</button>
           <button class="report-btn" onclick="H.reportListing('${l.id}')">${S.flag} Report this listing</button>
         `}
@@ -128,7 +128,7 @@
   };
 
   H.openUserProfile = async function (id) {
-    await openInner('UserProfile', { id });
+    await H.openInner('Profile', { id });
   };
 
   H.openBoostPage = async function (listingId) {
@@ -137,7 +137,7 @@
 
   H.shareListing = function (id) {
     const l = state.listings.find(x => x.id === id); if (!l) return;
-    const text = `${l.title} Â· ${fmtPrice(l.price, l.currency)} on Hostly`;
+    const text = `${l.title} · ${fmtPrice(l.price, l.currency)} on Hostly`;
     if (navigator.share) {
       navigator.share({ title: l.title, text, url: location.href }).catch(() => {});
     } else {
@@ -262,5 +262,40 @@
     sec.innerHTML = '<div class="sec-head" style="margin-top:24px"><div class="sec-title">Similar Listings</div></div><div class="listing-list">' + similar.map(H.renderListCard).join('') + '</div>';
     det.appendChild(sec);
   };
+
+
+  // UserProfile page - view any user
+  H.pages.UserProfile = function(params) {
+    var id = params && params.id ? String(params.id) : null;
+    if (!id) return '<div class="page active">' + H.innerTopbar('User') + '<div class="empty-state"><div class="empty-title">User not found</div></div></div>';
+    var u = (H.state.users||[]).find(function(x){ return String(x.id)===id; });
+    if (!u) {
+      var listing = (H.state.listings||[]).find(function(l){ return String(l.sellerId)===id; });
+      if (listing && listing.sellerName) {
+        u = { id: id, name: listing.sellerName, phone: listing.sellerPhone || '', verified: false, joinedAt: Date.now(), avatar: null };
+      } else {
+        return '<div class="page active">' + H.innerTopbar('User') + '<div class="empty-state"><div class="empty-title">User not found</div></div></div>';
+      }
+    }
+    var myListings = (H.state.listings||[]).filter(function(l){ return String(l.sellerId)===id && l.status==='active'; });
+    var me = H.currentUser();
+    var isMe = !!(me && String(me.id)===id);
+    var reportBtn = !isMe ? '<button class="share-btn" onclick="H.reportUser(\''+ id +'\')">' + '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="22" x2="4" y2="15"/><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/></svg></button>' : '';
+    return '<div class="page active">'
+      + '<div class="det-topbar"><button class="back" onclick="H.goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="det-topbar-title">' + H.escHtml(u.name) + '</div>' + reportBtn + '</div>'
+      + '<div class="prof-top"><div class="prof-av">' + (u.avatar ? '<img src="' + u.avatar + '">' : H.initials(u.name)) + '</div>'
+      + '<div class="prof-name">' + H.escHtml(u.name) + '</div>'
+      + (u.verified ? '<div class="prof-badges"><span class="pbadge pbadge-verified">ID Verified</span></div>' : '')
+      + '<div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:8px">Member since ' + new Date(u.joinedAt||Date.now()).toLocaleDateString() + '</div></div>'
+      + '<div class="sec-head"><div class="sec-title">' + myListings.length + ' active listing' + (myListings.length===1?'':'s') + '</div></div>'
+      + '<div class="listing-list">' + (myListings.length ? myListings.map(H.renderListCard).join('') : H.emptyState('No listings','This user has no active listings',null,null)) + '</div>'
+      + '</div>';
+  };
+
+  H.openUserProfile = function(id) {
+    if (!id) { H.toast('Profile not available'); return; }
+    H.openInner('UserProfile', { id: String(id) });
+  };
+
 })(window.H);
 
