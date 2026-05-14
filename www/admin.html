@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hostly Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Inter,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
+
+/* ── LOGIN ── */
+.wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.card{background:#1e293b;border-radius:20px;padding:40px;width:100%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,0.5);}
+.login-title{font-size:28px;font-weight:800;text-align:center;margin-bottom:6px;}
+.login-title em{font-style:normal;color:#3b82f6;}
+.login-sub{font-size:13px;color:#94a3b8;text-align:center;margin-bottom:28px;}
+.fg{margin-bottom:14px;}
+.fl{font-size:13px;color:#94a3b8;margin-bottom:6px;display:block;}
+.fi{width:100%;padding:12px;background:#0f172a;border:1.5px solid #334155;border-radius:10px;color:#e2e8f0;font-size:14px;outline:none;transition:border-color .2s;}
+.fi:focus{border-color:#3b82f6;}
+.btn-login{width:100%;padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:background .2s;}
+.btn-login:hover{background:#2563eb;}
+.btn-login:disabled{opacity:.6;cursor:not-allowed;}
+.err-box{background:#7f1d1d;color:#fca5a5;padding:12px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+
+/* ── DASHBOARD ── */
+#dash{display:none;}
+.hdr{background:#1e293b;padding:0 24px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #334155;height:58px;position:sticky;top:0;z-index:100;}
+.hdr-title{font-size:18px;font-weight:800;flex:1;}
+.hdr-title em{font-style:normal;color:#3b82f6;}
+.hdr-btn{border:none;padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;transition:all .2s;}
+.btn-refresh{background:#334155;color:#e2e8f0;}
+.btn-refresh:hover{background:#475569;}
+.btn-logout{background:#7f1d1d;color:#fca5a5;}
+.btn-logout:hover{background:#991b1b;}
+
+.body{padding:20px;max-width:1400px;margin:0 auto;}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:#1e293b;border-radius:12px;padding:16px;text-align:center;border:1px solid #334155;}
+.stat-n{font-size:26px;font-weight:800;color:#3b82f6;}
+.stat-l{font-size:11px;color:#94a3b8;margin-top:3px;}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.tab{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:#1e293b;color:#94a3b8;transition:all .2s;border:1px solid #334155;}
+.tab.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
+.pnl{display:none;}
+.pnl.on{display:block;}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.search-box{flex:1;min-width:180px;padding:9px 12px;background:#1e293b;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;}
+.search-box:focus{border-color:#3b82f6;}
+.filter-sel{padding:9px 10px;background:#1e293b;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;cursor:pointer;}
+.filter-sel:focus{border-color:#3b82f6;}
+
+/* Table */
+.tbl-wrap{background:#1e293b;border-radius:12px;overflow:auto;border:1px solid #334155;}
+table{width:100%;border-collapse:collapse;min-width:600px;}
+th{text-align:left;padding:11px 12px;font-size:11px;color:#64748b;border-bottom:1px solid #334155;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid #0f172a;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(59,130,246,.04);}
+
+/* Badges */
+.b{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block;}
+.b-active{background:#14532d;color:#86efac;}
+.b-pending{background:#713f12;color:#fde68a;}
+.b-rejected{background:#7f1d1d;color:#fca5a5;}
+.b-removed{background:#374151;color:#9ca3af;}
+.b-banned{background:#7f1d1d;color:#fca5a5;}
+.b-blue{background:#1e3a5f;color:#93c5fd;}
+.b-approved{background:#14532d;color:#86efac;}
+.b-open{background:#713f12;color:#fde68a;}
+.b-resolved{background:#14532d;color:#86efac;}
+
+/* Action buttons */
+.actions{display:flex;gap:4px;flex-wrap:wrap;}
+.ab{padding:4px 9px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:700;transition:all .2s;white-space:nowrap;}
+.ab:hover{filter:brightness(1.15);}
+.ab-approve{background:#14532d;color:#86efac;}
+.ab-reject{background:#78350f;color:#fde68a;}
+.ab-edit{background:#1e3a5f;color:#93c5fd;}
+.ab-delete{background:#7f1d1d;color:#fca5a5;}
+.ab-ban{background:#7f1d1d;color:#fca5a5;}
+.ab-unban{background:#14532d;color:#86efac;}
+.ab-remove{background:#374151;color:#9ca3af;}
+.ab-resolve{background:#14532d;color:#86efac;}
+.ab-view{background:#1e3a5f;color:#93c5fd;}
+
+/* Top-up cards */
+.tu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
+.tu-card{background:#1e293b;border-radius:12px;padding:16px;border:1px solid #334155;}
+.tu-card:hover{border-color:#475569;}
+.tu-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.tu-amount{font-size:24px;font-weight:800;color:#3b82f6;}
+.tu-actions{display:flex;gap:6px;flex-wrap:wrap;}
+
+/* Empty / loading */
+.empty{color:#64748b;padding:48px;text-align:center;font-size:13px;}
+.empty-icon{font-size:32px;margin-bottom:8px;}
+.loading-msg{color:#64748b;padding:48px;text-align:center;font-style:italic;font-size:13px;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-overlay.hidden{display:none;}
+.modal{background:#1e293b;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;border:1px solid #334155;box-shadow:0 25px 60px rgba(0,0,0,.6);}
+.modal-hdr{padding:18px 20px;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#1e293b;z-index:1;}
+.modal-title{font-size:16px;font-weight:700;}
+.modal-close{background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;}
+.modal-close:hover{color:#e2e8f0;background:#334155;}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid #334155;display:flex;gap:8px;justify-content:flex-end;}
+.mfg{margin-bottom:14px;}
+.mfl{font-size:12px;color:#94a3b8;margin-bottom:5px;display:block;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.mfi{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;transition:border-color .2s;}
+.mfi:focus{border-color:#3b82f6;}
+.mfi-sel{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;cursor:pointer;}
+.mfi-sel:focus{border-color:#3b82f6;}
+.btn-save{padding:10px 22px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;}
+.btn-save:hover{background:#2563eb;}
+.btn-save:disabled{opacity:.6;cursor:not-allowed;}
+.btn-cancel{padding:10px 18px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn-cancel:hover{background:#475569;}
+.btn-danger{padding:10px 18px;background:#7f1d1d;color:#fca5a5;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;}
+.btn-danger:hover{background:#991b1b;}
+
+/* Info rows in modal */
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155;font-size:13px;}
+.info-row:last-child{border-bottom:none;}
+.info-label{color:#64748b;}
+.info-val{font-weight:600;text-align:right;}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:320px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{border-color:#16a34a;background:#14532d;color:#86efac;}
+.toast.error{border-color:#dc2626;background:#7f1d1d;color:#fca5a5;}
+
+/* Confirm dialog */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.confirm-overlay.hidden{display:none;}
+.confirm-box{background:#1e293b;border-radius:14px;padding:24px;max-width:380px;width:100%;border:1px solid #334155;text-align:center;}
+.confirm-icon{font-size:36px;margin-bottom:12px;}
+.confirm-title{font-size:16px;font-weight:700;margin-bottom:8px;}
+.confirm-msg{font-size:13px;color:#94a3b8;margin-bottom:20px;line-height:1.5;}
+.confirm-btns{display:flex;gap:8px;justify-content:center;}
+
+/* Responsive */
+@media(max-width:600px){
+.hdr{padding:0 12px;}
+.body{padding:12px;}
+.stats{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+
+</head>
+<body>
+
+<!-- LOGIN -->
+
+<div class="wrap" id="loginWrap">
+  <div class="card">
+    <div class="login-title">Host<em>ly</em></div>
+    <div class="login-sub">Admin Portal · Director Access</div>
+    <div class="err-box" id="errMsg"></div>
+    <div class="fg"><label class="fl">Email</label><input class="fi" id="aEmail" type="email" placeholder="admin@hostly.co.zw"></div>
+    <div class="fg"><label class="fl">Password</label><input class="fi" id="aPass" type="password" placeholder="••••••••"></div>
+    <button class="btn-login" id="loginBtn">Sign In</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+
+<div id="dash">
+  <div class="hdr">
+    <div class="hdr-title">Host<em>ly</em> Admin</div>
+    <button class="hdr-btn btn-refresh" id="refreshBtn">↻ Refresh</button>
+    <button class="hdr-btn btn-logout" id="logoutBtn">Sign Out</button>
+  </div>
+  <div class="body">
+    <div class="stats" id="statsDiv"></div>
+    <div class="tabs">
+      <button class="tab on" id="tab1">📋 Listings</button>
+      <button class="tab" id="tab2">👤 Users</button>
+      <button class="tab" id="tab3">💰 Top-Ups</button>
+      <button class="tab" id="tab4">🚩 Reports</button>
+    </div>
+
+```
+<!-- LISTINGS -->
+<div class="pnl on" id="pnl1">
+  <div class="toolbar">
+    <input class="search-box" id="listSearch" placeholder="Search listings…" oninput="renderListings()">
+    <select class="filter-sel" id="listFilter" onchange="renderListings()">
+      <option value="">All Statuses</option>
+      <option value="pending">Pending</option>
+      <option value="active">Active</option>
+      <option value="rejected">Rejected</option>
+      <option value="removed">Removed</option>
+    </select>
+  </div>
+  <div id="listContent"><p class="loading-msg">Loading listings…</p></div>
+</div>
+
+<!-- USERS -->
+<div class="pnl" id="pnl2">
+  <div class="toolbar">
+    <input class="search-box" id="userSearch" placeholder="Search users…" oninput="renderUsers()">
+    <select class="filter-sel" id="userFilter" onchange="renderUsers()">
+      <option value="">All Statuses</option>
+      <option value="active">Active</option>
+      <option value="banned_perm">Banned</option>
+    </select>
+  </div>
+  <div id="userContent"><p class="loading-msg">Loading users…</p></div>
+</div>
+
+<!-- TOP-UPS -->
+<div class="pnl" id="pnl3">
+  <div class="toolbar">
+    <input class="search-box" id="topupSearch" placeholder="Search top-ups…" oninput="renderTopups()">
+    <select class="filter-sel" id="topupFilter" onchange="renderTopups()">
+      <option value="">All Statuses</option>
+      <option value="pending">Pending</option>
+      <option value="approved">Approved</option>
+      <option value="rejected">Rejected</option>
+    </select>
+  </div>
+  <div id="topupContent"><p class="loading-msg">Loading top-ups…</p></div>
+</div>
+
+<!-- REPORTS -->
+<div class="pnl" id="pnl4">
+  <div class="toolbar">
+    <input class="search-box" id="reportSearch" placeholder="Search reports…" oninput="renderReports()">
+    <select class="filter-sel" id="reportFilter" onchange="renderReports()">
+      <option value="">All Statuses</option>
+      <option value="open">Open</option>
+      <option value="resolved">Resolved</option>
+    </select>
+  </div>
+  <div id="reportContent"><p class="loading-msg">Loading reports…</p></div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- MODAL -->
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal" id="modalBox">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modalTitle">Edit</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+
+<div class="confirm-overlay hidden" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="resolveConfirm(false)">Cancel</button>
+      <button class="btn-danger" id="confirmOkBtn" onclick="resolveConfirm(true)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+var sb = supabase.createClient(
+  "https://gxgytumhknmnwspxjzxw.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z3l0dW1oa25tbndzcHhqenh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzMwNDUsImV4cCI6MjA5MzY0OTA0NX0.ddJhWdUy7JVrSfdaSK8a0On3zuwssY2H4DWsxBhgbJs"
+);
+
+var DATA = { listings:[], users:[], topups:[], reports:[] };
+var confirmResolver = null;
+
+// ── HELPERS ───────────────────────────────────────────────
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function fmt(n){ return Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(s){ if(!s) return "—"; return new Date(s).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}); }
+function fmtDateTime(s){ if(!s) return "—"; return new Date(s).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}); }
+
+function toast(msg, type){
+  var el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = "toast show " + (type||"");
+  setTimeout(function(){ el.className = "toast"; }, 3200);
+}
+
+function confirm2(title, msg, icon, danger){
+  return new Promise(function(resolve){
+    confirmResolver = resolve;
+    document.getElementById("confirmTitle").textContent = title;
+    document.getElementById("confirmMsg").textContent = msg;
+    document.getElementById("confirmIcon").textContent = icon||"⚠️";
+    document.getElementById("confirmOkBtn").className = danger ? "btn-danger" : "btn-save";
+    document.getElementById("confirmOkBtn").textContent = danger ? "Delete" : "Confirm";
+    document.getElementById("confirmOverlay").classList.remove("hidden");
+  });
+}
+function resolveConfirm(val){
+  document.getElementById("confirmOverlay").classList.add("hidden");
+  if(confirmResolver){ confirmResolver(val); confirmResolver=null; }
+}
+
+// ── MODAL ─────────────────────────────────────────────────
+function openModal(title, bodyHTML, footerHTML){
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("modalBody").innerHTML = bodyHTML;
+  document.getElementById("modalFooter").innerHTML = footerHTML;
+  document.getElementById("modalOverlay").classList.remove("hidden");
+}
+function closeModal(){ document.getElementById("modalOverlay").classList.add("hidden"); }
+document.getElementById("modalOverlay").addEventListener("click", function(e){ if(e.target===this) closeModal(); });
+
+// ── AUTH ──────────────────────────────────────────────────
+document.getElementById("loginBtn").addEventListener("click", doLogin);
+document.getElementById("aPass").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
+document.getElementById("logoutBtn").addEventListener("click", doLogout);
+document.getElementById("refreshBtn").addEventListener("click", loadAllData);
+
+for(var i=1;i<=4;i++){
+  (function(n){ document.getElementById("tab"+n).addEventListener("click", function(){ showTab(n); }); })(i);
+}
+
+function showTab(n){
+  for(var i=1;i<=4;i++){
+    document.getElementById("tab"+i).classList.toggle("on", i===n);
+    document.getElementById("pnl"+i).classList.toggle("on", i===n);
+  }
+}
+
+async function doLogin(){
+  var email = document.getElementById("aEmail").value.trim();
+  var pass  = document.getElementById("aPass").value;
+  var errEl = document.getElementById("errMsg");
+  errEl.style.display = "none";
+  if(!email||!pass){ errEl.style.display="block"; errEl.textContent="Enter email and password."; return; }
+  var btn = document.getElementById("loginBtn");
+  btn.disabled=true; btn.textContent="Signing in…";
+  var { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
+  if(error||!data.user){
+    errEl.style.display="block"; errEl.textContent=(error?error.message:"Invalid credentials.");
+    btn.disabled=false; btn.textContent="Sign In"; return;
+  }
+  showDash();
+}
+
+async function doLogout(){ await sb.auth.signOut(); location.reload(); }
+
+// ── DASHBOARD ─────────────────────────────────────────────
+async function showDash(){
+  document.getElementById("loginWrap").style.display="none";
+  document.getElementById("dash").style.display="block";
+  await loadAllData();
+}
+
+async function loadAllData(){
+  var btn = document.getElementById("refreshBtn");
+  btn.textContent="↻ Loading…"; btn.disabled=true;
+  await Promise.all([loadListings(), loadUsers(), loadTopups(), loadReports()]);
+  renderAll();
+  btn.textContent="↻ Refresh"; btn.disabled=false;
+}
+
+async function loadListings(){ var {data}=await sb.from("listings").select("*").order("created_at",{ascending:false}); if(data) DATA.listings=data; }
+async function loadUsers(){ var {data}=await sb.from("users").select("*").order("created_at",{ascending:false}); if(data) DATA.users=data; }
+async function loadTopups(){ var {data}=await sb.from("topup_requests").select("*").order("created_at",{ascending:false}); if(data) DATA.topups=data; }
+async function loadReports(){ var {data}=await sb.from("reports").select("*").order("created_at",{ascending:false}); if(data) DATA.reports=data; }
+
+function renderAll(){ renderStats(); renderListings(); renderUsers(); renderTopups(); renderReports(); }
+
+// ── STATS ─────────────────────────────────────────────────
+function renderStats(){
+  var l=DATA.listings,u=DATA.users,t=DATA.topups,r=DATA.reports;
+  var totalRev = DATA.topups.filter(function(x){return x.status==="approved";}).reduce(function(a,x){return a+Number(x.amount||0);},0);
+  document.getElementById("statsDiv").innerHTML =
+    scard(l.length,"Total Listings")+
+    scard(l.filter(function(x){return x.status==="active";}).length,"Active")+
+    scard(l.filter(function(x){return x.status==="pending";}).length,"Pending Review")+
+    scard(u.length,"Total Users")+
+    scard(u.filter(function(x){return x.status==="banned_perm";}).length,"Banned Users")+
+    scard(t.filter(function(x){return x.status==="pending";}).length,"Pending Top-Ups")+
+    scard("$"+fmt(totalRev),"Revenue Approved")+
+    scard(r.filter(function(x){return x.status==="open";}).length,"Open Reports");
+}
+function scard(n,l){ return "<div class=\"stat-card\"><div class=\"stat-n\">"+n+"</div><div class=\"stat-l\">"+esc(l)+"</div></div>"; }
+
+// ── LISTINGS ──────────────────────────────────────────────
+function renderListings(){
+  var q=(document.getElementById("listSearch").value||"").toLowerCase();
+  var f=document.getElementById("listFilter").value;
+  var l=DATA.listings.filter(function(x){
+    var match=!q||(x.title||"").toLowerCase().includes(q)||(x.seller_name||"").toLowerCase().includes(q)||(x.category||"").toLowerCase().includes(q);
+    var fmatch=!f||x.status===f;
+    return match&&fmatch;
+  });
+  if(!l.length){ document.getElementById("listContent").innerHTML="<div class=\"empty\"><div class=\"empty-icon\">🏠</div>No listings found.</div>"; return; }
+  document.getElementById("listContent").innerHTML =
+    "<div class=\"tbl-wrap\"><table><thead><tr>"+
+    "<th>Title</th><th>Seller</th><th>Category</th><th>Province</th><th>Price</th><th>Date</th><th>Status</th><th>Actions</th>"+
+    "</tr></thead><tbody>"+
+    l.map(function(x){
+      var bc=x.status==="active"?"b-active":x.status==="pending"?"b-pending":x.status==="rejected"?"b-rejected":"b-removed";
+      return "<tr>"+
+        "<td><b>"+esc(x.title||"Untitled")+"</b></td>"+
+        "<td>"+esc(x.seller_name||"—")+"</td>"+
+        "<td>"+esc(x.category||"—")+"</td>"+
+        "<td>"+esc(x.province||"—")+"</td>"+
+        "<td><b>"+(x.price?"$"+fmt(x.price):"—")+"</b></td>"+
+        "<td>"+fmtDate(x.created_at)+"</td>"+
+        "<td><span class=\"b "+bc+"\">"+esc(x.status||"—")+"</span></td>"+
+        "<td><div class=\"actions\">"+
+          "<button class=\"ab ab-view\" onclick=\"viewListing('"+x.id+"')\">View</button>"+
+          "<button class=\"ab ab-edit\" onclick=\"editListing('"+x.id+"')\">Edit</button>"+
+          (x.status==="pending"?"<button class=\"ab ab-approve\" onclick=\"approveListing('"+x.id+"')\">Approve</button><button class=\"ab ab-reject\" onclick=\"rejectListing('"+x.id+"')\">Reject</button>":"")+
+          (x.status==="active"?"<button class=\"ab ab-remove\" onclick=\"removeListing('"+x.id+"')\">Remove</button>":"")+
+          "<button class=\"ab ab-delete\" onclick=\"deleteListing('"+x.id+"')\">Delete</button>"+
+        "</div></td></tr>";
+    }).join("")+"</tbody></table></div>";
+}
+
+function viewListing(id){
+  var x=DATA.listings.find(function(l){return l.id===id;}); if(!x) return;
+  var bc=x.status==="active"?"b-active":x.status==="pending"?"b-pending":x.status==="rejected"?"b-rejected":"b-removed";
+  var body=
+    "<div class=\"info-row\"><span class=\"info-label\">Title</span><span class=\"info-val\">"+esc(x.title)+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Seller</span><span class=\"info-val\">"+esc(x.seller_name||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Category</span><span class=\"info-val\">"+esc(x.category||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Province</span><span class=\"info-val\">"+esc(x.province||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Price</span><span class=\"info-val\">"+(x.price?"$"+fmt(x.price):"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Currency</span><span class=\"info-val\">"+esc(x.currency||"USD")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Status</span><span class=\"info-val\"><span class=\"b "+bc+"\">"+esc(x.status)+"</span></span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Created</span><span class=\"info-val\">"+fmtDateTime(x.created_at)+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">ID</span><span class=\"info-val\" style=\"font-size:11px;color:#64748b\">"+esc(x.id)+"</span></div>";
+  openModal("Listing Details", body, "<button class=\"btn-cancel\" onclick=\"closeModal()\">Close</button>");
+}
+
+function editListing(id){
+  var x=DATA.listings.find(function(l){return l.id===id;}); if(!x) return;
+  var body=
+    "<div class=\"mfg\"><label class=\"mfl\">Title</label><input class=\"mfi\" id=\"eTitle\" value=\""+esc(x.title||"")+"\"></div>"+
+    "<div class=\"mfg\"><label class=\"mfl\">Category</label><input class=\"mfi\" id=\"eCat\" value=\""+esc(x.category||"")+"\"></div>"+
+    "<div class=\"mfg\"><label class=\"mfl\">Province</label><input class=\"mfi\" id=\"eProv\" value=\""+esc(x.province||"")+"\"></div>"+
+    "<div class=\"mfg\"><label class=\"mfl\">Price (USD)</label><input class=\"mfi\" id=\"ePrice\" type=\"number\" value=\""+(x.price||"")+"\"></div>"+
+    "<div class=\"mfg\"><label class=\"mfl\">Status</label><select class=\"mfi-sel\" id=\"eStatus\">"+
+      ["pending","active","rejected","removed"].map(function(s){return "<option value=\""+s+"\""+(x.status===s?" selected":"")+">"+s+"</option>";}).join("")+
+    "</select></div>";
+  var footer=
+    "<button class=\"btn-cancel\" onclick=\"closeModal()\">Cancel</button>"+
+    "<button class=\"btn-save\" onclick=\"saveListingEdit('"+id+"')\">Save Changes</button>";
+  openModal("Edit Listing", body, footer);
+}
+
+async function saveListingEdit(id){
+  var updates={
+    title:document.getElementById("eTitle").value.trim(),
+    category:document.getElementById("eCat").value.trim(),
+    province:document.getElementById("eProv").value.trim(),
+    price:parseFloat(document.getElementById("ePrice").value)||null,
+    status:document.getElementById("eStatus").value
+  };
+  var {error}=await sb.from("listings").update(updates).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  closeModal(); await loadListings(); renderListings(); renderStats(); toast("Listing updated!","success");
+}
+
+async function approveListing(id){
+  var ok=await confirm2("Approve Listing","This listing will go live and be visible to all users.","✅",false);
+  if(!ok) return;
+  var {error}=await sb.from("listings").update({status:"active"}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadListings(); renderListings(); renderStats(); toast("Listing approved and live!","success");
+}
+
+async function rejectListing(id){
+  var reason=prompt("Reason for rejection (will be logged):"); if(!reason) return;
+  var {error}=await sb.from("listings").update({status:"rejected"}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadListings(); renderListings(); renderStats(); toast("Listing rejected.","");
+}
+
+async function removeListing(id){
+  var ok=await confirm2("Remove Listing","This listing will be hidden from the platform but not deleted.","🚫",false);
+  if(!ok) return;
+  var {error}=await sb.from("listings").update({status:"removed"}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadListings(); renderListings(); renderStats(); toast("Listing removed.","");
+}
+
+async function deleteListing(id){
+  var x=DATA.listings.find(function(l){return l.id===id;});
+  var ok=await confirm2("Permanently Delete","\""+esc(x?x.title:"this listing")+"\" will be deleted forever. This cannot be undone.","🗑️",true);
+  if(!ok) return;
+  var {error}=await sb.from("listings").delete().eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadListings(); renderListings(); renderStats(); toast("Listing permanently deleted.","");
+}
+
+// ── USERS ─────────────────────────────────────────────────
+function renderUsers(){
+  var q=(document.getElementById("userSearch").value||"").toLowerCase();
+  var f=document.getElementById("userFilter").value;
+  var u=DATA.users.filter(function(x){
+    var match=!q||(x.name||"").toLowerCase().includes(q)||(x.email||"").toLowerCase().includes(q);
+    var fmatch=!f||x.status===f;
+    return match&&fmatch;
+  });
+  if(!u.length){ document.getElementById("userContent").innerHTML="<div class=\"empty\"><div class=\"empty-icon\">👤</div>No users found.</div>"; return; }
+  document.getElementById("userContent").innerHTML =
+    "<div class=\"tbl-wrap\"><table><thead><tr>"+
+    "<th>Name</th><th>Email</th><th>Role</th><th>Wallet</th><th>Joined</th><th>Status</th><th>Actions</th>"+
+    "</tr></thead><tbody>"+
+    u.map(function(x){
+      var bc=x.status==="active"?"b-active":x.status==="banned_perm"?"b-banned":"b-pending";
+      return "<tr>"+
+        "<td><b>"+esc(x.name||"—")+"</b></td>"+
+        "<td>"+esc(x.email||"—")+"</td>"+
+        "<td><span class=\"b b-blue\">"+esc(x.role||"user")+"</span></td>"+
+        "<td><b style=\"color:#3b82f6\">$"+fmt(x.wallet_usd)+"</b></td>"+
+        "<td>"+fmtDate(x.created_at)+"</td>"+
+        "<td><span class=\"b "+bc+"\">"+esc(x.status||"active")+"</span></td>"+
+        "<td><div class=\"actions\">"+
+          "<button class=\"ab ab-view\" onclick=\"viewUser('"+x.id+"')\">View</button>"+
+          "<button class=\"ab ab-edit\" onclick=\"editUser('"+x.id+"')\">Edit</button>"+
+          (x.status!=="banned_perm"
+            ?"<button class=\"ab ab-ban\" onclick=\"banUser('"+x.id+"')\">Ban</button>"
+            :"<button class=\"ab ab-unban\" onclick=\"unbanUser('"+x.id+"')\">Unban</button>")+
+          "<button class=\"ab ab-delete\" onclick=\"deleteUser('"+x.id+"')\">Delete</button>"+
+        "</div></td></tr>";
+    }).join("")+"</tbody></table></div>";
+}
+
+function viewUser(id){
+  var x=DATA.users.find(function(u){return u.id===id;}); if(!x) return;
+  var bc=x.status==="active"?"b-active":x.status==="banned_perm"?"b-banned":"b-pending";
+  var body=
+    "<div class=\"info-row\"><span class=\"info-label\">Name</span><span class=\"info-val\">"+esc(x.name||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Email</span><span class=\"info-val\">"+esc(x.email||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Role</span><span class=\"info-val\">"+esc(x.role||"user")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Wallet Balance</span><span class=\"info-val\" style=\"color:#3b82f6\">$"+fmt(x.wallet_usd)+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Status</span><span class=\"info-val\"><span class=\"b "+bc+"\">"+esc(x.status||"active")+"</span></span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Joined</span><span class=\"info-val\">"+fmtDateTime(x.created_at)+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">ID</span><span class=\"info-val\" style=\"font-size:11px;color:#64748b\">"+esc(x.id)+"</span></div>";
+  openModal("User Details", body, "<button class=\"btn-cancel\" onclick=\"closeModal()\">Close</button>");
+}
+
+function editUser(id){
+  var x=DATA.users.find(function(u){return u.id===id;}); if(!x) return;
+  var body=
+    "<div class=\"mfg\"><label class=\"mfl\">Full Name</label><input class=\"mfi\" id=\"euName\" value=\""+esc(x.name||"")+"\"></div>"+
+    "<div class=\"mfg\"><label class=\"mfl\">Email</label><input class=\"mfi\" id=\"euEmail\" type=\"email\" value=\""+esc(x.email||"")+"\"></div>"+
+    "<div class=\"mfg\"><label class=\"mfl\">Role</label><select class=\"mfi-sel\" id=\"euRole\">"+
+      ["user","seller","admin"].map(function(r){return "<option value=\""+r+"\""+(x.role===r?" selected":"")+">"+r+"</option>";}).join("")+
+    "</select></div>"+
+    "<div class=\"mfg\"><label class=\"mfl\">Wallet Balance (USD)</label><input class=\"mfi\" id=\"euWallet\" type=\"number\" step=\"0.01\" value=\""+(x.wallet_usd||0)+"\"></div>"+
+    "<div class=\"mfg\"><label class=\"mfl\">Status</label><select class=\"mfi-sel\" id=\"euStatus\">"+
+      ["active","banned_perm"].map(function(s){return "<option value=\""+s+"\""+(x.status===s?" selected":"")+">"+s+"</option>";}).join("")+
+    "</select></div>";
+  var footer=
+    "<button class=\"btn-cancel\" onclick=\"closeModal()\">Cancel</button>"+
+    "<button class=\"btn-save\" onclick=\"saveUserEdit('"+id+"')\">Save Changes</button>";
+  openModal("Edit User", body, footer);
+}
+
+async function saveUserEdit(id){
+  var updates={
+    name:document.getElementById("euName").value.trim(),
+    email:document.getElementById("euEmail").value.trim(),
+    role:document.getElementById("euRole").value,
+    wallet_usd:parseFloat(document.getElementById("euWallet").value)||0,
+    status:document.getElementById("euStatus").value
+  };
+  var {error}=await sb.from("users").update(updates).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  closeModal(); await loadUsers(); renderUsers(); renderStats(); toast("User updated!","success");
+}
+
+async function banUser(id){
+  var x=DATA.users.find(function(u){return u.id===id;});
+  var ok=await confirm2("Ban User","\""+esc(x?x.name:"this user")+"\" will be banned and lose all platform access.","🚫",true);
+  if(!ok) return;
+  var {error}=await sb.from("users").update({status:"banned_perm"}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadUsers(); renderUsers(); renderStats(); toast("User banned.","");
+}
+
+async function unbanUser(id){
+  var ok=await confirm2("Unban User","This user will regain full access to the platform.","✅",false);
+  if(!ok) return;
+  var {error}=await sb.from("users").update({status:"active"}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadUsers(); renderUsers(); renderStats(); toast("User unbanned.","success");
+}
+
+async function deleteUser(id){
+  var x=DATA.users.find(function(u){return u.id===id;});
+  var ok=await confirm2("Permanently Delete User","\""+esc(x?x.name:"this user")+"\" and all their data will be deleted forever. This cannot be undone.","🗑️",true);
+  if(!ok) return;
+  var {error}=await sb.from("users").delete().eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadUsers(); renderUsers(); renderStats(); toast("User permanently deleted.","");
+}
+
+// ── TOP-UPS ───────────────────────────────────────────────
+function renderTopups(){
+  var q=(document.getElementById("topupSearch").value||"").toLowerCase();
+  var f=document.getElementById("topupFilter").value;
+  var t=DATA.topups.filter(function(x){
+    var match=!q||(x.user_name||"").toLowerCase().includes(q)||(x.reference||"").toLowerCase().includes(q)||(x.method||"").toLowerCase().includes(q);
+    var fmatch=!f||x.status===f;
+    return match&&fmatch;
+  });
+  if(!t.length){ document.getElementById("topupContent").innerHTML="<div class=\"empty\"><div class=\"empty-icon\">💰</div>No top-up requests found.</div>"; return; }
+  document.getElementById("topupContent").innerHTML =
+    "<div class=\"tu-grid\">"+
+    t.map(function(x){
+      var bc=x.status==="approved"?"b-approved":x.status==="pending"?"b-pending":"b-rejected";
+      return "<div class=\"tu-card\">"+
+        "<div class=\"tu-head\">"+
+          "<div>"+
+            "<div style=\"font-weight:700;font-size:14px;margin-bottom:3px\">"+esc(x.user_name||"Unknown User")+"</div>"+
+            "<div style=\"font-size:12px;color:#64748b\">"+esc(x.method||"—")+"</div>"+
+            "<div style=\"font-size:12px;color:#64748b\">Ref: "+esc(x.reference||"—")+"</div>"+
+            "<div style=\"font-size:11px;color:#475569;margin-top:4px\">"+fmtDateTime(x.created_at)+"</div>"+
+          "</div>"+
+          "<div style=\"text-align:right\">"+
+            "<div class=\"tu-amount\">$"+fmt(x.amount)+"</div>"+
+            "<span class=\"b "+bc+"\">"+esc(x.status)+"</span>"+
+          "</div>"+
+        "</div>"+
+        "<div class=\"tu-actions\">"+
+          (x.status==="pending"
+            ?"<button class=\"ab ab-approve\" onclick=\"approveTopup('"+x.id+"',"+x.amount+",'"+x.user_id+"')\">✓ Approve</button>"+
+              "<button class=\"ab ab-reject\" onclick=\"rejectTopup('"+x.id+"')\">✕ Reject</button>"
+            :"")+
+          "<button class=\"ab ab-delete\" onclick=\"deleteTopup('"+x.id+"')\">Delete</button>"+
+        "</div>"+
+      "</div>";
+    }).join("")+
+    "</div>";
+}
+
+async function approveTopup(id,amt,userId){
+  var ok=await confirm2("Approve Top-Up","$"+fmt(amt)+" will be credited to the user's wallet.","💰",false);
+  if(!ok) return;
+  var {error}=await sb.from("topup_requests").update({status:"approved"}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  var user=DATA.users.find(function(u){return u.id===userId;});
+  if(user){
+    var newBal=(Number(user.wallet_usd)||0)+Number(amt);
+    await sb.from("users").update({wallet_usd:newBal}).eq("id",userId);
+  }
+  await loadTopups(); await loadUsers(); renderTopups(); renderUsers(); renderStats();
+  toast("$"+fmt(amt)+" credited to wallet!","success");
+}
+
+async function rejectTopup(id){
+  var ok=await confirm2("Reject Top-Up","This top-up request will be rejected.","❌",true);
+  if(!ok) return;
+  var {error}=await sb.from("topup_requests").update({status:"rejected"}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadTopups(); renderTopups(); renderStats(); toast("Top-up rejected.","");
+}
+
+async function deleteTopup(id){
+  var ok=await confirm2("Delete Top-Up Record","This record will be permanently deleted.","🗑️",true);
+  if(!ok) return;
+  var {error}=await sb.from("topup_requests").delete().eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadTopups(); renderTopups(); renderStats(); toast("Top-up record deleted.","");
+}
+
+// ── REPORTS ───────────────────────────────────────────────
+function renderReports(){
+  var q=(document.getElementById("reportSearch").value||"").toLowerCase();
+  var f=document.getElementById("reportFilter").value;
+  var r=DATA.reports.filter(function(x){
+    var match=!q||(x.reason||"").toLowerCase().includes(q)||(x.target_type||"").toLowerCase().includes(q);
+    var fmatch=!f||x.status===f;
+    return match&&fmatch;
+  });
+  if(!r.length){ document.getElementById("reportContent").innerHTML="<div class=\"empty\"><div class=\"empty-icon\">🚩</div>No reports found.</div>"; return; }
+  document.getElementById("reportContent").innerHTML =
+    "<div class=\"tbl-wrap\"><table><thead><tr>"+
+    "<th>Type</th><th>Reason</th><th>Date</th><th>Status</th><th>Actions</th>"+
+    "</tr></thead><tbody>"+
+    r.map(function(x){
+      var bc=x.status==="open"?"b-open":"b-resolved";
+      return "<tr>"+
+        "<td><span class=\"b b-blue\">"+esc(x.target_type||"—")+"</span></td>"+
+        "<td>"+esc(x.reason||"—")+"</td>"+
+        "<td>"+fmtDate(x.created_at)+"</td>"+
+        "<td><span class=\"b "+bc+"\">"+esc(x.status||"open")+"</span></td>"+
+        "<td><div class=\"actions\">"+
+          "<button class=\"ab ab-view\" onclick=\"viewReport('"+x.id+"')\">View</button>"+
+          (x.status==="open"?"<button class=\"ab ab-resolve\" onclick=\"resolveReport('"+x.id+"')\">Resolve</button>":"")+
+          "<button class=\"ab ab-delete\" onclick=\"deleteReport('"+x.id+"')\">Delete</button>"+
+        "</div></td></tr>";
+    }).join("")+"</tbody></table></div>";
+}
+
+function viewReport(id){
+  var x=DATA.reports.find(function(r){return r.id===id;}); if(!x) return;
+  var bc=x.status==="open"?"b-open":"b-resolved";
+  var body=
+    "<div class=\"info-row\"><span class=\"info-label\">Target Type</span><span class=\"info-val\">"+esc(x.target_type||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Target ID</span><span class=\"info-val\" style=\"font-size:11px;color:#64748b\">"+esc(x.target_id||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Reason</span><span class=\"info-val\">"+esc(x.reason||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Reported By</span><span class=\"info-val\" style=\"font-size:11px;color:#64748b\">"+esc(x.reported_by||"—")+"</span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Status</span><span class=\"info-val\"><span class=\"b "+bc+"\">"+esc(x.status||"open")+"</span></span></div>"+
+    "<div class=\"info-row\"><span class=\"info-label\">Reported On</span><span class=\"info-val\">"+fmtDateTime(x.created_at)+"</span></div>";
+  var footer=
+    "<button class=\"btn-cancel\" onclick=\"closeModal()\">Close</button>"+
+    (x.status==="open"?"<button class=\"btn-save\" onclick=\"closeModal();resolveReport('"+id+"')\">Resolve</button>":"");
+  openModal("Report Details", body, footer);
+}
+
+async function resolveReport(id){
+  var ok=await confirm2("Resolve Report","This report will be marked as resolved.","✅",false);
+  if(!ok) return;
+  var {error}=await sb.from("reports").update({status:"resolved"}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadReports(); renderReports(); renderStats(); toast("Report resolved.","success");
+}
+
+async function deleteReport(id){
+  var ok=await confirm2("Delete Report","This report record will be permanently deleted.","🗑️",true);
+  if(!ok) return;
+  var {error}=await sb.from("reports").delete().eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadReports(); renderReports(); renderStats(); toast("Report deleted.","");
+}
+
+// ── AUTO-LOGIN ────────────────────────────────────────────
+(async function(){
+  var {data}=await sb.auth.getSession();
+  if(data&&data.session) showDash();
+})();
+</script>
+
+</body>
+</html>

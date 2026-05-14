@@ -588,3 +588,7 @@
 .boost-plan-desc{font-size:13px;color:var(--sub);margin-bottom:14px;line-height:1.5}
 .boost-plan-btn{width:100%;padding:13px;background:var(--surface,#fff);color:#1A3A8F;border:1.5px solid #1A3A8F;border-radius:12px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer}
 .boost-plan-btn-hot{background:#1A3A8F;color:#fff;border:none}
+.topup-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border,#eee)}
+.topup-row:last-child{border-bottom:none}
+.topup-label{font-size:13px;color:var(--sub)}
+.topup-val{font-size:13px;font-weight:600;color:var(--text);text-align:right}

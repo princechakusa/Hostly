@@ -132,7 +132,7 @@
   };
 
   H.openBoostPage = async function (listingId) {
-    await openInner('Boost', { listingId });
+    await H.openInner('Boost', { listingId });
   };
 
   H.shareListing = function (id) {

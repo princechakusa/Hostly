@@ -354,27 +354,20 @@ window.H = {
   },
 
   // â”€â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  authLogoTap() { window.location.href = 'admin.html'; },
+
   async boot() {
+    H.openInner = H.openInner.bind(H);
+    H.goBack = H.goBack.bind(H);
+    H.renderPage = H.renderPage.bind(H);
+    H.navTo = H.navTo.bind(H);
     this.applyTheme();
     this.applyLanguage();
     if(this.state.currentUserId && this.checkBan()) return;
     document.getElementById("bottomNav").style.display="flex";
     await this.navTo('Home');
     try { await this.fetchListingsFromSupabase(); await this.renderPage(this.currentPageName, this.currentPageParams); } catch(e) { console.warn('Fetch on boot failed:', e); }
-    if (window._autoRefresh) clearInterval(window._autoRefresh);
-    window._autoRefresh = setInterval(async function() {
-      try {
-        if (!H.currentUser()) return;
-        if (H.currentPageName === 'Home' || H.currentPageName === 'Browse') {
-          await H.fetchListingsFromSupabase();
-          // Only refresh silently - don't re-render if user is scrolling
-          if (document.getElementById('mainArea').scrollTop < 100) {
-            await H.renderPage(H.currentPageName, H.currentPageParams);
-            document.getElementById('bottomNav').style.display = 'flex';
-          }
-        }
-      } catch(e) {}
-    }, 60000);
+    // Auto-refresh disabled - user refreshes manually
     if (typeof H._setupRealtimeMessages === 'function') H._setupRealtimeMessages();
     if (typeof H.syncConversations === 'function') H.syncConversations();
   },
@@ -695,7 +688,7 @@ window.H = {
         + '<div class="fg"><div class="fl">Job Title <span style="color:red">*</span></div><input class="fi" id="jTitle" placeholder="e.g. Software Developer, Sales Manager"></div>'
         + '<div class="fg"><div class="fl">Job Type <span style="color:red">*</span></div>'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">'
-        + ['Full Time','Part Time','Contract','Freelance','Internship','Volunteer'].map(function(t){ var tid='jt_'+t.replace(' ','_'); return '<button class="filter-opt" id="'+tid+'" onclick="H._selectJobType(\"'+t+'\")" style="padding:10px;border-radius:10px;border:2px solid var(--border);background:var(--card);font-size:13px;font-weight:600;cursor:pointer">'+t+'</button>'; }).join('')
+        + ['Full Time','Part Time','Contract','Freelance','Internship','Volunteer'].map(function(t){ var tid='jt_'+t.replace(' ','_'); return '<button class="filter-opt" id="'+tid+'" onclick="H._selectJobType(this)" data-type="'+t+'" style="padding:10px;border-radius:10px;border:2px solid var(--border);background:var(--card);font-size:13px;font-weight:600;cursor:pointer">'+t+'</button>'; }).join('')
         + '</div></div>'
         + '<div class="fg"><div class="fl">Industry <span style="color:red">*</span></div><select class="fi" id="jIndustry"><option value="">Select industry...</option>'
         + ['IT & Technology','Finance & Banking','Healthcare','Education','Construction','Hospitality & Tourism','Sales & Marketing','Admin & Office','Agriculture','Transport & Logistics','Manufacturing','Media & Communications','Legal','NGO & Non-profit','Other'].map(function(i){ return '<option>'+i+'</option>'; }).join('')
@@ -727,10 +720,11 @@ window.H = {
     };
 
     H._selectedJobType = '';
-    H._selectJobType = function(type) {
+    H._selectJobType = function(el) {
+      var type = el.dataset ? el.dataset.type : el;
       H._selectedJobType = type;
       document.querySelectorAll('[id^="jt_"]').forEach(function(b){ b.style.background='var(--card)'; b.style.color='var(--text)'; b.style.borderColor='var(--border)'; });
-      var btn = document.getElementById('jt_'+type.replace(' ','_'));
+      var btn = typeof el === 'string' ? document.getElementById('jt_'+type.replace(' ','_')) : el;
       if (btn) { btn.style.background='#1A3A8F'; btn.style.color='#fff'; btn.style.borderColor='#1A3A8F'; }
     };
 
@@ -994,5 +988,46 @@ return `<div class="page active">${H.innerTopbar(cat.icon + ' ' + cat.name, fals
   window[fn] = (...a) => H[fn](...a);
 });
 window.pushNotif = (uid, title, body) => H.pushNotif && H.pushNotif(uid, title, body);
+
+// Pull to refresh
+H.initPullToRefresh = function() {
+  var el = document.getElementById('mainArea');
+  if (!el) return;
+  var startY = 0, pulling = false, indicator = null;
+  el.addEventListener('touchstart', function(e) {
+    if (el.scrollTop === 0) { startY = e.touches[0].clientY; pulling = true; }
+  }, {passive:true});
+  el.addEventListener('touchmove', function(e) {
+    if (!pulling) return;
+    var dy = e.touches[0].clientY - startY;
+    if (dy > 60) {
+      if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#1A3A8F;color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Inter,sans-serif;z-index:9999';
+        indicator.textContent = '↓ Release to refresh';
+        document.body.appendChild(indicator);
+      }
+    }
+  }, {passive:true});
+  el.addEventListener('touchend', function(e) {
+    if (!pulling) return;
+    var dy = e.changedTouches[0].clientY - startY;
+    pulling = false;
+    if (indicator) { indicator.remove(); indicator = null; }
+    if (dy > 80) {
+      H.toast('Refreshing...');
+      if (typeof H.fetchListingsFromSupabase === 'function') {
+        H.fetchListingsFromSupabase().then(function() {
+          H.renderPage(H.currentPageName, H.currentPageParams);
+          H.toast('Updated');
+        }).catch(function() {
+          H.renderPage(H.currentPageName, H.currentPageParams);
+        });
+      } else {
+        H.renderPage(H.currentPageName, H.currentPageParams);
+      }
+    }
+  }, {passive:true});
+};
 
 H.init();
