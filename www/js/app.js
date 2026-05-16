@@ -331,7 +331,6 @@ window.H = {
   authLogoTap() { window.location.href='admin.html'; },
 
   async boot() {
-    // Bind core methods so they always have correct context
     H.openInner  = H.openInner.bind(H);
     H.goBack     = H.goBack.bind(H);
     H.renderPage = H.renderPage.bind(H);
@@ -341,14 +340,12 @@ window.H = {
     if(this.state.currentUserId&&this.checkBan()) return;
     document.getElementById('bottomNav').style.display='flex';
     await this.navTo('Home');
-    // Background fetch — don't block UI
     try {
       await this.fetchListingsFromSupabase();
       await this.renderPage(this.currentPageName, this.currentPageParams);
     } catch(e) { console.warn('Boot fetch failed:', e); }
     if(typeof H._setupRealtimeMessages==='function') H._setupRealtimeMessages();
     if(typeof H.syncConversations==='function') H.syncConversations();
-    // Init pull-to-refresh
     this._initPullToRefresh();
   },
 
@@ -424,7 +421,6 @@ window.H = {
   },
 
   async renderPage(name, params) {
-    // Smooth fade transition
     const area=document.getElementById('mainArea');
     if(area){ area.style.opacity='0'; await new Promise(r=>setTimeout(r,70)); area.style.opacity='1'; }
     if(this.canAccessPage&&!this.canAccessPage(name)){this.toast('Access denied');await this.navTo('Home');return;}
@@ -436,7 +432,6 @@ window.H = {
     area.scrollTop=0;
     area.innerHTML=html;
     if(this.pages[name+'_after']) this.pages[name+'_after'](params||{});
-    // Re-attach pull-to-refresh on new content
     this._initPullToRefresh();
   },
 
@@ -448,6 +443,26 @@ window.H = {
     localStorage.setItem('hostly_rv',JSON.stringify(filtered));
     this.saveState();
     this.openInner('Detail',{id});
+  },
+
+  // ── Category Navigation ──────────────────────────────────
+  filterByCat(cid) {
+    const map = {
+      vehicles:    'Vehicles',
+      property:    'Property',
+      electronics: 'Electronics',
+      fashion:     'Fashion',
+      furniture:   'Furniture',
+      services:    'Services',
+      jobs:        'Jobs',
+      rooms:       'Rooms'
+    };
+    const page = map[cid];
+    if (cid === 'jobs') {
+      H._jobsState = { tab:'find', search:'', category:'', type:'', dateFilter:'', expLevel:'', province:'', page:1 };
+    }
+    if (page) { this.openInner(page, {cid}); }
+    else { this.openInner('Browse', {cat:cid}); }
   },
 
   // ── Sort & Filter ────────────────────────────────────────
@@ -495,7 +510,6 @@ window.H = {
     if(btn) btn.classList.add('active');
     this.navTo('Home');
   },
-  filterByCat(cid){ this.openInner('CategoryView',{cid}); },
 
   // ── Theme / Language ─────────────────────────────────────
   applyTheme() {
@@ -519,12 +533,8 @@ window.H = {
   // ── Pull-to-Refresh ──────────────────────────────────────
   _initPullToRefresh() {
     const el=document.getElementById('mainArea'); if(!el) return;
-    // Remove existing listeners to avoid duplicates
     if(el._ptrCleanup) el._ptrCleanup();
-
     let startY=0, curY=0, pulling=false, refreshing=false;
-
-    // Create or reuse indicator
     let ind=document.getElementById('ptr-ind');
     if(!ind){
       ind=document.createElement('div');
@@ -533,14 +543,11 @@ window.H = {
       ind.style.cssText='position:fixed;top:56px;left:50%;transform:translateX(-50%) translateY(-60px);background:#1A3A8F;color:#fff;padding:9px 18px;border-radius:24px;font-family:Inter,sans-serif;font-size:13px;font-weight:600;z-index:9000;display:flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(26,58,143,.35);pointer-events:none;transition:transform .2s,opacity .2s;opacity:0;';
       document.body.appendChild(ind);
     }
-
-    // Inject CSS once
     if(!document.getElementById('ptr-css')){
       const s=document.createElement('style'); s.id='ptr-css';
       s.textContent=`.ptr-arc{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;}.ptr-arc.spin{animation:ptrspin .7s linear infinite;}@keyframes ptrspin{to{transform:rotate(360deg)}}`;
       document.head.appendChild(s);
     }
-
     function show(state, dist=0){
       const y=Math.min(Math.max(dist-50,0),28);
       ind.style.transform=`translateX(-50%) translateY(${y}px)`;
@@ -552,7 +559,6 @@ window.H = {
       else if(state==='refreshing'){ arc.classList.add('spin'); txt.textContent='Refreshing…'; ind.style.transform='translateX(-50%) translateY(0px)'; }
     }
     function hide(){ ind.style.opacity='0'; ind.style.transform='translateX(-50%) translateY(-60px)'; }
-
     async function doRefresh(){
       if(refreshing) return; refreshing=true;
       show('refreshing');
@@ -565,7 +571,6 @@ window.H = {
       } catch(e){ console.warn('Pull refresh error:',e); }
       setTimeout(()=>{ hide(); refreshing=false; },500);
     }
-
     function onStart(e){
       if(el.scrollTop>0) return;
       startY=e.touches[0].clientY; curY=startY; pulling=true;
@@ -585,12 +590,10 @@ window.H = {
       else { hide(); }
     }
     function cleanup(){ pulling=false; hide(); }
-
     el.addEventListener('touchstart',onStart,{passive:true});
     el.addEventListener('touchmove', onMove,{passive:false});
     el.addEventListener('touchend',  onEnd, {passive:true});
     el.addEventListener('touchcancel',cleanup,{passive:true});
-
     el._ptrCleanup=function(){
       el.removeEventListener('touchstart',onStart);
       el.removeEventListener('touchmove', onMove);
@@ -677,7 +680,7 @@ window.H = {
     } catch(e){ console.warn('Realtime setup failed:',e.message); }
   },
 
-  // ── Category View ─────────────────────────────────────────
+  // ── Category View (fallback for unmapped categories) ─────
   _registerCategoryView() {
     this.pages.CategoryView=function({cid}){
       const cat=H.CATEGORIES.find(c=>c.id===cid)||{name:'Category',icon:''};

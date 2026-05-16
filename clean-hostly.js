@@ -56,7 +56,7 @@ const MOJIBAKE_MAP = [
   ['â€¢', '-'],
   ['â\u0080\u00a2', '-'],
   // Per mille / stray symbol (the one visible next to your name)
-  ['â€°', ''],
+  ['', ''],
   ['â\u0080\u00b0', ''],
   // Trademarks
   ['â„¢', 'TM'],

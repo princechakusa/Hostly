@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 (function(H) {
   const state = H.state;
   let authBusy = false;
@@ -191,8 +191,25 @@
   };
 
   // ── SOCIAL AUTH STUBS ─────────────────────────────
-  H.authGoogle = function() { H.toast('Google sign-in coming soon. Use email.'); };
-  H.authFacebook = function() { H.toast('Facebook sign-in coming soon. Use email.'); };
+  H.authGoogle = async function() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google'
+  });
+
+  if (error) {
+    H.toast(error.message || 'Google sign-in failed');
+  }
+};
+
+H.authFacebook = async function() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'facebook'
+  });
+
+  if (error) {
+    H.toast(error.message || 'Facebook sign-in failed');
+  }
+};
 
   // ── LEGAL DOCS ───────────────────────────────────
   H.authShowDoc = function(which) {
