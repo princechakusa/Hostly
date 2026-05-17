@@ -231,9 +231,9 @@
     };
 
     const myCard = (l, status) =>
-      `<div style="margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border)">
+      `<div style="margin-bottom:14px">
         ${H.renderListCard(l)}
-        <div style="display:flex;gap:8px;padding:10px 12px;background:var(--card);border-top:1px solid var(--border)">
+        <div style="display:flex;gap:6px;margin-top:6px">
           ${(actionBars[status] || actionBars.active)(l.id)}
         </div>
       </div>`;
@@ -366,11 +366,11 @@
     const list  = (H.state.listings || []).filter(l => saved.includes(l.id) && l.status === 'active');
 
     const savedCard = (l) =>
-      `<div style="margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border)">
+      `<div style="margin-bottom:14px">
         ${H.renderListCard(l)}
-        <div style="display:flex;gap:8px;padding:10px 12px;background:var(--card);border-top:1px solid var(--border)">
-          <button onclick="H._favorites.unsave('${l.id}')" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;font-family:inherit">Remove</button>
-          <button onclick="H.openInner('ListingDetail',{listingId:'${l.id}'})" style="flex:2;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#EFF6FF;color:#1A3A8F;border:1.5px solid #BFDBFE;font-family:inherit">View Listing</button>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button onclick="H._favorites.unsave('${l.id}')" style="flex:1;padding:9px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;font-family:inherit">Remove</button>
+          <button onclick="H.openInner('ListingDetail',{listingId:'${l.id}'})" style="flex:2;padding:9px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#EFF6FF;color:#1A3A8F;border:1.5px solid #BFDBFE;font-family:inherit">View Listing</button>
         </div>
       </div>`;
 
