@@ -12,6 +12,7 @@
     vehicles:'#e53935',property:'#1E88E5',electronics:'#8E24AA',
     fashion:'#F06292',furniture:'#6D4C41',services:'#00897B',
     jobs:'#F5A623',rooms:'#00838F',other:'#546E7A',
+    agriculture:'#558B2F',pets:'#FB8C00',kids:'#E91E63',
   };
 
   function renderHCard(l) {
@@ -41,7 +42,7 @@
     const filtered       = filterListings(activeListings);
     const featured       = filtered.filter(l => l.boost && l.boost.until > Date.now()).slice(0, 6);
 
-    const catSections = CATEGORIES.slice(0, 8).map(c => ({
+    const catSections = CATEGORIES.map(c => ({
       ...c, items: filtered.filter(l => l.cat === c.id).slice(0, 10)
     })).filter(s => s.items.length > 0);
 
@@ -106,7 +107,7 @@
             <span onclick="H.navTo('Browse',null)" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer">See all</span>
           </div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
-            ${CATEGORIES.slice(0, 8).map(c => {
+            ${CATEGORIES.map(c => {
               const color = CAT_COLORS[c.id] || '#546E7A';
               return `<div onclick="H.filterByCat('${c.id}')" style="display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer">
                 <div style="width:56px;height:56px;border-radius:16px;background:${color}18;display:flex;align-items:center;justify-content:center;font-size:26px;border:1.5px solid ${color}22;transition:transform 0.15s"

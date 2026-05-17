@@ -15,7 +15,7 @@
       .filter(c => c.members.includes(u.id) && c.messages.length)
       .sort((a, b) => b.messages[b.messages.length - 1].t - a.messages[a.messages.length - 1].t);
 
-    return `<div class="page active">${innerTopbar('Messages')}
+    return `<div class="page active">${H.innerTopbar('Messages')}
       <div style="padding:10px 14px;font-size:12px;color:var(--sub)">${convos.length} conversation${convos.length === 1 ? '' : 's'}</div>
       <div>
         ${convos.length ? convos.map(c => {
@@ -34,7 +34,7 @@
             </div>
             ${unread ? '<div class="msg-unread-dot"></div>' : ''}
           </div>`;
-        }).join('') : emptyState('No messages yet', 'When buyers message you about a listing, it will show up here.', null, null)}
+        }).join('') : H.emptyState('No messages yet', 'When buyers message you about a listing, it will show up here.', null, null)}
       </div>
     </div>`;
   };
@@ -42,7 +42,7 @@
   
   pages.Chat = function ({ id }) {
     const c = (state.conversations || []).find(x => x.id === id);
-    if (!c) return '<div class="page active">' + innerTopbar('Chat') + '<div class="empty-state"><div class="empty-title">Conversation not found</div></div></div>';
+    if (!c) return '<div class="page active">' + H.innerTopbar('Chat') + '<div class="empty-state"><div class="empty-title">Conversation not found</div></div></div>';
     const u = currentUser();
     const otherId = c.members.find(m => m !== u.id);
     const other = state.users.find(x => x.id === otherId) || { name: (function(){ var m = c.messages.find(function(msg){ return msg.from===otherId; }); return m&&m.senderName ? m.senderName : 'User'; })() };
