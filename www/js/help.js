@@ -310,7 +310,7 @@
           <p>You must be at least 18 years old to use Hostly. By using the App you confirm that you are 18 or older and legally capable of entering into binding contracts under Zimbabwean law.</p>
 
           <h2>3. Account Registration</h2>
-          <p>You must provide accurate, current, and complete information when creating an account. You are responsible for maintaining the confidentiality of your password and for all activity under your account. Notify us immediately at support@hostly.co.zw if you suspect unauthorized access.</p>
+          <p>You must provide accurate, current, and complete information when creating an account. You are responsible for maintaining the confidentiality of your password and for all activity under your account. Notify us immediately at chakusaprince@gmail.com if you suspect unauthorized access.</p>
 
           <h2>4. Listing Rules</h2>
           <p>All listings must be accurate, legal, and comply with Zimbabwean law. You must own or have the right to sell any item you list. The following are strictly prohibited:</p>
@@ -360,7 +360,7 @@
           <p>We reserve the right to modify these Terms at any time. Continued use of the App after changes constitutes acceptance of the new Terms.</p>
 
           <h2>14. Contact</h2>
-          <p>For legal queries: legal@hostly.co.zw</p>
+          <p>For legal queries: chakusaprince@gmail.com</p>
         </div>
       </div>
     </div>`;
@@ -425,7 +425,7 @@ pages.HelpPrivacy = function () {
             <li>Correct inaccurate information in your profile settings</li>
             <li>Delete your account and all associated data</li>
             <li>Opt out of promotional notifications in settings</li>
-            <li>Request a copy of your data by emailing privacy@hostly.co.zw</li>
+            <li>Request a copy of your data by emailing chakusaprince@gmail.com</li>
           </ul>
 
           <h2>10. Children</h2>
@@ -435,7 +435,7 @@ pages.HelpPrivacy = function () {
           <p>We will notify you of significant changes to this policy through the App. Continued use after changes constitutes acceptance.</p>
 
           <h2>12. Contact</h2>
-          <p>Privacy concerns: privacy@hostly.co.zw</p>
+          <p>Privacy concerns: chakusaprince@gmail.com</p>
         </div>
       </div>
     </div>`;
@@ -515,7 +515,7 @@ pages.HelpCommunity = function () {
           <p>If you see something suspicious:</p>
           <ul>
             <li>Use the Report button on any listing or user profile</li>
-            <li>Email us at safety@hostly.co.zw for urgent matters</li>
+            <li>Email us at chakusaprince@gmail.com for urgent matters</li>
             <li>All reports are reviewed within 24 hours</li>
             <li>3 or more reports on a listing triggers automatic review</li>
             <li>False reports made in bad faith will result in action against the reporter</li>
@@ -529,13 +529,13 @@ pages.HelpCommunity = function () {
             <li><strong>7-day suspension:</strong> Serious violations</li>
             <li><strong>Permanent ban:</strong> Fraud, scams, or 3+ serious violations</li>
           </ul>
-          <p>Banned users may appeal by emailing appeals@hostly.co.zw with evidence. We review all appeals within 7 days.</p>
+          <p>Banned users may appeal by emailing chakusaprince@gmail.com with evidence. We review all appeals within 7 days.</p>
 
           <h2>9. Our Commitment</h2>
           <p>We are committed to making Hostly Zimbabwe's most trusted marketplace. We review all reports, take action on violations, and continuously improve our safety systems. Together we can build a marketplace that works for everyone.</p>
 
           <h2>Contact Safety Team</h2>
-          <p>safety@hostly.co.zw</p>
+          <p>chakusaprince@gmail.com</p>
         </div>
       </div>
     </div>`;

@@ -19,16 +19,16 @@
     ecocash: {
       id: 'ecocash', label: 'EcoCash', network: 'Econet Wireless',
       color: '#00A651', bg: '#F0FDF4', border: '#86EFAC', textColor: '#15803d',
-      number: '077 897 7264', rawNumber: '0778977264',
+      number: '+263 77 734 1565', rawNumber: '+263777341565',
       name: 'Prince Chakusa',
-      steps: ['Open EcoCash on your phone', 'Select "Send Money"', 'Enter number: 077 897 7264', 'Enter the USD amount', 'Use your name as reference', 'Note the EcoCash reference number from the SMS'],
+      steps: ['Open EcoCash on your phone', 'Select "Send Money"', 'Enter number: +263 77 734 1565', 'Enter the USD amount', 'Use your name as the reference / reason', 'Note the EcoCash reference number from the confirmation SMS'],
     },
     onemoney: {
       id: 'onemoney', label: 'OneMoney', network: 'NetOne',
       color: '#E65C00', bg: '#FFF7F0', border: '#FDBA74', textColor: '#9a3412',
-      number: '071 897 7264', rawNumber: '0718977264',
+      number: '+263 77 734 1565', rawNumber: '+263777341565',
       name: 'Prince Chakusa',
-      steps: ['Open OneMoney on your phone', 'Select "Send Money"', 'Enter number: 071 897 7264', 'Enter the USD amount', 'Use your name as reference', 'Note the OneMoney reference from the SMS'],
+      steps: ['Open OneMoney on your phone', 'Select "Send Money"', 'Enter number: +263 77 734 1565', 'Enter the USD amount', 'Use your name as the reference / reason', 'Note the OneMoney reference number from the confirmation SMS'],
     },
     bank: {
       id: 'bank', label: 'Bank Transfer', network: 'CBZ Bank Zimbabwe',
@@ -204,8 +204,8 @@
         <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Accepted Payment Methods</div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
           ${[
-            { label: 'EcoCash', sub: 'Econet Wireless · 077 897 7264', color: '#00A651', bg: '#F0FDF4' },
-            { label: 'OneMoney', sub: 'NetOne · 071 897 7264', color: '#E65C00', bg: '#FFF7F0' },
+            { label: 'EcoCash', sub: 'Econet Wireless · +263 77 734 1565', color: '#00A651', bg: '#F0FDF4' },
+            { label: 'OneMoney', sub: 'NetOne · +263 77 734 1565', color: '#E65C00', bg: '#FFF7F0' },
             { label: 'Bank Transfer', sub: 'CBZ Bank Zimbabwe', color: '#1A3A8F', bg: '#EFF6FF' },
           ].map((m, i, arr) => `
             <div style="display:flex;align-items:center;gap:12px;padding:13px 16px;${i < arr.length-1 ? 'border-bottom:1px solid var(--border)' : ''}">
@@ -285,6 +285,15 @@
                 <div style="font-size:13px;color:var(--sub);line-height:1.5">${s}</div>
               </div>`
             ).join('')}
+          </div>
+        </div>
+
+        <!-- Store compliance notice -->
+        <div style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:12px;padding:12px 14px;margin-bottom:4px;display:flex;gap:10px;align-items:flex-start">
+          <div style="color:#D97706;flex-shrink:0;margin-top:1px">${I.info}</div>
+          <div style="font-size:12px;color:#92400E;line-height:1.6">
+            <strong>External Payment — Not an In-App Purchase.</strong> Advertising credits are purchased via mobile money or bank transfer directly to Hostly. This transaction is not processed by Google Play or the Apple App Store.
+            Need help? <a href="https://wa.me/971589772645" style="color:#D97706;font-weight:700;text-decoration:none">WhatsApp us</a> or email <a href="mailto:chakusaprince@gmail.com" style="color:#D97706;font-weight:700;text-decoration:none">chakusaprince@gmail.com</a>
           </div>
         </div>
 
