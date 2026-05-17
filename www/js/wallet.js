@@ -149,15 +149,10 @@
       <div style="background:linear-gradient(135deg,#1A3A8F 0%,#2952cc 100%);margin:16px;border-radius:20px;padding:24px 20px">
         <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Available Balance</div>
         <div style="font-size:38px;font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1;margin-bottom:3px">$${(u.walletUSD || 0).toFixed(2)}</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:20px">USD · Hostly Wallet</div>
-        <div style="display:flex;gap:10px">
-          <button onclick="H.openInner('TopUp')" style="flex:1;padding:11px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.45);border-radius:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-            ${I.plus} Top Up
-          </button>
-          <button onclick="H._wallet.withdraw()" style="flex:1;padding:11px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.25);border-radius:12px;color:rgba(255,255,255,.85);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-            Withdraw
-          </button>
-        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:20px">Used for boosting listings &amp; platform services</div>
+        <button onclick="H.openInner('TopUp')" style="width:100%;padding:13px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.45);border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+          ${I.plus} Top Up Wallet
+        </button>
       </div>
 
       <!-- Payment Methods -->
@@ -331,32 +326,7 @@
     };
   };
 
-  H._wallet = {
-    withdraw() {
-      const u = H.currentUser();
-      if (!u || (u.walletUSD || 0) <= 0) { H.toast('No balance to withdraw'); return; }
-      H.modal({
-        title: 'Withdraw to EcoCash',
-        body: `<div style="background:#F0FDF4;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:#15803d">
-          Funds will be sent to <strong>${H.escHtml(u.phone || 'your EcoCash number')}</strong>.<br>Processing fee: 3% · Allow up to 24 hours.
-        </div>
-        <div class="fl">Amount (USD)</div>
-        <input class="fi" type="number" id="wdAmt" placeholder="${(u.walletUSD || 0).toFixed(2)}" max="${u.walletUSD}" step="1" min="1">`,
-        confirmText: 'Confirm Withdrawal',
-        onConfirm: () => {
-          const amt = parseFloat(document.getElementById('wdAmt')?.value);
-          if (!amt || amt < 1)          { H.toast('Minimum withdrawal is $1.00'); return false; }
-          if (amt > (u.walletUSD || 0)) { H.toast('Insufficient balance'); return false; }
-          u.walletUSD = +(u.walletUSD - amt).toFixed(2);
-          H.state.txns = H.state.txns || [];
-          H.state.txns.unshift({ id: H.uid(), userId: u.id, type: 'withdraw', amt: -amt, t: Date.now(), note: `Withdraw · EcoCash · ${H.escHtml(u.phone || '')}` });
-          H.saveState();
-          H.toast(`Withdrawal of $${amt.toFixed(2)} processing`);
-          H.renderPage('Wallet');
-        }
-      });
-    }
-  };
+  H._wallet = {};
 
   // Legacy alias
   H.showTopUp = () => H.openInner('TopUp');
