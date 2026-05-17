@@ -60,7 +60,7 @@
         </div>
         <div class="info-row">
           <span class="info-label">Joined</span>
-          <span class="info-val">${new Date(u.createdAt).toLocaleDateString()}</span>
+          <span class="info-val">${new Date(u.joinedAt || u.createdAt || Date.now()).toLocaleDateString()}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Status</span>

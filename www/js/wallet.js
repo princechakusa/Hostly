@@ -44,7 +44,7 @@
       </div>
       <div class="inner-content">
         <div class="fl">Select listing</div>
-        <select class="fi" style="margin-bottom:14px" id="boostListing" onchange="_boostState.listingId=this.value">
+        <select class="fi" style="margin-bottom:14px" id="boostListing" onchange="H._boost.setListing(this.value)">
           ${myActive.map(l => `<option value="${l.id}" ${_boostState.listingId === l.id ? 'selected' : ''}>${escHtml(l.title)} · ${escHtml(fmtPrice(l.price, l.currency))}</option>`).join('')}
         </select>
         <div class="fl">Choose boost plan</div>
@@ -72,6 +72,7 @@
   };
 
   H._boost = {
+    setListing(id) { _boostState.listingId = id; },
     selectPlan(pid) { _boostState.planId = pid; H.renderPage('Boost', { listingId: _boostState.listingId }); },
     activate() {
       const u    = H.currentUser();
@@ -150,7 +151,7 @@
           </div>
           <div class="mi" onclick="H.toast('Coming soon')">
             <div class="mi-icon blue-ic">${I.card}</div>
-            <div class="mi-label">Add USD Card</div><div class="mi-arrow" style="font-size:20px;color:var(--sub)">&rsaquo;</div</div>
+            <div class="mi-label">Add USD Card</div>
             <div class="mi-arrow">›</div>
           </div>
         </div>
@@ -256,7 +257,7 @@ H.pages.TopUp = function(params) {
   var amount = (params && params.amount) || 5;
   var user = H.currentUser();
   var name = user ? user.name : 'Your Name';
-  var html = '<div class="page active">' + H.H.innerTopbar('Top Up & Pay');
+  var html = '<div class="page active">' + H.innerTopbar('Top Up & Pay');
   html += '<div style="padding:16px">';
   html += '<div style="background:linear-gradient(135deg,#1A3A8F,#2d5be3);border-radius:20px;padding:24px;color:#fff;text-align:center;margin-bottom:20px"><div style="font-size:14px;opacity:.8;margin-bottom:4px">Amount Due</div><div style="font-size:36px;font-weight:800;margin-bottom:4px">$' + amount + '</div><div style="font-size:13px;opacity:.8">For: ' + reason + '</div></div>';
   html += '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:12px">How to Pay</div>';

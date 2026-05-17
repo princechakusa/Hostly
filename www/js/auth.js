@@ -3,7 +3,7 @@
   const state = H.state;
   let authBusy = false;
 
-  function sb() { return window._sbClient || null; }
+  function sb() { return (window.supabase && window.supabase.auth) ? window.supabase : null; }
   function setAuthBusy(v) { authBusy = v; const r = document.getElementById('authCard'); if(r) r.querySelectorAll('button').forEach(function(b){b.disabled=v;}); }
 
   // ── LOGO TAP → ADMIN ─────────────────────────────
@@ -192,24 +192,18 @@
 
   // ── SOCIAL AUTH STUBS ─────────────────────────────
   H.authGoogle = async function() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google'
-  });
+    const c = sb();
+    if (!c) { H.toast('Sign-in service unavailable'); return; }
+    const { error } = await c.auth.signInWithOAuth({ provider: 'google' });
+    if (error) H.toast(error.message || 'Google sign-in failed');
+  };
 
-  if (error) {
-    H.toast(error.message || 'Google sign-in failed');
-  }
-};
-
-H.authFacebook = async function() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'facebook'
-  });
-
-  if (error) {
-    H.toast(error.message || 'Facebook sign-in failed');
-  }
-};
+  H.authFacebook = async function() {
+    const c = sb();
+    if (!c) { H.toast('Sign-in service unavailable'); return; }
+    const { error } = await c.auth.signInWithOAuth({ provider: 'facebook' });
+    if (error) H.toast(error.message || 'Facebook sign-in failed');
+  };
 
   // ── LEGAL DOCS ───────────────────────────────────
   H.authShowDoc = function(which) {
