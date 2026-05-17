@@ -2,10 +2,10 @@
   event.waitUntil(
     caches.open('hostly-v1').then(cache => {
       cache.addAll([
-        '/',
-        '/index.html',
-        '/manifest.json',
-        '/css/styles.css'
+        './',
+        './index.html',
+        './manifest.json',
+        './css/styles.css'
       ]).catch(err => {
         console.log('Cache addAll error (non-critical):', err);
       });
