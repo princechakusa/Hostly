@@ -215,9 +215,32 @@
     const sold     = all.filter(l => l.status === 'sold');
     const rejected = all.filter(l => l.status === 'rejected');
 
-    const section = (list, label) => list.length
-      ? list.map(H.renderListCard).join('')
-      : `<div style="color:var(--sub);padding:20px;text-align:center;font-size:13px">No ${label.toLowerCase()} listings</div>`;
+    const btn = (label, fn, c, bg, bo) =>
+      `<button onclick="${fn}" style="flex:1;padding:8px 2px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:${bg};color:${c};border:1.5px solid ${bo};font-family:inherit;white-space:nowrap">${label}</button>`;
+
+    const actionBars = {
+      active:   (id) => btn('Edit',        `H._myListings.edit('${id}')`,       '#1A3A8F','#EFF6FF','#BFDBFE')
+                      + btn('Mark Sold',   `H._myListings.markSold('${id}')`,   '#16a34a','#dcfce7','#bbf7d0')
+                      + btn('Delete',      `H._myListings.del('${id}')`,        '#ef4444','#fef2f2','#fecaca'),
+      pending:  (id) => btn('Edit',        `H._myListings.edit('${id}')`,       '#1A3A8F','#EFF6FF','#BFDBFE')
+                      + btn('Delete',      `H._myListings.del('${id}')`,        '#ef4444','#fef2f2','#fecaca'),
+      sold:     (id) => btn('Post Again',  `H._myListings.reactivate('${id}')`, '#1A3A8F','#EFF6FF','#BFDBFE')
+                      + btn('Delete',      `H._myListings.del('${id}')`,        '#ef4444','#fef2f2','#fecaca'),
+      rejected: (id) => btn('Edit & Resubmit', `H._myListings.edit('${id}')`,  '#D97706','#FFFBEB','#FDE68A')
+                      + btn('Delete',      `H._myListings.del('${id}')`,        '#ef4444','#fef2f2','#fecaca'),
+    };
+
+    const myCard = (l, status) =>
+      `<div style="margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border)">
+        ${H.renderListCard(l)}
+        <div style="display:flex;gap:8px;padding:10px 12px;background:var(--card);border-top:1px solid var(--border)">
+          ${(actionBars[status] || actionBars.active)(l.id)}
+        </div>
+      </div>`;
+
+    const section = (list, label, status) => list.length
+      ? `<div style="padding:12px">${list.map(l => myCard(l, status)).join('')}</div>`
+      : `<div style="color:var(--sub);padding:32px 20px;text-align:center;font-size:13px">No ${label.toLowerCase()} listings</div>`;
 
     return `<div class="page active">
       ${H.innerTopbar('My Listings')}
@@ -228,10 +251,10 @@
         <button class="tab" data-tab="rejected">Rejected (${rejected.length})</button>
       </div>
       <div class="tabs-content">
-        <div class="tab-content active" data-tab="active">${section(active,'Active')}</div>
-        <div class="tab-content" data-tab="pending">${section(pending,'Pending')}</div>
-        <div class="tab-content" data-tab="sold">${section(sold,'Sold')}</div>
-        <div class="tab-content" data-tab="rejected">${section(rejected,'Rejected')}</div>
+        <div class="tab-content active" data-tab="active">${section(active,'Active','active')}</div>
+        <div class="tab-content" data-tab="pending">${section(pending,'Pending','pending')}</div>
+        <div class="tab-content" data-tab="sold">${section(sold,'Sold','sold')}</div>
+        <div class="tab-content" data-tab="rejected">${section(rejected,'Rejected','rejected')}</div>
       </div>
       <div style="height:24px"></div>
     </div>`;
@@ -247,6 +270,91 @@
         if (el) el.classList.add('active');
       });
     });
+
+    H._myListings = {
+      edit: (id) => H.openInner('EditListing', { listingId: id }),
+      markSold: (id) => {
+        const l = (H.state.listings || []).find(x => x.id === id);
+        if (!l) return;
+        l.status = 'sold';
+        l.soldAt = Date.now();
+        H.saveState();
+        H.toast('Listing marked as sold');
+        H.renderPage('MyListings');
+      },
+      del: (id) => {
+        if (!window.confirm('Delete this listing permanently?')) return;
+        H.state.listings = (H.state.listings || []).filter(x => x.id !== id);
+        H.saveState();
+        H.toast('Listing deleted');
+        H.renderPage('MyListings');
+      },
+      reactivate: (id) => {
+        const l = (H.state.listings || []).find(x => x.id === id);
+        if (!l) return;
+        l.status = 'active';
+        delete l.soldAt;
+        l.renewedAt = Date.now();
+        H.saveState();
+        H.toast('Listing reactivated!');
+        H.renderPage('MyListings');
+      },
+    };
+  };
+
+  // ── Edit Listing ─────────────────────────────────────────
+  pages.EditListing = function (params) {
+    const id = params && params.listingId;
+    const l  = id ? (H.state.listings || []).find(x => x.id === id) : null;
+    if (!l) return `<div class="page active">${H.innerTopbar('Edit Listing')}${H.emptyState('Listing not found','')}</div>`;
+    return `<div class="page active">
+      ${H.innerTopbar('Edit Listing')}
+      <div class="form-wrap">
+        <div class="fg"><div class="fl">Title</div>
+          <input class="fi" id="elTitle" value="${H.escHtml(l.title || '')}" placeholder="Listing title" maxlength="80">
+        </div>
+        <div class="fg"><div class="fl">Price (USD)</div>
+          <input class="fi" id="elPrice" type="number" min="0" value="${H.escHtml(String(l.price || ''))}" placeholder="0">
+        </div>
+        <div class="fg"><div class="fl">Description</div>
+          <textarea class="fi" id="elDesc" rows="5" placeholder="Describe your item...">${H.escHtml(l.description || '')}</textarea>
+        </div>
+        <div id="elErr" style="display:none;color:#ef4444;font-size:13px;font-weight:600;padding:6px 0"></div>
+        <button id="elSaveBtn" class="btn-pri" onclick="H._editListing.save('${id}')">Save Changes</button>
+        <button class="btn-sec" onclick="H.goBack()">Cancel</button>
+      </div>
+    </div>`;
+  };
+
+  pages.EditListing_after = function () {
+    H._editListing = {
+      save: (id) => {
+        const title = document.getElementById('elTitle')?.value.trim();
+        const price = parseFloat(document.getElementById('elPrice')?.value);
+        const desc  = document.getElementById('elDesc')?.value.trim();
+        const errEl = document.getElementById('elErr');
+        const btn   = document.getElementById('elSaveBtn');
+        const showErr = (m) => { if (errEl) { errEl.textContent = m; errEl.style.display = ''; } };
+
+        if (!title) { showErr('Title is required'); return; }
+        if (isNaN(price) || price < 0) { showErr('Enter a valid price'); return; }
+        if (!desc) { showErr('Description is required'); return; }
+
+        const l = (H.state.listings || []).find(x => x.id === id);
+        if (!l) { showErr('Listing not found'); return; }
+
+        l.title       = title;
+        l.price       = price;
+        l.description = desc;
+        l.updatedAt   = Date.now();
+        if (l.status === 'rejected') l.status = 'pending';
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+        H.saveState();
+        H.toast('Listing updated!');
+        H.goBack();
+      }
+    };
   };
 
   // ── Favorites ────────────────────────────────────────────
@@ -257,15 +365,38 @@
     const saved = (H.state.saves && H.state.saves[u.id]) || [];
     const list  = (H.state.listings || []).filter(l => saved.includes(l.id) && l.status === 'active');
 
+    const savedCard = (l) =>
+      `<div style="margin-bottom:12px;border-radius:14px;overflow:hidden;border:1px solid var(--border)">
+        ${H.renderListCard(l)}
+        <div style="display:flex;gap:8px;padding:10px 12px;background:var(--card);border-top:1px solid var(--border)">
+          <button onclick="H._favorites.unsave('${l.id}')" style="flex:1;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#fef2f2;color:#ef4444;border:1.5px solid #fecaca;font-family:inherit">Remove</button>
+          <button onclick="H.openInner('ListingDetail',{listingId:'${l.id}'})" style="flex:2;padding:8px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#EFF6FF;color:#1A3A8F;border:1.5px solid #BFDBFE;font-family:inherit">View Listing</button>
+        </div>
+      </div>`;
+
     return `<div class="page active">
-      ${H.innerTopbar('Saved & Favorites')}
-      <div class="listing-list" style="padding:14px">
+      ${H.innerTopbar(list.length ? `Saved & Favorites (${list.length})` : 'Saved & Favorites')}
+      <div style="padding:14px">
         ${list.length
-          ? list.map(H.renderListCard).join('')
+          ? list.map(savedCard).join('')
           : H.emptyState('No saved listings', 'Tap the heart on any listing to save it', 'Browse', "H.navTo('Browse')")}
       </div>
       <div style="height:24px"></div>
     </div>`;
+  };
+
+  pages.Favorites_after = function () {
+    H._favorites = {
+      unsave: (id) => {
+        const u = H.currentUser();
+        if (!u) return;
+        H.state.saves = H.state.saves || {};
+        H.state.saves[u.id] = (H.state.saves[u.id] || []).filter(sid => sid !== id);
+        H.saveState();
+        H.toast('Removed from saved');
+        H.renderPage('Favorites');
+      }
+    };
   };
 
   // ── Identity Verification ────────────────────────────────
