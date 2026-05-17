@@ -103,151 +103,263 @@
   };
 
   // ---------------------------------------------------
-  // PAYMENTS / WALLET
+  // WALLET (redesigned)
   // ---------------------------------------------------
-  pages.Payments = function () {
-    const u    = H.currentUser();
-    const txns = (H.state.txns || []).filter(t => t.userId === u.id).slice(0, 30);
+  pages.Wallet = function () {
+    const u       = H.currentUser();
+    if (!u) return `<div class="page active">${H.innerTopbar('Wallet')}${H.emptyState('Not signed in', 'Sign in to access your wallet', 'Sign In', "H.authPage()")}</div>`;
 
-    return `<div class="page active">${H.innerTopbar('Wallet & Payments')}
-      <div class="inner-content">
-        <div class="pay-balance">
-          <div class="pay-bal-lbl">Wallet Balance</div>
-          <div class="pay-bal-amt">$${(u.walletUSD || 0).toFixed(2)}</div>
-          <div class="pay-actions">
-            <button class="pay-act" onclick="H.showTopUp()">${I.plus} Top Up</button>
-            <button class="pay-act" onclick="H._wallet.withdraw()">Withdraw</button>
+    const txns    = (H.state.txns || []).filter(t => t.userId === u.id).slice(0, 40);
+    const pending = (H.state.topupRequests || []).filter(r => r.userId === u.id && r.status === 'pending');
+
+    const typeLabel = { topup: 'Top Up', withdraw: 'Withdrawal', boost: 'Listing Boost', fee: 'Fee' };
+
+    const txRow = (t) => {
+      const isIn  = t.amt > 0;
+      const label = H.escHtml(typeLabel[t.type] || t.note || 'Transaction');
+      const bg    = isIn ? '#dcfce7' : t.type === 'boost' ? '#FFF7ED' : '#fef2f2';
+      const color = isIn ? '#16a34a' : t.type === 'boost' ? '#D97706' : '#ef4444';
+      const icon  = isIn ? I.down : t.type === 'boost' ? I.boost : I.up;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)">
+        <div style="width:36px;height:36px;border-radius:10px;background:${bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:${color}">${icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600;color:var(--text)">${label}</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:1px">${new Date(t.t || Date.now()).toLocaleString()}</div>
+        </div>
+        <div style="font-size:15px;font-weight:800;color:${isIn ? '#16a34a' : '#ef4444'}">${isIn ? '+' : ''}$${Math.abs(t.amt).toFixed(2)}</div>
+      </div>`;
+    };
+
+    const pendingRow = (r) =>
+      `<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border)">
+        <div style="width:36px;height:36px;border-radius:10px;background:#FFFBEB;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#D97706">${I.down}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Top Up · ${H.escHtml(r.method)}</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:1px">Ref: ${H.escHtml(r.reference)} · $${r.amount.toFixed(2)}</div>
+        </div>
+        <span style="font-size:10px;font-weight:700;color:#D97706;background:#FFFBEB;border:1px solid #FDE68A;padding:3px 8px;border-radius:8px">Pending</span>
+      </div>`;
+
+    const allRows = [...pending.map(pendingRow), ...txns.map(txRow)];
+
+    return `<div class="page active">
+      ${H.innerTopbar('Wallet & Payments')}
+
+      <!-- Balance Hero -->
+      <div style="background:linear-gradient(135deg,#1A3A8F 0%,#2952cc 100%);margin:16px;border-radius:20px;padding:24px 20px">
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Available Balance</div>
+        <div style="font-size:38px;font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1;margin-bottom:3px">$${(u.walletUSD || 0).toFixed(2)}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:20px">USD · Hostly Wallet</div>
+        <div style="display:flex;gap:10px">
+          <button onclick="H.openInner('TopUp')" style="flex:1;padding:11px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.45);border-radius:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+            ${I.plus} Top Up
+          </button>
+          <button onclick="H._wallet.withdraw()" style="flex:1;padding:11px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.25);border-radius:12px;color:rgba(255,255,255,.85);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+            Withdraw
+          </button>
+        </div>
+      </div>
+
+      <!-- Payment Methods -->
+      <div style="margin:0 16px 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Payment Methods</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+          ${u.phone
+            ? `<div style="display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--border)">
+                <div style="width:36px;height:36px;border-radius:10px;background:#FFF7ED;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#F5A623">${I.card}</div>
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:600;color:var(--text)">EcoCash</div>
+                  <div style="font-size:12px;color:var(--sub)">${H.escHtml(u.phone)}</div>
+                </div>
+                <span style="font-size:10px;font-weight:700;color:#16a34a;background:#dcfce7;padding:3px 8px;border-radius:8px">Primary</span>
+              </div>`
+            : ''}
+          <div style="display:flex;align-items:center;gap:12px;padding:14px;opacity:.6">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sub)">${I.plus}</div>
+            <div style="font-size:14px;font-weight:500;color:var(--sub)">Add Bank / Card</div>
+            <div style="margin-left:auto;color:var(--sub)">›</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction History -->
+      <div style="margin:0 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">
+          Transactions
+          ${pending.length ? `<span style="background:#FFFBEB;color:#D97706;border:1px solid #FDE68A;font-size:10px;padding:2px 7px;border-radius:8px;margin-left:6px">${pending.length} pending</span>` : ''}
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0 14px">
+          ${allRows.length
+            ? allRows.join('')
+            : `<div style="padding:32px 16px;text-align:center;color:var(--sub);font-size:13px">No transactions yet<br><span style="font-size:12px;margin-top:4px;display:block">Top up to get started</span></div>`}
+        </div>
+      </div>
+
+      <div style="height:32px"></div>
+    </div>`;
+  };
+
+  pages.Payments = pages.Wallet;
+
+  // ---------------------------------------------------
+  // TOP UP (dedicated page)
+  // ---------------------------------------------------
+  pages.TopUp = function () {
+    const u = H.currentUser();
+    if (!u) return `<div class="page active">${H.innerTopbar('Top Up')}${H.emptyState('Not signed in', '', 'Sign In', "H.authPage()")}</div>`;
+
+    return `<div class="page active">
+      ${H.innerTopbar('Top Up Wallet')}
+      <div class="form-wrap">
+
+        <!-- Method Selector -->
+        <div class="fg">
+          <div class="fl">Payment Method</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+            <button id="tuMethodEco" onclick="H._topup.setMethod('ecocash')"
+              style="padding:14px 8px;border-radius:12px;border:2px solid #1A3A8F;background:#EFF6FF;font-size:13px;font-weight:700;color:#1A3A8F;cursor:pointer;font-family:inherit">
+              EcoCash
+            </button>
+            <button id="tuMethodBank" onclick="H._topup.setMethod('bank')"
+              style="padding:14px 8px;border-radius:12px;border:2px solid var(--border);background:var(--card);font-size:13px;font-weight:700;color:var(--sub);cursor:pointer;font-family:inherit">
+              Bank Transfer
+            </button>
           </div>
         </div>
 
-        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Transaction History</div>
-        <div class="section-card">
-          ${txns.length ? txns.map(t => {
-            const sign = t.amt >= 0 ? 'plus' : 'minus';
-            const ic   = t.type === 'topup' ? 'green' : t.type === 'withdraw' ? 'red' : 'amber';
-            // Choose icon based on type
-            let iconSvg;
-            if (t.type === 'topup') iconSvg = I.down;
-            else if (t.type === 'withdraw') iconSvg = I.up;
-            else if (t.type === 'boost') iconSvg = I.boost;
-            else iconSvg = I.wallet;
-            return `<div class="tx-item">
-              <div class="tx-icon ${ic}">${iconSvg}</div>
-              <div class="tx-body">
-                <div class="tx-title">${escHtml(t.note || t.type)}</div>
-                <div class="tx-date">${new Date(t.t).toLocaleString()}</div>
-              </div>
-              <div class="tx-amount ${sign}">${t.amt >= 0 ? '+' : ''}$${Math.abs(t.amt).toFixed(2)}</div>
-            </div>`;
-          }).join('') : `<div style="padding:24px;text-align:center;color:var(--sub);font-size:13px">No transactions yet</div>`}
+        <!-- Payment Details (EcoCash) -->
+        <div id="tuDetailsEco" style="background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:14px;padding:16px;margin-bottom:4px">
+          <div style="font-size:13px;font-weight:700;color:#15803d;margin-bottom:10px">Send to EcoCash Number:</div>
+          <div style="font-size:22px;font-weight:900;color:#15803d;letter-spacing:1px;margin-bottom:6px">+263 777 341 565</div>
+          <div style="font-size:12px;color:#16a34a;margin-bottom:10px">Use your name <strong>${H.escHtml(u.name)}</strong> as reference</div>
+          <button onclick="H._topup.copyNumber('+263777341565')" style="background:#dcfce7;border:1px solid #86EFAC;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#15803d;cursor:pointer;font-family:inherit">
+            Copy Number
+          </button>
         </div>
 
-        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px">Payment Methods</div>
-        <div class="section-card">
-          <div class="mi" onclick="H.toast('EcoCash linked to '+H.currentUser().phone)">
-            <div class="mi-icon amber-ic">${I.card}</div>
-            <div class="mi-label">EcoCash · ${escHtml(u.phone)}</div>
-            <span style="font-size:11px;color:var(--n2);font-weight:700;background:var(--n4);padding:2px 8px;border-radius:10px">Primary</span>
+        <!-- Payment Details (Bank) -->
+        <div id="tuDetailsBank" style="display:none;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:14px;padding:16px;margin-bottom:4px">
+          <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:10px">Bank Transfer Details:</div>
+          <div style="font-size:13px;color:#1e40af;line-height:1.8">
+            <div><strong>Bank:</strong> CBZ Zimbabwe</div>
+            <div><strong>Account Name:</strong> Hostly Marketplace</div>
+            <div><strong>Account No:</strong> 03129840780054</div>
+            <div><strong>Branch:</strong> Harare Main</div>
           </div>
-          <div class="mi" onclick="H.toast('Coming soon')">
-            <div class="mi-icon blue-ic">${I.card}</div>
-            <div class="mi-label">Add USD Card</div>
-            <div class="mi-arrow">›</div>
-          </div>
+          <div style="font-size:12px;color:#3b82f6;margin-top:8px">Use your name <strong>${H.escHtml(u.name)}</strong> as reference</div>
         </div>
+
+        <div class="fg">
+          <div class="fl">Amount (USD)</div>
+          <input class="fi" id="tuAmt" type="number" min="1" step="1" placeholder="e.g. 10">
+        </div>
+
+        <div class="fg">
+          <div class="fl">Transaction Reference / ID</div>
+          <input class="fi" id="tuRef" placeholder="e.g. ECO1234567890" autocapitalize="characters">
+          <div style="font-size:11px;color:var(--sub);margin-top:4px">The reference number from your EcoCash / bank SMS</div>
+        </div>
+
+        <div id="tuErr" style="display:none;color:#ef4444;font-size:13px;font-weight:600;padding:6px 0"></div>
+
+        <button id="tuSubmitBtn" class="btn-pri" onclick="H._topup.submit()">Submit for Verification</button>
+        <div style="text-align:center;font-size:12px;color:var(--sub);margin-top:6px">Admin verifies within 24 hours · You'll get a notification</div>
+        <button class="btn-sec" onclick="H.goBack()">Cancel</button>
       </div>
     </div>`;
   };
 
-  H._wallet = {
-    topUp() {
-      H.modal({
-        title: 'Top Up Wallet',
-        body: `<div class="fl">Method</div>
-          <select class="fi" id="tuMethod"><option>EcoCash</option><option>OneMoney</option><option>USD Card (Visa/Mastercard)</option></select>
-          <div class="fl" style="margin-top:10px">Amount (USD)</div>
-          <input class="fi" type="number" id="tuAmt" placeholder="5.00" min="1" step="0.50">`,
-        confirmText: 'Top Up',
-        onConfirm: () => {
-          const amt = parseFloat(document.getElementById('tuAmt').value);
-          if (!amt || amt < 1) { H.toast('Min $1.00'); return false; }
-          const m = document.getElementById('tuMethod').value;
-          const u = H.currentUser();
-          u.walletUSD = +(u.walletUSD + amt).toFixed(2);
-          H.state.txns = H.state.txns || [];
-          H.state.txns.unshift({ id: uid(), userId: u.id, type: 'topup', amt, t: Date.now(), note: 'Top Up … ' + m });
-          H.saveState(); H.toast('+$' + amt.toFixed(2) + ' added'); H.renderPage('Payments');
+  pages.TopUp_after = function () {
+    H._topup = {
+      method: 'ecocash',
+      setMethod(m) {
+        this.method = m;
+        const eco  = document.getElementById('tuDetailsEco');
+        const bank = document.getElementById('tuDetailsBank');
+        const btnE = document.getElementById('tuMethodEco');
+        const btnB = document.getElementById('tuMethodBank');
+        if (m === 'ecocash') {
+          if (eco)  { eco.style.display  = ''; }
+          if (bank) { bank.style.display = 'none'; }
+          if (btnE) { btnE.style.borderColor = '#1A3A8F'; btnE.style.background = '#EFF6FF'; btnE.style.color = '#1A3A8F'; }
+          if (btnB) { btnB.style.borderColor = 'var(--border)'; btnB.style.background = 'var(--card)'; btnB.style.color = 'var(--sub)'; }
+        } else {
+          if (eco)  { eco.style.display  = 'none'; }
+          if (bank) { bank.style.display = ''; }
+          if (btnE) { btnE.style.borderColor = 'var(--border)'; btnE.style.background = 'var(--card)'; btnE.style.color = 'var(--sub)'; }
+          if (btnB) { btnB.style.borderColor = '#1A3A8F'; btnB.style.background = '#EFF6FF'; btnB.style.color = '#1A3A8F'; }
         }
-      });
-    },
+      },
+      copyNumber(num) {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(num).then(() => H.toast('Number copied!')).catch(() => H.toast(num));
+        } else {
+          H.toast(num);
+        }
+      },
+      submit() {
+        const amt    = parseFloat(document.getElementById('tuAmt')?.value);
+        const ref    = (document.getElementById('tuRef')?.value || '').trim();
+        const errEl  = document.getElementById('tuErr');
+        const btn    = document.getElementById('tuSubmitBtn');
+        const showErr = (m) => { if (errEl) { errEl.textContent = m; errEl.style.display = ''; } };
+
+        if (!amt || amt < 1)  { showErr('Enter an amount of at least $1.00'); return; }
+        if (amt > 10000)      { showErr('Maximum top-up is $10,000 per request'); return; }
+        if (!ref)             { showErr('Enter the transaction reference from your SMS'); return; }
+        if (ref.length < 5)   { showErr('Reference too short — check your SMS'); return; }
+
+        // Duplicate reference check
+        const exists = (H.state.topupRequests || []).some(r => r.reference === ref);
+        if (exists) { showErr('This reference has already been submitted'); return; }
+
+        if (errEl) errEl.style.display = 'none';
+        if (btn)   { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
+        const u = H.currentUser();
+        H.state.topupRequests = H.state.topupRequests || [];
+        H.state.topupRequests.push({
+          id: H.uid(), userId: u.id, userName: u.name,
+          amount: amt, method: this.method === 'ecocash' ? 'EcoCash' : 'Bank Transfer',
+          reference: ref, status: 'pending', t: Date.now()
+        });
+        H.saveState();
+        H.pushNotif && H.pushNotif(u.id, 'Top-up Submitted', `$${amt.toFixed(2)} top-up request received. Admin will verify within 24 hours.`, 'info');
+        H.toast('Request submitted! Admin will verify within 24 hours.');
+        H.goBack();
+      }
+    };
+  };
+
+  H._wallet = {
     withdraw() {
       const u = H.currentUser();
-      if ((u.walletUSD || 0) <= 0) { H.toast('Nothing to withdraw'); return; }
+      if (!u || (u.walletUSD || 0) <= 0) { H.toast('No balance to withdraw'); return; }
       H.modal({
         title: 'Withdraw to EcoCash',
-        body: `<div class="fl" onclick="H._addPaymentMethod('ecocash')" style="cursor:pointer">Amount</div>
-          <input class="fi" type="number" id="wdAmt" placeholder="${u.walletUSD.toFixed(2)}" max="${u.walletUSD}" step="0.50">
-          <p style="margin-top:8px;font-size:13px;color:var(--sub)">Sent to ${escHtml(u.phone)} via EcoCash. Processing fee: 3%.</p>`,
-        confirmText: 'Withdraw',
+        body: `<div style="background:#F0FDF4;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:#15803d">
+          Funds will be sent to <strong>${H.escHtml(u.phone || 'your EcoCash number')}</strong>.<br>Processing fee: 3% · Allow up to 24 hours.
+        </div>
+        <div class="fl">Amount (USD)</div>
+        <input class="fi" type="number" id="wdAmt" placeholder="${(u.walletUSD || 0).toFixed(2)}" max="${u.walletUSD}" step="1" min="1">`,
+        confirmText: 'Confirm Withdrawal',
         onConfirm: () => {
-          const amt = parseFloat(document.getElementById('wdAmt').value);
-          if (!amt || amt <= 0 || amt > u.walletUSD) { H.toast('Invalid amount'); return false; }
+          const amt = parseFloat(document.getElementById('wdAmt')?.value);
+          if (!amt || amt < 1)          { H.toast('Minimum withdrawal is $1.00'); return false; }
+          if (amt > (u.walletUSD || 0)) { H.toast('Insufficient balance'); return false; }
           u.walletUSD = +(u.walletUSD - amt).toFixed(2);
           H.state.txns = H.state.txns || [];
-          H.state.txns.unshift({ id: uid(), userId: u.id, type: 'withdraw', amt: -amt, t: Date.now(), note: 'Withdraw · EcoCash' });
-          H.saveState(); H.toast('Withdrawal of $' + amt.toFixed(2) + ' processing'); H.renderPage('Payments');
+          H.state.txns.unshift({ id: H.uid(), userId: u.id, type: 'withdraw', amt: -amt, t: Date.now(), note: `Withdraw · EcoCash · ${H.escHtml(u.phone || '')}` });
+          H.saveState();
+          H.toast(`Withdrawal of $${amt.toFixed(2)} processing`);
+          H.renderPage('Wallet');
         }
       });
     }
   };
-// Alias: make "Wallet" open the Payments page
-pages.Wallet = pages.Payments;
 
-  H.showTopUp = function() {
-    var u = H.currentUser();
-    if (!u) { H.requireAuth('Sign in to top up'); return; }
-    H.modal({
-      title: 'Top Up Wallet',
-      body: '<div style="font-size:14px;line-height:1.6">'
-        + '<div style="background:#e8f5e9;border-radius:10px;padding:14px;margin-bottom:14px">'
-        + '<div style="font-weight:700;margin-bottom:6px">How to Top Up:</div>'
-        + '<div>1. Send payment via EcoCash or Bank Transfer</div>'
-        + '<div>2. Use your name <strong>' + H.escHtml(u.name) + '</strong> as reference</div>'
-        + '<div>3. Submit this form - admin will verify and credit your wallet</div>'
-        + '</div>'
-        + '<div style="background:#f5f5f5;border-radius:10px;padding:14px;margin-bottom:14px">'
-        + '<div style="font-weight:700;margin-bottom:8px">Payment Details:</div>'
-        + '<div style="margin-bottom:6px">&#128242; <strong>EcoCash:</strong> +263 777 341 565</div>'
-        + '<div style="font-size:12px;color:#666">Reference: ' + H.escHtml(u.name) + '</div>'
-        + '</div>'
-        + '<div class="fg"><div class="fl">Amount (USD)</div><input class="fi" id="topupAmt" type="number" min="1" placeholder="Enter amount e.g. 10" style="margin-top:6px"></div>'
-        + '<div class="fg" style="margin-top:10px"><div class="fl">Payment Method</div><select class="fi" id="topupMethod" style="margin-top:6px"><option>EcoCash</option><option>Bank Transfer</option></select></div>'
-        + '<div class="fg" style="margin-top:10px"><div class="fl">Transaction Reference / ID</div><input class="fi" id="topupRef" placeholder="e.g. ECO1234567" style="margin-top:6px"></div>'
-        + '</div>',
-      confirmText: 'Submit for Verification',
-      onConfirm: function() {
-        var amt = parseFloat(document.getElementById('topupAmt').value);
-        var method = document.getElementById('topupMethod').value;
-        var ref = document.getElementById('topupRef').value.trim();
-        if (!amt || amt < 1) { H.toast('Enter a valid amount'); return false; }
-        if (!ref) { H.toast('Enter transaction reference'); return false; }
-        var request = {
-          id: H.uid(),
-          userId: u.id,
-          userName: u.name,
-          amount: amt,
-          method: method,
-          reference: ref,
-          status: 'pending',
-          t: Date.now()
-        };
-        H.state.topupRequests = H.state.topupRequests || [];
-        H.state.topupRequests.push(request);
-        H.saveState();
-        H.toast('Top-up request submitted! Admin will verify within 24hrs.');
-      }
-    });
-  };
+  // Legacy alias
+  H.showTopUp = () => H.openInner('TopUp');
 
 })(window.H);
 
