@@ -1,10 +1,46 @@
-﻿'use strict';
+'use strict';
 (function(H) {
   const state = H.state;
   let authBusy = false;
 
   function sb() { return (window.supabase && window.supabase.auth) ? window.supabase : null; }
   function setAuthBusy(v) { authBusy = v; const r = document.getElementById('authCard'); if(r) r.querySelectorAll('button').forEach(function(b){b.disabled=v;}); }
+
+  function validateEmail(e) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
+  }
+
+  function validatePhone(p) {
+    if (!p) return true;
+    return /^(\+263|0)[0-9]{9}$/.test(p.replace(/\s/g,''));
+  }
+
+  function passwordStrength(p) {
+    var s = 0;
+    if (p.length >= 8) s++;
+    if (p.length >= 12) s++;
+    if (/[A-Z]/.test(p)) s++;
+    if (/[0-9]/.test(p)) s++;
+    if (/[^A-Za-z0-9]/.test(p)) s++;
+    if (s <= 1) return { label:'Weak',   color:'#ef4444', width:'25%'  };
+    if (s <= 2) return { label:'Fair',   color:'#f97316', width:'50%'  };
+    if (s <= 3) return { label:'Good',   color:'#eab308', width:'75%'  };
+    return          { label:'Strong', color:'#22c55e', width:'100%' };
+  }
+
+  function updatePassStrength() {
+    var p   = document.getElementById('newPass');
+    var bar = document.getElementById('passStrengthBar');
+    var lbl = document.getElementById('passStrengthLabel');
+    if (!p || !bar || !lbl) return;
+    if (!p.value) { bar.style.width='0'; lbl.textContent=''; return; }
+    var s = passwordStrength(p.value);
+    bar.style.width      = s.width;
+    bar.style.background = s.color;
+    lbl.textContent      = s.label;
+    lbl.style.color      = s.color;
+  }
+  H._updatePassStrength = updatePassStrength;
 
   // ── LOGO TAP → ADMIN ─────────────────────────────
   H.authLogoTap = function() {
@@ -30,7 +66,7 @@
     card.innerHTML = ''
       + '<div style="text-align:center;margin-bottom:16px"><div style="font-size:20px;font-weight:700;color:var(--text)">Sign In</div></div>'
       + '<div class="fg"><div class="fl">Email</div><input class="fi" id="emailIn" type="email" placeholder="you@example.com" autocomplete="email"></div>'
-      + '<div class="fg"><div class="fl">Password</div><input class="fi" id="passIn" type="password" placeholder="Password" onkeydown="if(event.key===\'Enter\')H.authSignIn()"></div>'
+      + '<div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="fl" style="margin-bottom:0">Password</span><span onclick="H.authForgotPassword()" style="font-size:12px;color:#F5A623;cursor:pointer;font-weight:500">Forgot password?</span></div><input class="fi" id="passIn" type="password" placeholder="Password" onkeydown="if(event.key===\'Enter\')H.authSignIn()" autocomplete="current-password"></div>'
       + '<button class="auth-btn" onclick="H.authSignIn()">Sign In</button>'
       + '<button class="auth-btn secondary" onclick="H.authStepEmail()">&larr; Back</button>';
     setTimeout(function(){ var e=document.getElementById('emailIn'); if(e) e.focus(); }, 100);
@@ -42,33 +78,114 @@
     var card = document.getElementById('authCard');
     if (!card) return;
     card.innerHTML = ''
-      + '<div style="text-align:center;margin-bottom:16px"><div style="font-size:20px;font-weight:700;color:var(--text)">Create Account</div></div>'
-      + '<div class="fg"><div class="fl">Full Name</div><input class="fi" id="newName" placeholder="e.g. Tendai Moyo"></div>'
-      + '<div class="fg"><div class="fl">Email</div><input class="fi" id="newEmail" type="email" placeholder="you@example.com"></div>'
-      + '<div class="fg"><div class="fl">Phone (optional)</div><input class="fi" id="newPhone" type="tel" placeholder="+263 77 123 4567"></div>'
-      + '<div class="fg"><div class="fl">Password</div><input class="fi" id="newPass" type="password" placeholder="min 8 characters"></div>'
-      + '<div class="fg"><div class="fl">Confirm Password</div><input class="fi" id="newPass2" type="password" placeholder="re-enter password"></div>'
-      + '<label style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:rgba(255,255,255,.75);margin-bottom:10px;cursor:pointer"><input id="ageConsent" type="checkbox" style="margin-top:2px"><span>I am 18+ and agree to Terms &amp; Privacy Policy</span></label>'
+      + '<div style="text-align:center;margin-bottom:16px"><div style="font-size:20px;font-weight:700;color:var(--text)">Create Account</div><div style="font-size:13px;color:var(--sub);margin-top:2px">Join Zimbabwe\'s marketplace</div></div>'
+      + '<div class="fg"><div class="fl">Full Name</div><input class="fi" id="newName" placeholder="e.g. Tendai Moyo" autocomplete="name"></div>'
+      + '<div class="fg"><div class="fl">Email</div><input class="fi" id="newEmail" type="email" placeholder="you@example.com" autocomplete="email"></div>'
+      + '<div class="fg"><div class="fl">Phone (optional)</div><input class="fi" id="newPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel"></div>'
+      + '<div class="fg"><div class="fl">Password</div><input class="fi" id="newPass" type="password" placeholder="8+ chars, uppercase &amp; number" oninput="H._updatePassStrength()" autocomplete="new-password"><div style="height:4px;background:rgba(255,255,255,.12);border-radius:2px;margin-top:6px"><div id="passStrengthBar" style="height:100%;border-radius:2px;transition:all .3s;width:0"></div></div><div id="passStrengthLabel" style="font-size:11px;margin-top:3px;text-align:right;height:14px"></div></div>'
+      + '<div class="fg"><div class="fl">Confirm Password</div><input class="fi" id="newPass2" type="password" placeholder="re-enter password" autocomplete="new-password"></div>'
+      + '<label style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:rgba(255,255,255,.75);margin-bottom:10px;cursor:pointer"><input id="ageConsent" type="checkbox" style="margin-top:2px"><span>I am 18+ and agree to <span onclick="event.stopPropagation();H.authShowDoc(\'terms\')" style="color:#F5A623;text-decoration:underline;cursor:pointer">Terms</span> &amp; <span onclick="event.stopPropagation();H.authShowDoc(\'privacy\')" style="color:#F5A623;text-decoration:underline;cursor:pointer">Privacy Policy</span></span></label>'
       + '<button class="auth-btn" onclick="H.authSignUp()">Create Account</button>'
       + '<button class="auth-btn secondary" onclick="H.authStepEmail()">&larr; Back to Sign In</button>';
     setTimeout(function(){ var e=document.getElementById('newName'); if(e) e.focus(); }, 100);
   };
 
+  // ── OTP VERIFICATION ─────────────────────────────
+  H.authShowOtp = function(email) {
+    var card = document.getElementById('authCard');
+    if (!card) return;
+    H._otpEmail = email;
+    card.innerHTML = ''
+      + '<div style="text-align:center;margin-bottom:20px">'
+      + '<div style="font-size:42px;margin-bottom:10px">📧</div>'
+      + '<div style="font-size:20px;font-weight:700;color:var(--text)">Verify Your Email</div>'
+      + '<div style="font-size:13px;color:var(--sub);margin-top:8px;line-height:1.6">We sent a 6-digit code to<br><strong style="color:var(--text)">' + H.escHtml(email) + '</strong></div>'
+      + '</div>'
+      + '<div class="fg"><div class="fl" style="text-align:center">Verification Code</div><input class="fi" id="otpIn" type="text" inputmode="numeric" maxlength="6" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" style="letter-spacing:10px;text-align:center;font-size:24px;font-weight:700" onkeydown="if(event.key===\'Enter\')H.authVerifyOtp()"></div>'
+      + '<button class="auth-btn" onclick="H.authVerifyOtp()">Verify &amp; Continue</button>'
+      + '<div style="text-align:center;margin-top:12px;font-size:13px;color:var(--sub)">Didn\'t get the code? <span onclick="H.authResendOtp()" style="color:#F5A623;font-weight:600;cursor:pointer">Resend</span></div>'
+      + '<div style="text-align:center;margin-top:6px;font-size:12px;color:var(--sub)">Check spam if not received within 2 minutes</div>'
+      + '<button class="auth-btn secondary" style="margin-top:16px" onclick="H.authStepEmail()">&larr; Back to Sign In</button>';
+    setTimeout(function(){ var e=document.getElementById('otpIn'); if(e) e.focus(); }, 100);
+  };
+
+  H.authVerifyOtp = async function() {
+    var otp = ((document.getElementById('otpIn')||{}).value||'').trim().replace(/\s/g,'');
+    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) { H.toast('Enter the 6-digit code from your email'); return; }
+    var c = sb();
+    if (!c) { H.toast('Connection error — try again'); return; }
+    setAuthBusy(true);
+    var res = await c.auth.verifyOtp({ email: H._otpEmail, token: otp, type: 'signup' });
+    if (res.error) { H.toast('Invalid or expired code. Try resending.'); setAuthBusy(false); return; }
+    state.currentUserId = res.data.user.id;
+    await H.loadProfile(res.data.user.id);
+    H.saveState();
+    setAuthBusy(false);
+    H.toast('Email verified! Welcome to Hostly');
+    H.boot();
+  };
+
+  H.authResendOtp = async function() {
+    if (!H._otpEmail) return;
+    var c = sb();
+    if (!c) { H.toast('Connection error'); return; }
+    var res = await c.auth.resend({ type: 'signup', email: H._otpEmail });
+    H.toast(res.error ? res.error.message : 'Code resent — check your inbox');
+  };
+
+  // ── FORGOT PASSWORD ──────────────────────────────
+  H.authForgotPassword = function() {
+    var card = document.getElementById('authCard');
+    if (!card) return;
+    card.innerHTML = ''
+      + '<div style="text-align:center;margin-bottom:16px"><div style="font-size:20px;font-weight:700;color:var(--text)">Reset Password</div><div style="font-size:13px;color:var(--sub);margin-top:4px">Enter your email to receive a reset link</div></div>'
+      + '<div class="fg"><div class="fl">Email</div><input class="fi" id="resetEmail" type="email" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key===\'Enter\')H.authSendReset()"></div>'
+      + '<button class="auth-btn" onclick="H.authSendReset()">Send Reset Link</button>'
+      + '<button class="auth-btn secondary" onclick="H.authShowEmailForm()">&larr; Back to Sign In</button>';
+    setTimeout(function(){ var e=document.getElementById('resetEmail'); if(e) e.focus(); }, 100);
+  };
+
+  H.authSendReset = async function() {
+    var email = ((document.getElementById('resetEmail')||{}).value||'').trim();
+    if (!validateEmail(email)) { H.toast('Enter a valid email address'); return; }
+    var c = sb();
+    if (!c) { H.toast('Connection error — try again'); return; }
+    setAuthBusy(true);
+    var res = await c.auth.resetPasswordForEmail(email);
+    setAuthBusy(false);
+    if (res.error) { H.toast(res.error.message); return; }
+    var card = document.getElementById('authCard');
+    if (!card) return;
+    card.innerHTML = ''
+      + '<div style="text-align:center;padding:24px 0">'
+      + '<div style="font-size:42px;margin-bottom:12px">✉️</div>'
+      + '<div style="font-size:18px;font-weight:700;color:var(--text)">Check Your Email</div>'
+      + '<div style="font-size:14px;color:var(--sub);margin-top:10px;line-height:1.6">A reset link was sent to<br><strong style="color:var(--text)">' + H.escHtml(email) + '</strong><br><br>Click the link in the email to set a new password. Check your spam folder if you don\'t see it.</div>'
+      + '</div>'
+      + '<button class="auth-btn secondary" onclick="H.authShowEmailForm()">&larr; Back to Sign In</button>';
+  };
+
   // ── SIGN IN ──────────────────────────────────────
   H.authSignIn = async function() {
     if (authBusy) return;
-    var email = document.getElementById('emailIn').value.trim();
-    var password = document.getElementById('passIn').value.trim();
-    if (!email||!password) { H.toast('Enter email and password'); return; }
+    var email    = document.getElementById('emailIn').value.trim();
+    var password = document.getElementById('passIn').value;
+    if (!validateEmail(email)) { H.toast('Enter a valid email address'); return; }
+    if (!password) { H.toast('Enter your password'); return; }
     setAuthBusy(true);
     var c = sb();
     if (c) {
       var res = await c.auth.signInWithPassword({email:email, password:password});
-      if (res.error) { H.toast(res.error.message==='Invalid login credentials'?'Wrong email or password':res.error.message); setAuthBusy(false); return; }
+      if (res.error) {
+        var msg = res.error.message;
+        if (msg==='Invalid login credentials') msg = 'Wrong email or password';
+        if (msg.includes('Email not confirmed')) msg = 'Please verify your email first';
+        H.toast(msg); setAuthBusy(false); return;
+      }
       state.currentUserId = res.data.user.id;
       await H.loadProfile(res.data.user.id);
       var cu = H.currentUser();
-      if (cu && email === 'admin@hostly.co.zw') cu.role = 'admin';
+      if (cu && email === 'chakusaprince@gmail.com') cu.role = 'admin';
       H.saveState();
       setAuthBusy(false);
       H.boot();
@@ -83,36 +200,54 @@
   // ── SIGN UP ──────────────────────────────────────
   H.authSignUp = async function() {
     if (authBusy) return;
-    var name = document.getElementById('newName').value.trim();
-    var email = document.getElementById('newEmail').value.trim();
-    var phone = document.getElementById('newPhone').value.trim();
-    var password = document.getElementById('newPass').value.trim();
-    var password2 = document.getElementById('newPass2').value.trim();
-    var ageConsent = document.getElementById('ageConsent').checked;
-    if (name.length<2) { H.toast('Enter your name'); return; }
-    if (!email) { H.toast('Enter a valid email'); return; }
-    if (password.length<8) { H.toast('Password must be at least 8 characters'); return; }
-    if (password!==password2) { H.toast('Passwords do not match'); return; }
-    if (!ageConsent) { H.toast('Please confirm age and policy agreement'); return; }
+    var name      = document.getElementById('newName').value.trim();
+    var email     = document.getElementById('newEmail').value.trim();
+    var phone     = document.getElementById('newPhone').value.trim();
+    var password  = document.getElementById('newPass').value;
+    var password2 = document.getElementById('newPass2').value;
+    var consent   = document.getElementById('ageConsent').checked;
+
+    if (name.length < 2)           { H.toast('Enter your full name'); return; }
+    if (!validateEmail(email))     { H.toast('Enter a valid email address'); return; }
+    if (!validatePhone(phone))     { H.toast('Enter a valid Zimbabwe phone number (+263 or 07X)'); return; }
+    if (password.length < 8)       { H.toast('Password must be at least 8 characters'); return; }
+    if (!/[A-Z]/.test(password))   { H.toast('Password must include at least one uppercase letter'); return; }
+    if (!/[0-9]/.test(password) && !/[^A-Za-z0-9]/.test(password)) {
+      H.toast('Password must include a number or special character'); return;
+    }
+    if (password !== password2)    { H.toast('Passwords do not match'); return; }
+    if (!consent)                  { H.toast('Please confirm you are 18+ and agree to our policies'); return; }
+
     setAuthBusy(true);
     var c = sb();
     if (c) {
-      var res = await c.auth.signUp({email:email, password:password});
-      if (res.error) { H.toast(res.error.message); setAuthBusy(false); return; }
+      var res = await c.auth.signUp({email:email, password:password, options:{data:{full_name:name}}});
+      if (res.error) {
+        var msg = res.error.message;
+        if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('unique constraint')) {
+          msg = 'Email already registered. Sign in instead.';
+        }
+        H.toast(msg); setAuthBusy(false); return;
+      }
       var userId = res.data.user.id;
       await c.from('profiles').upsert({id:userId, name:name, phone:phone||null, verified:false});
       var u = {id:userId,email:email,name:name,phone:phone||'',avatar:null,verified:false,walletUSD:0,language:'English',joinedAt:Date.now(),role:'user',status:'active',banReason:null,banUntil:null,blocked:[]};
-      state.users.push(u);
+      (state.users = state.users||[]).push(u);
       state.currentUserId = userId;
-      H.saveState(); setAuthBusy(false);
-      H.toast('Account created! Welcome to Hostly');
-      H.boot();
+      H.saveState();
+      setAuthBusy(false);
+      if (res.data.session) {
+        H.toast('Account created! Welcome to Hostly');
+        H.boot();
+      } else {
+        H.authShowOtp(email);
+      }
       return;
     }
     var exists = (state.users||[]).some(function(u){ return (u.email||'').toLowerCase()===email.toLowerCase(); });
-    if (exists) { H.toast('Email already registered'); setAuthBusy(false); return; }
+    if (exists) { H.toast('Email already registered. Sign in instead.'); setAuthBusy(false); return; }
     var uid2 = H.uid();
-    state.users.push({id:uid2,email:email,name:name,phone:phone||'',avatar:null,verified:false,walletUSD:0,language:'English',joinedAt:Date.now(),role:'user',status:'active',banReason:null,banUntil:null,blocked:[],_localPassword:password});
+    (state.users = state.users||[]).push({id:uid2,email:email,name:name,phone:phone||'',avatar:null,verified:false,walletUSD:0,language:'English',joinedAt:Date.now(),role:'user',status:'active',banReason:null,banUntil:null,blocked:[],_localPassword:password});
     state.currentUserId = uid2;
     H.saveState(); setAuthBusy(false);
     H.toast('Account created! Welcome to Hostly');
@@ -125,18 +260,17 @@
     if (!card) return;
     card.innerHTML = ''
       + '<div style="text-align:center;margin-bottom:16px"><div style="font-size:20px;font-weight:700;color:var(--text)">Admin Portal</div><div style="font-size:13px;color:var(--sub)">Restricted access</div></div>'
-      + '<div class="fg"><div class="fl">Admin Email</div><input class="fi" id="admEmailPage" type="email" value="admin@hostly.co.zw"></div>'
-      + '<div class="fg"><div class="fl">Password</div><input class="fi" id="admPassPage" type="password" placeholder="Password" onkeydown="if(event.key===\'Enter\')H.authAdminSignInPage()"></div>'
+      + '<div class="fg"><div class="fl">Admin Email</div><input class="fi" id="admEmailPage" type="email" autocomplete="username"></div>'
+      + '<div class="fg"><div class="fl">Password</div><input class="fi" id="admPassPage" type="password" placeholder="Password" onkeydown="if(event.key===\'Enter\')H.authAdminSignInPage()" autocomplete="current-password"></div>'
       + '<button class="auth-btn" onclick="H.authAdminSignInPage()">Admin Sign In</button>'
       + '<button class="auth-btn secondary" onclick="H.authStepEmail()">&larr; Back</button>';
-    setTimeout(function(){ var p=document.getElementById('admPassPage'); if(p) p.focus(); }, 100);
+    setTimeout(function(){ var p=document.getElementById('admEmailPage'); if(p) p.focus(); }, 100);
   };
 
   H.authAdminSignInPage = async function() {
-    var email = (document.getElementById('admEmailPage')||{}).value;
-    var pass = (document.getElementById('admPassPage')||{}).value;
+    var email = ((document.getElementById('admEmailPage')||{}).value||'').trim();
+    var pass  = ((document.getElementById('admPassPage')||{}).value||'').trim();
     if (!email||!pass) { H.toast('Enter credentials'); return; }
-    email = email.trim(); pass = pass.trim();
     var c = sb();
     if (!c) { H.toast('Connection error - refresh page'); return; }
     H.toast('Signing in...');
@@ -190,7 +324,7 @@
     H.authPage();
   };
 
-  // ── SOCIAL AUTH STUBS ─────────────────────────────
+  // ── SOCIAL AUTH ───────────────────────────────────
   H.authGoogle = async function() {
     const c = sb();
     if (!c) { H.toast('Sign-in service unavailable'); return; }
