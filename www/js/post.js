@@ -8,7 +8,7 @@
 
   pages.Post = function () {
     if (!H.currentUser()) {
-      return `<div class="page active">${H.innerTopbar('Post a Listing')}<div style="padding: 20px;">${H.emptyState('Sign In Required', 'Sign in to post listings and reach millions of buyers.', 'Sign In', 'H.requireLogin(\"post listings\")')}</div></div>`;
+      return `<div class="page active">${H.innerTopbar('Post a Listing')}<div style="padding: 20px;">${H.emptyState('Sign In Required', 'Sign in to post listings and reach millions of buyers.', 'Sign In', "H.requireAuth('Sign in to post listings')")}</div></div>`;
     }
     postState = {
       step: 1, cat: null, title: '', desc: '', price: '',
@@ -200,8 +200,8 @@
         const img = new Image();
         img.onload = () => {
           let w = img.width, h = img.height;
-          if (w > h && w > maxDim) { h = h * maxDim / w; w = maxDim; }
-          else if (h > maxDim)     { w = w * maxDim / h; h = maxDim; }
+          if (w > h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else if (h > maxDim)     { w = Math.round(w * maxDim / h); h = maxDim; }
           const c = document.createElement('canvas');
           c.width = w; c.height = h;
           c.getContext('2d').drawImage(img, 0, 0, w, h);

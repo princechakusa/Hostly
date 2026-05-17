@@ -176,7 +176,7 @@
   H.toggleSetting = function (k, btn) {
     const u = H.currentUser();
     u.settings = u.settings || {};
-    u.settings[k] = !u.settings[k];
+    u.settings[k] = !(u.settings[k] !== false);
     btn.classList.toggle('on', u.settings[k]);
     btn.setAttribute('aria-checked', u.settings[k] ? 'true' : 'false');
     saveState();
