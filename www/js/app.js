@@ -346,6 +346,8 @@ window.H = {
     } catch(e) { console.warn('Boot fetch failed:', e); }
     if(typeof H._setupRealtimeMessages==='function') H._setupRealtimeMessages();
     if(typeof H.syncConversations==='function') H.syncConversations();
+    if(typeof H.syncNotifications==='function') H.syncNotifications();
+    if(typeof H._setupRealtimeNotifs==='function') H._setupRealtimeNotifs();
     this._initPullToRefresh();
   },
 
