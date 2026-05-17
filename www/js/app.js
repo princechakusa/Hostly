@@ -808,24 +808,43 @@ window.H = {
     const sheet=document.getElementById('actionSheet');
     const bg=document.getElementById('sheetBg');
     const I=this.ICONS;
-    const item=(label,icon,page)=>`<button class="sheet-item" onclick="H.closeSheet();H.state._backToAccount=true;setTimeout(()=>H.openInner('${page}'),50)"><span class="sheet-icon">${icon}</span><span class="sheet-label">${label}</span></button>`;
+    const nav=(page)=>`H.closeSheet();H.state._backToAccount=true;setTimeout(()=>H.openInner('${page}'),50)`;
+    const item=(label,icon,page,badge)=>`<button class="sheet-item" onclick="${nav(page)}"><span class="sheet-icon">${icon}</span><span class="sheet-label">${label}</span>${badge?`<span style="margin-left:auto;background:#F5A623;color:#1A3A8F;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:800">${badge}</span>`:''}</button>`;
+
+    const activeAds=(this.state.listings||[]).filter(l=>l.sellerId===u.id&&l.status==='active').length;
+    const savedAds=((this.state.saves||{})[u.id]||[]).length;
+    const unread=(this.state.conversations||[]).reduce((n,c)=>c.members.includes(u.id)?n+(c.messages||[]).filter(m=>m.from!==u.id&&!m.read).length:n,0);
+
     sheet.innerHTML=`
-      <div class="sheet-header">Account Menu</div>
-      ${item('My Profile',I.user,'Profile')}
-      ${item('My Listings',I.doc,'MyListings')}
-      ${item('Saved & Favorites',I.heart,'Favorites')}
-      ${item('Wallet & Payments',I.wallet,'Wallet')}
-      ${item('Settings',I.settings,'Settings')}
-      ${item('Help & Support',I.help,'Help')}
-      <button class="sheet-item" onclick="H.closeSheet();H.state._backToAccount=true;setTimeout(()=>H.openInner('About'),50)">
-        <span class="sheet-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
-        <span class="sheet-label">About Hostly</span>
-      </button>
-      <button class="sheet-item" onclick="H.closeSheet();H.state._backToAccount=true;setTimeout(()=>H.openInner('Ads'),50)">
-        <span class="sheet-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-        <span class="sheet-label">Advertise with Us</span>
-      </button>
-      <button class="sheet-item danger" onclick="H.logout();H.closeSheet()">
+      <!-- User info header -->
+      <div onclick="${nav('Profile')}" style="display:flex;align-items:center;gap:14px;padding:16px 18px 14px;border-bottom:1px solid var(--border);cursor:pointer">
+        <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:#1A3A8F14;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;font-weight:800;color:#1A3A8F;border:2px solid #1A3A8F22">
+          ${u.avatar?`<img src="${this.escHtml(u.avatar)}" style="width:100%;height:100%;object-fit:cover">`:this.initials(u.name)}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${this.escHtml(u.name||'User')}</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${this.escHtml(u.email||'')}</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:1px">${this.escHtml(u.phone||'No phone')}</div>
+        </div>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--sub)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <!-- Quick stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border)">
+        ${[['Ads',activeAds,'MyListings'],['Saved',savedAds,'Favorites'],['Inbox',unread,'Messages']].map(([l,v,p])=>`
+          <div onclick="${p==='Messages'?'H.closeSheet();setTimeout(()=>H.navTo(\'Messages\'),50)':nav(p)}" style="padding:12px 4px;text-align:center;cursor:pointer;border-right:1px solid var(--border)">
+            <div style="font-size:20px;font-weight:800;color:#1A3A8F">${v}</div>
+            <div style="font-size:10px;color:var(--sub);font-weight:600">${l}</div>
+          </div>`).join('')}
+      </div>
+
+      ${item('My Listings',I.doc,'MyListings',activeAds||'')}
+      ${item('Saved & Favorites',I.heart,'Favorites',savedAds||'')}
+      ${item('Wallet & Payments',I.wallet,'Wallet','')}
+      ${item('Settings',I.settings,'Settings','')}
+      ${item('Security & Password','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>','SecuritySettings','')}
+      ${item('Help & Support',I.help,'Help','')}
+      <button class="sheet-item danger" onclick="H.closeSheet();setTimeout(()=>H.logout(),50)">
         <span class="sheet-icon">${I.logout}</span>
         <span class="sheet-label">Sign Out</span>
       </button>

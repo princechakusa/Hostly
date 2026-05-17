@@ -7,19 +7,28 @@
     return `<div class="page active">
       ${H.innerTopbar('Change Password')}
       <div class="form-wrap">
-        <div class="fg">
-          <div class="fl">Current Password</div>
-          <input class="fi" type="password" id="curPass" placeholder="Enter current password">
+        <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:13px;color:#1E40AF;line-height:1.5">
+          Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol.
         </div>
         <div class="fg">
           <div class="fl">New Password</div>
-          <input class="fi" type="password" id="newPass" placeholder="Enter new password">
+          <div style="position:relative">
+            <input class="fi" type="password" id="newPass" placeholder="Enter new password" style="padding-right:44px"
+              oninput="H._changePassword.checkStrength(this.value)">
+            <button type="button" onclick="H._changePassword.toggleVis('newPass',this)"
+              style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--sub);cursor:pointer;padding:4px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+          <div id="passStrength" style="margin-top:6px;font-size:12px;font-weight:600"></div>
         </div>
         <div class="fg">
           <div class="fl">Confirm New Password</div>
-          <input class="fi" type="password" id="confPass" placeholder="Confirm new password">
+          <input class="fi" type="password" id="confPass" placeholder="Re-enter new password"
+            onkeydown="if(event.key==='Enter')H._changePassword.save()">
         </div>
-        <button class="btn-pri" onclick="H._changePassword.save()">Update Password</button>
+        <div id="cpErrMsg" style="display:none;font-size:13px;color:#EF4444;padding:6px 0;font-weight:600"></div>
+        <button id="cpSaveBtn" class="btn-pri" onclick="H._changePassword.save()">Update Password</button>
         <button class="btn-sec" onclick="H.goBack()">Cancel</button>
       </div>
     </div>`;
@@ -27,18 +36,56 @@
 
   pages.ChangePassword_after = function () {
     H._changePassword = {
-      save: () => {
-        const cur  = document.getElementById('curPass')?.value;
-        const nw   = document.getElementById('newPass')?.value;
-        const conf = document.getElementById('confPass')?.value;
-        const u    = H.currentUser();
-        if (!cur || !nw || !conf)      { H.toast('Fill in all fields'); return; }
-        if (cur !== u.password)        { H.toast('Current password is incorrect'); return; }
-        if (nw.length < 6)             { H.toast('New password must be at least 6 characters'); return; }
-        if (nw !== conf)               { H.toast('Passwords do not match'); return; }
-        u.password = nw;
-        H.saveState();
-        H.toast('Password updated successfully');
+      toggleVis: (id, btn) => {
+        const inp = document.getElementById(id);
+        if (!inp) return;
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      },
+      checkStrength: (val) => {
+        const el = document.getElementById('passStrength');
+        if (!el) return;
+        if (!val) { el.textContent = ''; return; }
+        const checks = [val.length >= 8, /[A-Z]/.test(val), /[a-z]/.test(val), /[0-9]/.test(val), /[^A-Za-z0-9]/.test(val)];
+        const score = checks.filter(Boolean).length;
+        const labels = ['','Very weak','Weak','Fair','Strong','Very strong'];
+        const colors = ['','#EF4444','#F59E0B','#EAB308','#22C55E','#16A34A'];
+        el.textContent = labels[score] || '';
+        el.style.color = colors[score] || '';
+      },
+      save: async () => {
+        const nw   = (document.getElementById('newPass')?.value || '').trim();
+        const conf = (document.getElementById('confPass')?.value || '').trim();
+        const btn  = document.getElementById('cpSaveBtn');
+        const errEl = document.getElementById('cpErrMsg');
+        const showErr = (msg) => { if(errEl){errEl.textContent=msg;errEl.style.display='';} };
+
+        if (!nw || !conf) { showErr('Please fill in both password fields'); return; }
+        if (nw.length < 8) { showErr('Password must be at least 8 characters'); return; }
+        if (!/[A-Z]/.test(nw)) { showErr('Password must include at least one uppercase letter'); return; }
+        if (!/[a-z]/.test(nw)) { showErr('Password must include at least one lowercase letter'); return; }
+        if (!/[0-9]/.test(nw)) { showErr('Password must include at least one number'); return; }
+        if (!/[^A-Za-z0-9]/.test(nw)) { showErr('Password must include at least one symbol (e.g. !@#$)'); return; }
+        if (nw !== conf) { showErr('Passwords do not match'); return; }
+
+        if (errEl) errEl.style.display = 'none';
+        if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
+
+        const c = window.supabase && typeof window.supabase.from === 'function' ? window.supabase : null;
+        if (c && c.auth) {
+          const res = await c.auth.updateUser({ password: nw });
+          if (res && res.error) {
+            if (btn) { btn.disabled = false; btn.textContent = 'Update Password'; }
+            showErr(res.error.message || 'Password update failed. Try again.');
+            return;
+          }
+        } else {
+          // Fallback for local-only mode
+          const u = H.currentUser();
+          if (u) { u._localPassword = nw; H.saveState(); }
+        }
+
+        if (btn) { btn.disabled = false; btn.textContent = 'Update Password'; }
+        H.toast('Password updated successfully!');
         H.goBack();
       }
     };

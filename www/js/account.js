@@ -2,316 +2,77 @@
 (function (H) {
   const pages = H.pages;
 
-  // --- Profile Page -----------------------------------------
-  pages.Profile = function () {
+  // ── Account Hub ───────────────────────────────────────────
+  // A full-screen version of the account centre, reachable via
+  // H.openInner('AccountHub') if needed; the bottom-nav tab still
+  // opens the compact sheet via H.showAccountMenu().
+  pages.AccountHub = function () {
     const u = H.currentUser();
-    if (!u) return H.emptyState('Not logged in', 'Please sign in to continue', 'Go Home', "H.navTo('Home')");
-
-    const verified = u.verified ? '? Verified' : '? Not Verified';
-    const verifiedClass = u.verified ? 'verified' : 'unverified';
-    const avgRating = u.ratings && u.ratings.length > 0 
-      ? (u.ratings.reduce((a,b) => a+b, 0) / u.ratings.length).toFixed(1) 
-      : 'N/A';
-    const ratingCount = u.ratings ? u.ratings.length : 0;
-
-    return `<div class="page active">
-      ${H.innerTopbar('My Profile')}
-      <div class="profile-hero">
-        <div class="profile-pic">
-          ${u.avatar 
-            ? `<img src="${u.avatar}" alt="${H.escHtml(u.name)}">` 
-            : `<div class="profile-initials">${H.initials(u.name)}</div>`}
-        </div>
-        <div class="profile-info">
-          <div class="profile-name">${H.escHtml(u.name || 'User')}</div>
-          <div class="profile-phone">?? ${H.escHtml(u.phone || 'N/A')}</div>
-          <div class="profile-status ${verifiedClass}">
-            ${u.verified ? '?' : '?'} ${verified}
-          </div>
-        </div>
-      </div>
-
-      <div class="profile-stats">
-        <div class="stat-box">
-          <div class="stat-val">${u.listings ? u.listings.length : 0}</div>
-          <div class="stat-label">Active Listings</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-val">${avgRating}</div>
-          <div class="stat-label">Rating (${ratingCount})</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-val">${u.totalSold || 0}</div>
-          <div class="stat-label">Sold Items</div>
-        </div>
-      </div>
-
-      <div class="form-wrap">
-        <button class="btn-pri" onclick="H.openInner('EditProfile')">?? Edit Profile</button>
-        <button class="btn-sec" onclick="H.openInner('ProfileVerify')">?? Verify Identity</button>
-        <button class="btn-sec" onclick="H.openInner('Reviews')">? Reviews & Ratings</button>
-      </div>
-
-      <div class="section-box">
-        <div class="section-title">Account Info</div>
-        <div class="info-row">
-          <span class="info-label">Email</span>
-          <span class="info-val">${H.escHtml(u.email || 'N/A')}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Joined</span>
-          <span class="info-val">${new Date(u.joinedAt || u.createdAt || Date.now()).toLocaleDateString()}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Status</span>
-          <span class="info-val">${H.escHtml(u.status || 'Active')}</span>
-        </div>
-      </div>
-
-      <div style="height:20px"></div>
-    </div>`;
-  };
-
-  // --- Edit Profile Page ------------------------------------
-  pages.EditProfile = function () {
-    const u = H.currentUser();
-    if (!u) return H.emptyState('Not logged in', 'Please sign in to continue');
-
-    return `<div class="page active">
-      ${H.innerTopbar('Edit Profile')}
-      <div class="form-wrap">
-        <div class="fg">
-          <div class="fl">Full Name</div>
-          <input class="fi" id="editName" value="${H.escHtml(u.name || '')}" placeholder="Your full name">
-        </div>
-        
-        <div class="fg">
-          <div class="fl">Phone Number</div>
-          <input class="fi" id="editPhone" value="${H.escHtml(u.phone || '')}" placeholder="+263 77..." type="tel">
-        </div>
-
-        <div class="fg">
-          <div class="fl">Bio</div>
-          <textarea class="fi" rows="3" id="editBio" placeholder="Tell buyers about yourself...">${H.escHtml(u.bio || '')}</textarea>
-        </div>
-
-        <div class="fg">
-          <div class="fl">Profile Picture</div>
-          <label class="img-upload-zone" for="profilePicFile">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <div class="img-upload-title">Tap to change</div>
-            <div class="img-upload-sub">JPG, PNG · Max 2MB</div>
-          </label>
-          <input type="file" id="profilePicFile" accept="image/*" capture="user" style="display:none" onchange="H._editProfile.onPicChange(event)">
-        </div>
-
-        <div class="btn-group">
-          <button class="btn-pri" onclick="H._editProfile.save()">Save Changes</button>
-          <button class="btn-sec" onclick="H.goBack()">Cancel</button>
-        </div>
-      </div>
-    </div>`;
-  };
-
-  pages.EditProfile_after = function () {
-    H._editProfile = {
-      onPicChange: async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const compressed = await H.compressImage(file, 300, 0.85);
-        const u = H.currentUser();
-        u.avatar = compressed;
-        H.saveState();
-      },
-      save: () => {
-        const u = H.currentUser();
-        u.name = document.getElementById('editName').value.trim();
-        u.phone = document.getElementById('editPhone').value.trim();
-        u.bio = document.getElementById('editBio').value.trim();
-        H.saveState();
-        H.toast('Profile updated!');
-        H.goBack();
-      }
-    };
-  };
-
-  // --- My Listings Page --------------------------------------
-  pages.MyListings = function () {
-    const u = H.currentUser();
-    const myListings = (H.state.listings || []).filter(l => l.sellerId === u.id);
-    
-    const active = myListings.filter(l => l.status === 'active');
-    const pending = myListings.filter(l => l.status === 'pending');
-    const sold = myListings.filter(l => l.status === 'sold');
-    const rejected = myListings.filter(l => l.status === 'rejected');
-
-    const renderListings = (list, label) => {
-      if (!list.length) return `<div class="empty-section">No ${label.toLowerCase()} listings</div>`;
-      return `
-        <div class="listing-section">
-          <div class="section-title">${label}</div>
-          <div class="listing-list">${list.map(H.renderListCard).join('')}</div>
-        </div>`;
-    };
-
-    return `<div class="page active">
-      ${H.innerTopbar('My Listings')}
-      <div class="listing-tabs">
-        <button class="tab active" data-tab="active">Active (${active.length})</button>
-        <button class="tab" data-tab="pending">Pending (${pending.length})</button>
-        <button class="tab" data-tab="sold">Sold (${sold.length})</button>
-        <button class="tab" data-tab="rejected">Rejected (${rejected.length})</button>
-      </div>
-
-      <div class="tabs-content">
-        <div class="tab-content active" data-tab="active">
-          ${renderListings(active, 'Active')}
-        </div>
-        <div class="tab-content" data-tab="pending">
-          ${renderListings(pending, 'Pending')}
-        </div>
-        <div class="tab-content" data-tab="sold">
-          ${renderListings(sold, 'Sold')}
-        </div>
-        <div class="tab-content" data-tab="rejected">
-          ${renderListings(rejected, 'Rejected')}
-        </div>
-      </div>
-      <div style="height:20px"></div>
-    </div>`;
-  };
-
-  pages.MyListings_after = function () {
-    document.querySelectorAll('.listing-tabs .tab').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.listing-tabs .tab').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        e.target.classList.add('active');
-        const tab = e.target.dataset.tab;
-        document.querySelector(`[data-tab="${tab}"].tab-content`).classList.add('active');
-      });
-    });
-  };
-
-  // --- Favorites / Saved Listings ----------------------------
-  pages.Favorites = function () {
-    const u = H.currentUser();
-    const saved = (H.state.saves && H.state.saves[u.id]) || [];
-    const savedListings = (H.state.listings || []).filter(l => saved.includes(l.id) && l.status === 'active');
-
-    return `<div class="page active">
-      ${H.innerTopbar('Saved & Favorites')}
-      <div class="form-wrap">
-        <div class="listing-list">
-          ${savedListings.length 
-            ? savedListings.map(H.renderListCard).join('')
-            : H.emptyState('No saved listings yet', 'Tap the heart icon on listings to save them', 'Browse Listings', "H.navTo('Browse')")}
-        </div>
-      </div>
-      <div style="height:20px"></div>
-    </div>`;
-  };
-
-  // --- Profile Verification ---------------------------------
-  pages.ProfileVerify = function () {
-    const u = H.currentUser();
-    const isVerified = u.verified;
-
-    if (isVerified) {
+    if (!u) {
       return `<div class="page active">
-        ${H.innerTopbar('Identity Verification')}
-        <div class="section-box verified-box">
-          <div class="verify-icon">?</div>
-          <div class="verify-title">Identity Verified</div>
-          <div class="verify-sub">Your identity has been verified. You get a blue badge on your listings!</div>
-          <div class="verify-date">Verified on ${new Date(u.verifiedAt).toLocaleDateString()}</div>
-        </div>
+        ${H.innerTopbar('Account')}
+        ${H.emptyState('Not signed in', 'Sign in to manage your account.', 'Sign In', 'H.authPage()')}
       </div>`;
     }
 
-    return `<div class="page active">
-      ${H.innerTopbar('Verify Identity')}
-      <div class="section-box">
-        <div class="verify-icon">??</div>
-        <div class="verify-title">Get Verified</div>
-        <div class="verify-sub">Build trust with buyers by verifying your identity with a valid ID</div>
-      </div>
+    const activeAds = (H.state.listings || []).filter(l => l.sellerId === u.id && l.status === 'active').length;
+    const savedAds  = ((H.state.saves || {})[u.id] || []).length;
+    const unread    = (H.state.conversations || []).reduce((n, c) =>
+      c.members.includes(u.id) ? n + (c.messages || []).filter(m => m.from !== u.id && !m.read).length : n, 0);
 
-      <div class="form-wrap">
-        <div class="fg">
-          <div class="fl">ID Type</div>
-          <select class="fi" id="idType">
-            <option>National ID</option>
-            <option>Passport</option>
-            <option>Driver's License</option>
-          </select>
-        </div>
-
-        <div class="fg">
-          <div class="fl">ID Number</div>
-          <input class="fi" id="idNum" placeholder="Enter ID number">
-        </div>
-
-        <div class="fg">
-          <div class="fl">ID Photo (Front)</div>
-          <label class="img-upload-zone" for="idPhotoFront">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <div class="img-upload-title">Upload front photo</div>
-          </label>
-          <input type="file" id="idPhotoFront" accept="image/*" capture style="display:none">
-        </div>
-
-        <button class="btn-pri" onclick="H._profileVerify.submit()">Submit for Verification</button>
-      </div>
-    </div>`;
-  };
-
-  pages.ProfileVerify_after = function () {
-    H._profileVerify = {
-      submit: () => {
-        const idType = document.getElementById('idType')?.value;
-        const idNum = document.getElementById('idNum')?.value?.trim();
-        if (!idNum) { H.toast('Please enter ID number'); return; }
-        H.toast('Verification request submitted. We will review within 24h.');
-        const u = H.currentUser();
-        u.verificationPending = true;
-        H.saveState();
-        H.goBack();
-      }
-    };
-  };
-
-  // --- Reviews & Ratings ------------------------------------
-  pages.Reviews = function () {
-    const u = H.currentUser();
-    const avgRating = u.ratings && u.ratings.length > 0 
-      ? (u.ratings.reduce((a,b) => a+b, 0) / u.ratings.length).toFixed(1) 
-      : 0;
+    const row = (icon, label, page, badge) => `
+      <div onclick="H.openInner('${page}')"
+          style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--card);border-bottom:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent">
+        <div style="width:38px;height:38px;border-radius:12px;background:#1A3A8F14;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#1A3A8F">${icon}</div>
+        <div style="flex:1;font-size:15px;font-weight:600;color:var(--text)">${label}</div>
+        ${badge ? `<span style="background:#F5A623;color:#1A3A8F;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:800">${badge}</span>` : ''}
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--sub)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>`;
 
     return `<div class="page active">
-      ${H.innerTopbar('Reviews & Ratings')}
-      <div class="rating-summary">
-        <div class="rating-big">${avgRating}</div>
-        <div class="rating-stars">
-          ${'?'.repeat(Math.round(avgRating))}${'?'.repeat(5 - Math.round(avgRating))}
+      ${H.innerTopbar('Account')}
+
+      <!-- Profile Hero -->
+      <div style="background:linear-gradient(135deg,#1A3A8F 0%,#2952cc 100%);padding:24px 20px 28px;display:flex;align-items:center;gap:16px">
+        <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:24px;font-weight:800;color:#fff;border:2.5px solid rgba(255,255,255,.4)">
+          ${u.avatar ? `<img src="${H.escHtml(u.avatar)}" style="width:100%;height:100%;object-fit:cover">` : H.initials(u.name)}
         </div>
-        <div class="rating-count">Based on ${u.ratings ? u.ratings.length : 0} reviews</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${H.escHtml(u.name || 'User')}</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.8);margin-bottom:3px">${H.escHtml(u.email || '')}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.65)">${H.escHtml(u.phone || 'No phone number')}</div>
+        </div>
+        ${u.verified ? '<span style="background:#22C55E;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;flex-shrink:0">✓ Verified</span>' : ''}
       </div>
 
-      <div class="section-box">
-        <div class="section-title">Recent Reviews</div>
-        ${u.reviews && u.reviews.length
-          ? u.reviews.slice(0, 10).map(r => `
-              <div class="review-item">
-                <div class="review-header">
-                  <div class="review-name">${H.escHtml(r.reviewerName || 'Anonymous')}</div>
-                  <div class="review-rating">? ${r.rating}</div>
-                </div>
-                <div class="review-text">${H.escHtml(r.text)}</div>
-                <div class="review-date">${H.timeAgo(r.date)}</div>
-              </div>
-            `).join('')
-          : '<div style="color:var(--sub);padding:16px">No reviews yet</div>'}
+      <!-- Quick Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border-bottom:1px solid var(--border)">
+        ${[['Active Ads', activeAds, "H.openInner('MyListings')"], ['Saved', savedAds, "H.openInner('Favorites')"], ['Messages', unread || 0, "H.navTo('Messages')"]].map(([l, v, fn]) => `
+          <div onclick="${fn}" style="padding:16px 8px;text-align:center;cursor:pointer;border-right:1px solid var(--border)">
+            <div style="font-size:22px;font-weight:800;color:#1A3A8F">${v}</div>
+            <div style="font-size:11px;color:var(--sub);font-weight:500;margin-top:2px">${l}</div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Menu Rows -->
+      <div style="margin-top:12px">
+        ${row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>', 'My Profile', 'Profile', '')}
+        ${row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>', 'Edit Profile', 'EditProfile', '')}
+        ${row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>', 'My Listings', 'MyListings', activeAds || '')}
+        ${row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>', 'Saved & Favorites', 'Favorites', savedAds || '')}
+        ${row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>', 'Wallet & Payments', 'Wallet', '')}
+      </div>
+
+      <div style="margin-top:12px">
+        ${row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>', 'Settings', 'Settings', '')}
+        ${row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', 'Security & Password', 'SecuritySettings', '')}
+        ${row('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>', 'Help & Support', 'Help', '')}
+      </div>
+
+      <div style="padding:20px 16px 36px">
+        <button onclick="H.logout()" style="width:100%;padding:14px;background:#FFF1F0;color:#EF4444;border:1.5px solid #FECACA;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">
+          Sign Out
+        </button>
       </div>
     </div>`;
   };

@@ -106,26 +106,38 @@
     return `<div class="page active">
       ${H.innerTopbar('Edit Profile')}
       <div class="form-wrap">
-        <div class="fg"><div class="fl">Full Name</div>
+        <!-- Avatar picker -->
+        <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0 16px">
+          <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;background:#1A3A8F14;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#1A3A8F;margin-bottom:10px;border:2.5px solid #1A3A8F22">
+            ${u.avatar ? `<img id="avatarPreview" src="${H.escHtml(u.avatar)}" style="width:100%;height:100%;object-fit:cover">` : `<span id="avatarPreview">${H.initials(u.name)}</span>`}
+          </div>
+          <label for="profilePicFile" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer;background:#1A3A8F14;padding:7px 16px;border-radius:20px">
+            Change Photo
+          </label>
+          <input type="file" id="profilePicFile" accept="image/*" capture="user" style="display:none" onchange="H._editProfile.onPicChange(event)">
+        </div>
+
+        <div class="fg"><div class="fl">Full Name <span style="color:#EF4444">*</span></div>
           <input class="fi" id="editName" value="${H.escHtml(u.name || '')}" placeholder="Your full name" maxlength="60">
         </div>
         <div class="fg"><div class="fl">Phone Number</div>
-          <input class="fi" id="editPhone" value="${H.escHtml(u.phone || '')}" placeholder="+263 77..." type="tel" maxlength="15">
+          <input class="fi" id="editPhone" value="${H.escHtml(u.phone || '')}" placeholder="+263 77 123 4567" type="tel" maxlength="16">
+          <div style="font-size:11px;color:var(--sub);margin-top:4px">International format, e.g. +263 77 123 4567</div>
+        </div>
+        <div class="fg"><div class="fl">Email</div>
+          <input class="fi" value="${H.escHtml(u.email || '')}" disabled style="opacity:.6;cursor:not-allowed">
+          <div style="font-size:11px;color:var(--sub);margin-top:4px">Email cannot be changed here</div>
         </div>
         <div class="fg"><div class="fl">Bio</div>
           <textarea class="fi" rows="3" id="editBio" placeholder="Tell buyers about yourself..." maxlength="200">${H.escHtml(u.bio || '')}</textarea>
         </div>
-        <div class="fg"><div class="fl">Profile Picture</div>
-          <label class="img-upload-zone" for="profilePicFile">
-            ${u.avatar ? `<img src="${u.avatar}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:8px">` : ''}
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <div class="img-upload-title">Tap to change photo</div>
-            <div class="img-upload-sub">JPG or PNG · Max 2MB</div>
-          </label>
-          <input type="file" id="profilePicFile" accept="image/*" capture="user" style="display:none" onchange="H._editProfile.onPicChange(event)">
-        </div>
+
+        <div id="editSaveMsg" style="display:none;font-size:13px;color:#16A34A;text-align:center;padding:8px 0;font-weight:600">✓ Saved!</div>
+        <div id="editErrMsg"  style="display:none;font-size:13px;color:#EF4444;text-align:center;padding:8px 0"></div>
+
         <div class="btn-group">
-          <button class="btn-pri" onclick="H._editProfile.save()">Save Changes</button>
+          <button id="editSaveBtn" class="btn-pri" onclick="H._editProfile.save()">Save Changes</button>
+          <button class="btn-sec" onclick="H.openInner('ChangePassword')">Change Password</button>
           <button class="btn-sec" onclick="H.goBack()">Cancel</button>
         </div>
       </div>
@@ -137,24 +149,57 @@
       onPicChange: async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const compressed = await H.compressImage(file, 300, 0.85);
+        if (file.size > 3 * 1024 * 1024) { H.toast('Photo must be under 3 MB'); return; }
+        const compressed = await H.compressImage(file, 400, 0.82);
         const u = H.currentUser();
         u.avatar = compressed;
         H.saveState();
-        H.renderPage('EditProfile');
+        // Update preview in place without full re-render
+        const prev = document.getElementById('avatarPreview');
+        if (prev) { prev.outerHTML = `<img id="avatarPreview" src="${compressed}" style="width:100%;height:100%;object-fit:cover">`; }
       },
-      save: () => {
+      save: async () => {
         const u = H.currentUser();
-        const name  = document.getElementById('editName')?.value.trim();
-        const phone = document.getElementById('editPhone')?.value.trim();
-        const bio   = document.getElementById('editBio')?.value.trim();
-        if (!name) { H.toast('Name is required'); return; }
+        const name  = (document.getElementById('editName')?.value || '').trim();
+        const phone = (document.getElementById('editPhone')?.value || '').trim();
+        const bio   = (document.getElementById('editBio')?.value || '').trim();
+        const btn   = document.getElementById('editSaveBtn');
+        const errEl = document.getElementById('editErrMsg');
+        const okEl  = document.getElementById('editSaveMsg');
+
+        const showErr = (msg) => { if(errEl){errEl.textContent=msg;errEl.style.display='';} H.toast(msg); };
+
+        if (!name || name.length < 2) { showErr('Please enter your full name (min 2 characters)'); return; }
+
+        // Optional phone validation — international format
+        if (phone && !/^\+?[0-9\s\-]{7,16}$/.test(phone)) {
+          showErr('Phone number looks invalid. Use format: +263 77 123 4567'); return;
+        }
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+        if (errEl) errEl.style.display = 'none';
+
         u.name  = name;
-        u.phone = phone || u.phone;
+        if (phone) u.phone = phone;
         u.bio   = bio;
         H.saveState();
+
+        // Sync to Supabase profiles table
+        const c = window.supabase && typeof window.supabase.from === 'function' ? window.supabase : null;
+        if (c) {
+          const res = await c.from('profiles').upsert({
+            id: u.id, name: u.name, phone: u.phone || null,
+            bio: u.bio || null, avatar: u.avatar || null,
+            updated_at: new Date().toISOString()
+          });
+          if (res && res.error) {
+            console.warn('Profile sync failed:', res.error.message);
+          }
+        }
+
+        if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
+        if (okEl) { okEl.style.display = ''; setTimeout(() => { if(okEl) okEl.style.display='none'; }, 2500); }
         H.toast('Profile updated!');
-        H.goBack();
       }
     };
   };
