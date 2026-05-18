@@ -187,11 +187,24 @@
   H.deleteListing = function(id) {
     H.modal({
       title:'Delete this listing?', body:'This cannot be undone.', confirmText:'Delete', danger:true,
-      onConfirm:() => {
-        H.state.listings = H.state.listings.filter(l => l.id !== id);
+      onConfirm: async () => {
+        var sc = window.supabase;
+        if (sc && typeof sc.from === 'function') {
+          try {
+            var res = await sc.from('listings').delete().eq('id', id);
+            if (res && res.error) {
+              H.toast('Could not delete: ' + (res.error.message || 'permission denied'));
+              return;
+            }
+          } catch (e) {
+            H.toast('Network error — try again');
+            return;
+          }
+        }
+        H.state.listings = (H.state.listings || []).filter(l => l.id !== id);
         H.saveState();
-        if (typeof H.deleteListingFromCloud==='function') H.deleteListingFromCloud(id);
-        H.toast('Listing deleted'); H.goBack();
+        H.toast('Listing deleted');
+        H.goBack();
       }
     });
   };

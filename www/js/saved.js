@@ -124,7 +124,7 @@
       <div class="menu-items" style="padding-bottom:90px">
         <div class="mi" onclick="H.logOut()">
           <div class="mi-icon red-ic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
-          <div class="mi-label red-lbl">Log Out</div>
+          <div class="mi-label red-lbl">Sign Out</div>
         </div>
         <div class="mi" onclick="H.openInner('DeleteAccount')">
           <div class="mi-icon red-ic"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
@@ -170,14 +170,21 @@
     </div>`;
   };
 
-  // Log out helper
   H.logOut = function () {
     modal({
-      title: 'Log out?', body: 'You will be returned to the login screen.',
-      confirmText: 'Log Out',
-      onConfirm: () => {
+      title: 'Sign out?', body: 'You will be returned to the login screen.',
+      confirmText: 'Sign Out',
+      onConfirm: async () => {
+        try {
+          var sc = window.supabase;
+          if (sc && sc.auth && typeof sc.auth.signOut === 'function') {
+            await sc.auth.signOut();
+          }
+        } catch (e) {}
         state.currentUserId = null;
+        state.adminSession = null;
         saveState();
+        try { sessionStorage.clear(); } catch (e) {}
         location.reload();
       }
     });
