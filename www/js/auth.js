@@ -86,7 +86,6 @@
     card.innerHTML = ''
       + '<div style="text-align:center;margin-bottom:20px"><div style="font-size:22px;font-weight:700;color:var(--text)">Welcome</div><div style="font-size:14px;color:var(--sub);margin-top:4px">Sign in to buy and sell across Zimbabwe</div></div>'
       + '<button class="social-auth-btn google" onclick="H.authGoogle()"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>'
-      + '<button class="social-auth-btn facebook" onclick="H.authFacebook()"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>Continue with Facebook</button>'
       + '<div class="auth-divider"><span>or</span></div>'
       + '<button class="social-auth-btn email" onclick="H.authShowEmailForm()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1A3A8F" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Continue with Email</button>'
       + '<div style="text-align:center;margin-top:16px;font-size:13px;color:var(--sub)">Don\'t have an account? <span onclick="H.authShowRegister()" style="color:#F5A623;font-weight:600;cursor:pointer">Create one</span></div>';
@@ -377,13 +376,6 @@
     if (error) H.toast(error.message || 'Google sign-in failed');
   };
 
-  H.authFacebook = async function() {
-    const c = sb();
-    if (!c) { H.toast('Sign-in service unavailable'); return; }
-    const { error } = await c.auth.signInWithOAuth({ provider: 'facebook' });
-    if (error) H.toast(error.message || 'Facebook sign-in failed');
-  };
-
   // ── LEGAL DOCS ───────────────────────────────────
   H.authShowDoc = function(which) {
     H.modal({
@@ -394,11 +386,68 @@
   };
 
   H._termsText = function() {
-    return '<div class="doc-content"><h2>Terms and Conditions</h2><p><strong>Effective Date: May 2026</strong></p><p>Welcome to Hostly. By using the app you agree to these terms.</p><h2>1. Eligibility</h2><p>You must be 18+ to use Hostly.</p><h2>2. Listings</h2><p>You must own or have rights to sell listed items. All info must be accurate.</p><h2>3. Prohibited</h2><p>No stolen goods, drugs, weapons, adult content, or hate speech.</p><h2>4. Transactions</h2><p>Hostly is a listing platform only. We do not process payments.</p><h2>5. Contact</h2><p>Email: chakusaprince@gmail.com | WhatsApp: +971 589 772 645</p></div>';
+    return '<div class="doc-content">'
+      + '<h2>Terms &amp; Conditions</h2>'
+      + '<p><strong>Effective Date: 1 May 2026</strong></p>'
+      + '<p>Welcome to Hostly Zimbabwe. By downloading or using the Hostly app you agree to be bound by these Terms and Conditions. Please read them carefully.</p>'
+      + '<h3>1. Eligibility</h3>'
+      + '<p>You must be at least 18 years old to create an account and use Hostly. By registering you confirm that you meet this requirement. Hostly reserves the right to terminate accounts of users found to be under 18.</p>'
+      + '<h3>2. Account Responsibility</h3>'
+      + '<p>You are responsible for keeping your login credentials secure. You are liable for all activity that occurs under your account. Notify us immediately at chakusaprince@gmail.com if you suspect unauthorised access.</p>'
+      + '<h3>3. Listings</h3>'
+      + '<p>You may only list items you own or have legal authority to sell. All listing information — including title, description, photos, and price — must be accurate and not misleading. Hostly reserves the right to remove any listing without notice.</p>'
+      + '<h3>4. Prohibited Content</h3>'
+      + '<p>The following are strictly prohibited on Hostly: stolen or counterfeit goods; illegal drugs, weapons, or firearms; adult or explicit content; hate speech or content that promotes discrimination; spam, pyramid schemes, or fraudulent offers; impersonation of any person or business.</p>'
+      + '<h3>5. Transactions</h3>'
+      + '<p>Hostly is a listing and communication platform only. We do not process payments, hold funds, or guarantee the quality of any item. All transactions are solely between buyer and seller. Hostly accepts no liability for disputes, losses, or damages arising from transactions.</p>'
+      + '<h3>6. Wallet &amp; Top-Ups</h3>'
+      + '<p>The in-app wallet is used exclusively for boosting listings. Top-up amounts are non-refundable except at Hostly\'s sole discretion. Wallet balances have no cash value and cannot be transferred.</p>'
+      + '<h3>7. Intellectual Property</h3>'
+      + '<p>All content you post on Hostly (photos, descriptions, etc.) remains yours. By posting, you grant Hostly a non-exclusive, royalty-free licence to display your content within the app. The Hostly name, logo, and app design are our intellectual property and may not be copied or reused.</p>'
+      + '<h3>8. Privacy</h3>'
+      + '<p>Your use of the app is also governed by our Privacy Policy, which is incorporated into these Terms by reference.</p>'
+      + '<h3>9. Termination</h3>'
+      + '<p>We may suspend or permanently ban any account that violates these Terms, with or without notice. You may delete your account at any time via Settings → Security → Delete Account.</p>'
+      + '<h3>10. Limitation of Liability</h3>'
+      + '<p>Hostly is provided "as is" without warranties of any kind. To the maximum extent permitted by law, Hostly shall not be liable for any indirect, incidental, or consequential damages arising from your use of the app.</p>'
+      + '<h3>11. Changes to Terms</h3>'
+      + '<p>We may update these Terms from time to time. Continued use of the app after changes are posted constitutes acceptance of the revised Terms.</p>'
+      + '<h3>12. Governing Law</h3>'
+      + '<p>These Terms are governed by the laws of Zimbabwe. Any disputes shall be resolved in the courts of Zimbabwe.</p>'
+      + '<h3>13. Contact</h3>'
+      + '<p>Email: chakusaprince@gmail.com<br>WhatsApp: +971 589 772 645</p>'
+      + '</div>';
   };
 
   H._privacyText = function() {
-    return '<div class="doc-content"><h2>Privacy Policy</h2><p><strong>Effective Date: May 2026</strong></p><p>We collect name, email, and listing data to operate the platform. We do not sell your data.</p><h2>Data Storage</h2><p>Data stored securely via Supabase with encryption.</p><h2>Your Rights</h2><p>Delete your account anytime via Settings.</p><h2>Contact</h2><p>Email: chakusaprince@gmail.com | WhatsApp: +971 589 772 645</p></div>';
+    return '<div class="doc-content">'
+      + '<h2>Privacy Policy</h2>'
+      + '<p><strong>Effective Date: 1 May 2026</strong></p>'
+      + '<p>Hostly Zimbabwe ("we", "us", or "our") is committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and your rights.</p>'
+      + '<h3>1. Information We Collect</h3>'
+      + '<p><strong>Account data:</strong> name, email address, phone number, and profile photo when you register.</p>'
+      + '<p><strong>Listing data:</strong> photos, descriptions, prices, and location you provide when posting an ad.</p>'
+      + '<p><strong>Usage data:</strong> pages viewed, searches performed, listings saved, and messages sent within the app.</p>'
+      + '<p><strong>Device data:</strong> device type, operating system, and app version for crash reporting and performance monitoring.</p>'
+      + '<h3>2. How We Use Your Information</h3>'
+      + '<p>To operate and improve the Hostly platform; to authenticate your account and keep it secure; to display your listings to other users; to send you notifications about messages, offers, and account activity; to investigate reports of abuse or policy violations.</p>'
+      + '<h3>3. Data Sharing</h3>'
+      + '<p>We do not sell your personal data. We share data only with: <strong>Supabase</strong> (our database and authentication provider, data stored in EU data centres with encryption at rest and in transit); <strong>Google</strong> (if you choose Sign in with Google); and law enforcement when required by law.</p>'
+      + '<h3>4. Photos &amp; Camera</h3>'
+      + '<p>The app requests access to your camera and photo library only to let you upload listing photos and a profile picture. We do not access your camera or photos for any other purpose.</p>'
+      + '<h3>5. Data Retention</h3>'
+      + '<p>Your data is retained for as long as your account is active. When you delete your account, your personal data, listings, and messages are permanently deleted within 30 days.</p>'
+      + '<h3>6. Security</h3>'
+      + '<p>All data is transmitted over HTTPS. Passwords are never stored — authentication is managed by Supabase using industry-standard bcrypt hashing.</p>'
+      + '<h3>7. Your Rights</h3>'
+      + '<p>You may access, correct, or delete your personal data at any time via Settings → Edit Profile or Settings → Security → Delete Account. You may also contact us directly to request a copy of your data.</p>'
+      + '<h3>8. Children\'s Privacy</h3>'
+      + '<p>Hostly is not intended for users under 18. We do not knowingly collect data from children. If we become aware that a child has registered, we will delete the account immediately.</p>'
+      + '<h3>9. Changes to This Policy</h3>'
+      + '<p>We may update this Privacy Policy from time to time. We will notify you of significant changes via in-app notification. Continued use of the app constitutes acceptance of the updated policy.</p>'
+      + '<h3>10. Contact</h3>'
+      + '<p>Email: chakusaprince@gmail.com<br>WhatsApp: +971 589 772 645</p>'
+      + '</div>';
   };
 
 })(window.H);
