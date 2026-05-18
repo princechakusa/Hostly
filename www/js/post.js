@@ -143,9 +143,16 @@
       const files = Array.from(e.target.files || []);
       const remaining = 8 - postState.photos.length;
       files.slice(0, remaining).forEach(f => {
-        compressImage(f, 1200, 0.78).then(d => {
-          postState.photos.push(d);
+        compressImage(f, 1200, 0.78).then(({dataUrl, blob}) => {
+          postState.photos.push(dataUrl);
+          const idx = postState.photos.length - 1;
           document.getElementById('photoGrid').innerHTML = renderPhotoGrid();
+          // Upload to Supabase Storage in the background; replace preview URL when done
+          if (blob && typeof H.uploadPhotoToStorage === 'function') {
+            H.uploadPhotoToStorage(blob).then(url => {
+              if (url && postState.photos[idx] === dataUrl) postState.photos[idx] = url;
+            }).catch(() => {});
+          }
         });
       });
       e.target.value = '';
@@ -205,7 +212,8 @@
           const c = document.createElement('canvas');
           c.width = w; c.height = h;
           c.getContext('2d').drawImage(img, 0, 0, w, h);
-          res(c.toDataURL('image/jpeg', q));
+          const dataUrl = c.toDataURL('image/jpeg', q);
+          c.toBlob(blob => res({dataUrl, blob}), 'image/jpeg', q);
         };
         img.src = ev.target.result;
       };

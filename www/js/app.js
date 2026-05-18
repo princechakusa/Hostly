@@ -668,6 +668,22 @@ window.H = {
     } catch(e){ console.warn('deleteListingFromCloud:',e.message); }
   },
 
+  async uploadPhotoToStorage(blob) {
+    try {
+      const sb = window.supabase;
+      if (!sb || typeof sb.storage === 'undefined') return null;
+      const u = H.currentUser();
+      if (!u) return null;
+      const path = `listings/${u.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+      const { error } = await sb.storage.from('listings-photos').upload(path, blob, {
+        contentType: 'image/jpeg', cacheControl: '31536000', upsert: false
+      });
+      if (error) { console.warn('uploadPhotoToStorage:', error.message); return null; }
+      const { data } = sb.storage.from('listings-photos').getPublicUrl(path);
+      return data.publicUrl || null;
+    } catch(e) { console.warn('uploadPhotoToStorage:', e.message); return null; }
+  },
+
   async fetchListingsFromSupabase() {
     try {
       if(!window.supabase||typeof window.supabase.from!=='function') return;
