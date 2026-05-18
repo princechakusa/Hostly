@@ -1,4 +1,4 @@
-/* Hostly bundle — built 2026-05-18T14:38:53Z */
+/* Hostly bundle — built 2026-05-18T14:42:19Z */
 
 ;/* === www/js/app.js === */
 ﻿'use strict';
@@ -1546,7 +1546,7 @@ H.init();
     setAuthBusy(true);
     var c = sb();
     if (c) {
-      var redirectTo = 'https://princechakusa.github.io/Hostly/';
+      var redirectTo = 'https://princechakusa.github.io/Hostly/www/';
       var res = await c.auth.signUp({email:email, password:password, options:{data:{full_name:name}, emailRedirectTo:redirectTo}});
       if (res.error) {
         var msg = res.error.message;
