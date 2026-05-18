@@ -189,6 +189,7 @@
         price: s.price, currency: s.currency, cat: s.cat,
         prov: s.prov, city: s.city, suburb: s.suburb,
         photos: s.photos, createdAt: Date.now(),
+        expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000),
         status: (H.state.requireListingApproval || s.cat === 'jobs') ? 'pending' : 'active',
         boost: null, views: 0
       };

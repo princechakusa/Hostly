@@ -28,9 +28,10 @@
   // BROWSE PAGE
   // ---------------------------------------------------
   pages.Browse = function () {
-    const activeListings = (state.listings || []).filter(l => l.status === 'active');
+    const activeListings = (state.listings || []).filter(l => l.status === 'active' && !H.isExpired(l));
     const u = H.currentUser();
     const recentSearches = (u && u.recentSearches) || [];
+    const savedSearches = u ? ((state.savedSearches || {})[u.id] || []) : [];
 
     return `<div class="page active">
       <div class="app-header" style="padding-bottom:16px">
@@ -43,9 +44,26 @@
         <div class="search-box">
           <span aria-hidden="true">${S.search}</span>
           <input id="searchIn" placeholder="Search all listings…" oninput="H._browse.onSearch()">
+          ${u ? `<button class="save-search-btn" onclick="H._browse.saveSearch()" title="Save search">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>` : ''}
           <button class="voice-btn" onclick="H._browse.voiceSearch()" title="Voice search">${S.microphone}</button>
         </div>
       </div>
+
+      ${savedSearches.length ? `
+        <div class="recent-searches">
+          <div class="section-title">Saved Searches</div>
+          <div class="search-tags">
+            ${savedSearches.slice(0,5).map(s => `
+              <button class="search-tag saved-search-tag" onclick="H._browse.searchTag('${H.escHtml(s.query||'')}')">
+                <span>${H.escHtml(s.query||s.cat||'search')}</span>
+                <span onclick="H._browse.removeSavedSearch('${s.id}');event.stopPropagation()">${S.close}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
 
       <div class="browse-controls">
         <button class="filter-btn" onclick="H._browse.toggleFilters()">
@@ -160,7 +178,7 @@
         const el = document.getElementById('listingList');
         if (!el || H.currentPageName !== 'Browse') return;
         const q = document.getElementById('searchIn')?.value || '';
-        const active = (state.listings || []).filter(l => l.status === 'active');
+        const active = (state.listings || []).filter(l => l.status === 'active' && !H.isExpired(l));
         el.innerHTML = active.length
           ? filterListings(active, q).map(renderListCard).join('')
           : H.emptyState('No listings yet', 'Listings will appear here once people start posting', null, null);
@@ -182,7 +200,7 @@
         H._browse._searchTimer = setTimeout(() => {
           const q = document.getElementById('searchIn')?.value || '';
           browseState.lastSearch = q;
-          const activeListings = (state.listings || []).filter(l => l.status === 'active');
+          const activeListings = (state.listings || []).filter(l => l.status === 'active' && !H.isExpired(l));
           const filtered = filterListings(activeListings, q);
           const el = document.getElementById('listingList');
           if (el) el.innerHTML = filtered.length
@@ -215,6 +233,27 @@
       },
       voiceSearch: () => {
         H.toast('Voice search coming soon!');
+      },
+      saveSearch: () => {
+        const q = document.getElementById('searchIn')?.value?.trim() || '';
+        const u = H.currentUser();
+        if (!u) { H.requireAuth('Sign in to save searches'); return; }
+        if (!q && !browseState.selectedCategory) { H.toast('Type something to save as a search'); return; }
+        state.savedSearches = state.savedSearches || {};
+        state.savedSearches[u.id] = state.savedSearches[u.id] || [];
+        const already = state.savedSearches[u.id].some(s => s.query === q && s.cat === browseState.selectedCategory);
+        if (already) { H.toast('Search already saved'); return; }
+        state.savedSearches[u.id].unshift({ id: H.uid(), query: q, cat: browseState.selectedCategory, savedAt: Date.now() });
+        state.savedSearches[u.id] = state.savedSearches[u.id].slice(0, 10);
+        H.saveState();
+        H.toast('Search saved — we\'ll notify you of new matches');
+      },
+      removeSavedSearch: (id) => {
+        const u = H.currentUser(); if (!u) return;
+        state.savedSearches = state.savedSearches || {};
+        state.savedSearches[u.id] = (state.savedSearches[u.id] || []).filter(s => s.id !== id);
+        H.saveState();
+        H.renderPage('Browse');
       },
       onFilterChange: () => {
         // Placeholder for future filter logic

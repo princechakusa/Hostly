@@ -71,7 +71,7 @@ window.H = {
 
   defaultState: {
     users:[], listings:[], conversations:[], reports:[], txns:[],
-    saves:{}, notifs:{}, currentUserId:null, cityFilter:'All Zimbabwe',
+    saves:{}, notifs:{}, savedSearches:{}, currentUserId:null, cityFilter:'All Zimbabwe',
     _sortMode:'newest', _priceMin:'', _priceMax:'',
     adminLogs:[], supportTickets:[], adminSession:null, topupRequests:[]
   },
@@ -377,6 +377,9 @@ window.H = {
     if(typeof H.syncNotifications==='function') H.syncNotifications();
     if(typeof H._setupRealtimeNotifs==='function') H._setupRealtimeNotifs();
     this._initPullToRefresh();
+    this._initOfflineDetection();
+    this._initPushNotifications();
+    this.checkSavedSearches();
   },
 
   authPage() {
@@ -551,8 +554,28 @@ window.H = {
   // ── Theme / Language ─────────────────────────────────────
   applyTheme() {
     const u=this.currentUser();
-    const theme=(u&&u.settings&&u.settings.theme)||'light';
+    const stored=localStorage.getItem('hostly_theme');
+    const theme=(u&&u.settings&&u.settings.theme)||stored||'light';
     document.documentElement.setAttribute('data-theme', theme);
+  },
+  toggleDarkMode() {
+    const cur=document.documentElement.getAttribute('data-theme')||'light';
+    const next=cur==='dark'?'light':'dark';
+    localStorage.setItem('hostly_theme',next);
+    const u=H.currentUser();
+    if(u){u.settings=u.settings||{};u.settings.theme=next;H.saveState();}
+    document.documentElement.setAttribute('data-theme',next);
+    const toggle=document.getElementById('darkModeToggle');
+    if(toggle) toggle.textContent=next==='dark'?'On':'Off';
+  },
+  isExpired(l) { return !!(l.expiresAt && Date.now() > l.expiresAt); },
+  renewListing(id) {
+    const l=(H.state.listings||[]).find(x=>x.id===id); if(!l) return;
+    l.expiresAt=Date.now()+(30*24*60*60*1000);
+    H.saveState();
+    if(typeof H.saveListingToCloud==='function') H.saveListingToCloud(l);
+    H.toast('Listing renewed for 30 days');
+    H.renderPage('MyListings');
   },
   applyLanguage() {
     const u=this.currentUser();
@@ -655,7 +678,8 @@ window.H = {
         city:listing.city||'', suburb:listing.suburb||'',
         photos:listing.photos||[], status:listing.status||'active',
         boost:listing.boost||null, views:listing.views||0,
-        created_at:listing.createdAt?new Date(listing.createdAt).toISOString():new Date().toISOString()
+        created_at:listing.createdAt?new Date(listing.createdAt).toISOString():new Date().toISOString(),
+        expires_at:listing.expiresAt?new Date(listing.expiresAt).toISOString():null
       });
       if(error) console.warn('Cloud save failed:',error.message);
     } catch(e){ console.warn('saveListingToCloud:',e.message); }
@@ -700,7 +724,8 @@ window.H = {
         prov:r.province, city:r.city, suburb:r.suburb,
         photos:Array.isArray(r.photos)?r.photos:(r.photos?[r.photos]:[]),
         status:r.status, boost:r.boost, views:r.views||0,
-        createdAt:r.created_at?new Date(r.created_at).getTime():Date.now()
+        createdAt:r.created_at?new Date(r.created_at).getTime():Date.now(),
+        expiresAt:r.expires_at?new Date(r.expires_at).getTime():null
       }));
       const ids=new Set((H.state.listings||[]).map(l=>l.id));
       cloud.forEach(cl=>{
@@ -1076,6 +1101,86 @@ window.H = {
   },
 
   // ── Onboarding ───────────────────────────────────────────
+  // ── Offline Detection (#7) ───────────────────────────────
+  _initOfflineDetection() {
+    const show=()=>{
+      if(document.getElementById('offlineBanner')) return;
+      const b=document.createElement('div');
+      b.id='offlineBanner'; b.className='offline-banner';
+      b.innerHTML='<span>&#9888;&#65039; No internet connection</span>';
+      (document.getElementById('app')||document.body).prepend(b);
+    };
+    const hide=()=>{const b=document.getElementById('offlineBanner');if(b)b.remove();};
+    window.addEventListener('online',hide);
+    window.addEventListener('offline',show);
+    if(!navigator.onLine) show();
+  },
+
+  // ── Error Tracking (#13) ─────────────────────────────────
+  _initErrorTracking() {
+    window.onerror=(msg,src,line,col,err)=>{H._logError({type:'js',msg:String(msg),src,line,col,stack:err&&err.stack});};
+    window.addEventListener('unhandledrejection',e=>{H._logError({type:'promise',msg:String(e.reason),stack:e.reason&&e.reason.stack});});
+  },
+  _logError(data) {
+    try {
+      console.warn('[Hostly]',data.type,data.msg);
+      if(!window.supabase||typeof window.supabase.from!=='function') return;
+      window.supabase.from('error_logs').insert({
+        type:data.type, message:String(data.msg||'').slice(0,500),
+        source:String(data.src||'').slice(0,200),
+        stack:String(data.stack||'').slice(0,1000),
+        user_id:(H.state&&H.state.currentUserId)||null,
+        user_agent:navigator.userAgent.slice(0,300),
+        created_at:new Date().toISOString()
+      }).then(()=>{}).catch(()=>{});
+    } catch(_){}
+  },
+
+  // ── Push Notifications (#3) ──────────────────────────────
+  async _initPushNotifications() {
+    if(typeof Capacitor==='undefined'||!Capacitor.isNativePlatform()) return;
+    try {
+      const PP=Capacitor.Plugins&&Capacitor.Plugins.PushNotifications;
+      if(!PP) return;
+      const perm=await PP.requestPermissions();
+      if(perm.receive!=='granted') return;
+      await PP.register();
+      PP.addListener('registration',async({value:token})=>{
+        const u=H.currentUser(); if(!u) return;
+        u.pushToken=token; H.saveState();
+        if(window.supabase) await window.supabase.from('profiles').update({push_token:token}).eq('id',u.id).catch(()=>{});
+      });
+      PP.addListener('pushNotificationReceived',n=>{H.toast((n.title||'')+(n.body?': '+n.body:''));});
+      PP.addListener('pushNotificationActionPerformed',({notification:{data}})=>{
+        if(data&&data.type==='message'&&data.convId) H.openInner('Chat',{id:data.convId});
+        else if(data&&data.type==='listing'&&data.id) H.openListing(data.id);
+      });
+    } catch(e){console.warn('Push setup:',e);}
+  },
+
+  // ── Saved Searches check (#10) ───────────────────────────
+  checkSavedSearches() {
+    const u=H.currentUser(); if(!u) return;
+    const searches=((H.state.savedSearches||{})[u.id]||[]);
+    if(!searches.length) return;
+    const listings=(H.state.listings||[]).filter(l=>l.status==='active'&&!H.isExpired(l));
+    searches.forEach(s=>{
+      const key='hostly_ss_'+s.id;
+      const last=parseInt(localStorage.getItem(key)||'0',10);
+      if(!last){localStorage.setItem(key,Date.now());return;}
+      const q=(s.query||'').toLowerCase();
+      const matches=listings.filter(l=>l.createdAt>last&&
+        (!q||l.title.toLowerCase().includes(q)||(l.desc||'').toLowerCase().includes(q))&&
+        (!s.cat||l.cat===s.cat));
+      if(matches.length){
+        const label=s.query||s.cat||'your search';
+        H.pushNotif(u.id,`${matches.length} new match${matches.length>1?'es':''} for "${label}"`,
+          matches[0].title+' and more');
+      }
+      localStorage.setItem(key,Date.now());
+    });
+  },
+
   _showOnboarding() {
     if(localStorage.getItem('hostly_onboarded')) return;
     const slides=[
@@ -1146,6 +1251,7 @@ window.H = {
   // ── Bootstrap ────────────────────────────────────────────
   init() {
     this.state=this.loadState();
+    this._initErrorTracking();
     this._registerCategoryView();
     this._registerJobPage();
     this._registerExtraPages();

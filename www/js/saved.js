@@ -92,6 +92,12 @@
           <div class="mi-label">Notifications</div>
           <div class="mi-arrow">›</div>
         </div>
+        <div class="mi" onclick="H.toggleDarkMode()">
+          <div class="mi-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+          <div class="mi-label">Dark Mode</div>
+          <span id="darkModeToggle" class="${(u.settings&&u.settings.theme)==='dark'?'mi-badge-green':''}" style="font-size:12px;font-weight:700;color:var(--sub2);margin-right:4px">${(u.settings&&u.settings.theme)==='dark'?'On':'Off'}</span>
+          <div class="mi-arrow">›</div>
+        </div>
         <div class="mi" onclick="H.openInner('LanguageSettings')">
           <div class="mi-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
           <div class="mi-label">Language</div>
@@ -145,6 +151,9 @@
       <div style="padding-bottom:90px">
         ${list.length ? list.map(l => {
           const statusClass = l.status === 'active' ? 'status-active' : l.status === 'banned' ? 'status-banned' : 'status-pending';
+          const expiring = l.expiresAt && l.expiresAt - Date.now() < 7 * 24 * 60 * 60 * 1000;
+          const expired  = H.isExpired(l);
+          const daysLeft = l.expiresAt ? Math.max(0, Math.ceil((l.expiresAt - Date.now()) / 86400000)) : null;
           return `<div class="my-listing-card">
             <div class="ml-thumb">
               ${l.photos && l.photos[0] ? `<img src="${l.photos[0]}">` : (CATEGORIES.find(c => c.id === l.cat) || {}).icon || '??'}
@@ -155,10 +164,12 @@
               <div class="ml-meta">
                 <span class="status-pill ${statusClass}">${l.status}</span>
                 · ${l.views || 0} views · ${timeAgo(l.createdAt)}
+                ${expired ? ' · <span style="color:#dc2626;font-weight:700">Expired</span>' : expiring ? ` · <span style="color:#f59e0b;font-weight:700">${daysLeft}d left</span>` : ''}
               </div>
               <div class="ml-actions">
                 <button class="ml-act-btn" onclick="H.openListing('${l.id}')">View</button>
                 <button class="ml-act-btn" onclick="H.openInner('Boost',{listingId:'${l.id}'})">? Boost</button>
+                ${(expired || expiring) ? `<button class="ml-act-btn" onclick="H.renewListing('${l.id}')">Renew</button>` : ''}
                 ${l.status === 'active'
                   ? `<button class="ml-act-btn red" onclick="H.deleteListing('${l.id}')">Delete</button>`
                   : ''}
