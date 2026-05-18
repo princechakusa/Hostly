@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 window.H = {
   KEY:          'hostly.v2',
   ADMIN_PHONES: ['+263770000000', '+971589772645'],
@@ -462,7 +462,7 @@ window.H = {
     if(res instanceof Promise) {
       area.style.opacity='0';
       const html=await res;
-      if(this.currentPageName!==name) return; // navigated away while loading
+      if(this.currentPageName!==name) return;
       area.innerHTML=html;
       area.scrollTop=scrollTo;
       requestAnimationFrame(()=>{ area.style.opacity='1'; });
@@ -559,7 +559,6 @@ window.H = {
     if(u&&u.language) document.querySelectorAll('.current-lang').forEach(el=>el.textContent=u.language);
   },
 
-  // ── Logo easter-egg (7 taps → admin) ─────────────────────
   logoTap() {
     this.logoTaps++;
     clearTimeout(this.logoTapsTimer);
@@ -793,7 +792,6 @@ window.H = {
           local = { id: c.id, members: c.members, listingId: c.listing_id, messages: [] };
           (H.state.conversations = H.state.conversations || []).push(local);
         }
-        // fetch recent messages for this conversation
         const { data: msgs } = await sb.from('messages')
           .select('id, sender_id, sender_name, text, read, created_at')
           .eq('conversation_id', c.id)
