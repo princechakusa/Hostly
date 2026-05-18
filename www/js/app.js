@@ -86,7 +86,12 @@ window.H = {
   },
 
   saveState() {
-    try { localStorage.setItem(this.KEY, JSON.stringify(this.state)); }
+    try {
+      // Strip sensitive fields before persisting — passwords must never live in localStorage
+      const safe = JSON.parse(JSON.stringify(this.state));
+      if (safe.users) safe.users.forEach(u => { delete u._localPassword; });
+      localStorage.setItem(this.KEY, JSON.stringify(safe));
+    }
     catch(e) { if(e.name==='QuotaExceededError') this.toast('Storage full — try deleting old listings'); }
   },
 

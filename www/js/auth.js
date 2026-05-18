@@ -3,8 +3,40 @@
   const state = H.state;
   let authBusy = false;
 
+  // Rate limiting — max 5 failed attempts then 30s lockout
+  var _failCount  = 0;
+  var _lockUntil  = 0;
+
   function sb() { return (window.supabase && window.supabase.auth) ? window.supabase : null; }
-  function setAuthBusy(v) { authBusy = v; const r = document.getElementById('authCard'); if(r) r.querySelectorAll('button').forEach(function(b){b.disabled=v;}); }
+
+  function setAuthBusy(v) {
+    authBusy = v;
+    const r = document.getElementById('authCard');
+    if (r) r.querySelectorAll('button').forEach(function(b){ b.disabled = v; });
+  }
+
+  function isLocked() {
+    if (Date.now() < _lockUntil) {
+      var secs = Math.ceil((_lockUntil - Date.now()) / 1000);
+      H.toast('Too many attempts. Try again in ' + secs + 's');
+      return true;
+    }
+    return false;
+  }
+
+  function recordFailure() {
+    _failCount++;
+    if (_failCount >= 5) {
+      _lockUntil  = Date.now() + 30000;
+      _failCount  = 0;
+      H.toast('Too many failed attempts. Locked for 30 seconds.');
+    }
+  }
+
+  function recordSuccess() {
+    _failCount = 0;
+    _lockUntil = 0;
+  }
 
   function validateEmail(e) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
@@ -168,6 +200,7 @@
   // ── SIGN IN ──────────────────────────────────────
   H.authSignIn = async function() {
     if (authBusy) return;
+    if (isLocked()) return;
     var email    = document.getElementById('emailIn').value.trim();
     var password = document.getElementById('passIn').value;
     if (!validateEmail(email)) { H.toast('Enter a valid email address'); return; }
@@ -180,19 +213,20 @@
         var msg = res.error.message;
         if (msg==='Invalid login credentials') msg = 'Wrong email or password';
         if (msg.includes('Email not confirmed')) msg = 'Please verify your email first';
+        recordFailure();
         H.toast(msg); setAuthBusy(false); return;
       }
       state.currentUserId = res.data.user.id;
       await H.loadProfile(res.data.user.id);
-      var cu = H.currentUser();
-      if (cu && email === 'chakusaprince@gmail.com') cu.role = 'admin';
+      recordSuccess();
       H.saveState();
       setAuthBusy(false);
       H.boot();
       return;
     }
     var user = (state.users||[]).find(function(u){ return (u.email||'').toLowerCase()===email.toLowerCase() && u._localPassword===password; });
-    if (!user) { H.toast('Wrong email or password'); setAuthBusy(false); return; }
+    if (!user) { recordFailure(); H.toast('Wrong email or password'); setAuthBusy(false); return; }
+    recordSuccess();
     state.currentUserId = user.id;
     H.saveState(); setAuthBusy(false); H.boot();
   };
@@ -268,6 +302,7 @@
   };
 
   H.authAdminSignInPage = async function() {
+    if (isLocked()) return;
     var email = ((document.getElementById('admEmailPage')||{}).value||'').trim();
     var pass  = ((document.getElementById('admPassPage')||{}).value||'').trim();
     if (!email||!pass) { H.toast('Enter credentials'); return; }
@@ -275,16 +310,18 @@
     if (!c) { H.toast('Connection error - refresh page'); return; }
     H.toast('Signing in...');
     var res = await c.auth.signInWithPassword({email:email, password:pass});
-    if (res.error) { H.toast('Invalid credentials'); return; }
+    if (res.error) { recordFailure(); H.toast('Invalid credentials'); return; }
     state.currentUserId = res.data.user.id;
     await H.loadProfile(res.data.user.id);
     var cu = H.currentUser();
-    if (!cu) {
-      cu = {id:res.data.user.id,email:email,name:'Admin',role:'admin',status:'active',verified:true,joinedAt:Date.now(),settings:{theme:'light'},walletUSD:0,language:'English',blocked:[]};
-      state.users.push(cu);
-      state.currentUserId = cu.id;
+    if (!cu || cu.role !== 'admin') {
+      if (c) { try { await c.auth.signOut(); } catch(e) {} }
+      state.currentUserId = null;
+      recordFailure();
+      H.toast('Access denied. Not an admin account.');
+      return;
     }
-    cu.role = 'admin';
+    recordSuccess();
     state.adminSession = {at:Date.now(),via:'supabase'};
     H.saveState();
     H.toast('Welcome Admin!');
@@ -303,10 +340,10 @@
     var profile = res.data;
     var u = (state.users||[]).find(function(x){return x.id===userId;});
     if (!u) {
-      u = {id:userId,email:'',name:profile.name||'User',phone:profile.phone||'',avatar:profile.avatar||null,verified:profile.verified||false,walletUSD:profile.wallet_usd||0,language:profile.language||'English',joinedAt:new Date(profile.created_at||Date.now()).getTime(),role:'user',status:'active',banReason:null,banUntil:null,blocked:[]};
+      u = {id:userId,email:'',name:profile.name||'User',phone:profile.phone||'',avatar:profile.avatar||null,verified:profile.verified||false,walletUSD:profile.wallet_usd||0,language:profile.language||'English',joinedAt:new Date(profile.created_at||Date.now()).getTime(),role:profile.role||'user',status:'active',banReason:null,banUntil:null,blocked:[]};
       state.users.push(u);
     } else {
-      u.name=profile.name||u.name; u.phone=profile.phone||u.phone; u.avatar=profile.avatar||u.avatar; u.verified=profile.verified||false;
+      u.name=profile.name||u.name; u.phone=profile.phone||u.phone; u.avatar=profile.avatar||u.avatar; u.verified=profile.verified||false; u.role=profile.role||u.role||'user';
     }
     H.saveState();
   };
