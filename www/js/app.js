@@ -1,9 +1,8 @@
-﻿'use strict';
+'use strict';
 window.H = {
   KEY:          'hostly.v2',
   ADMIN_PHONES: ['+263770000000', '+971589772645'],
 
-  // ── Provinces & Cities ───────────────────────────────────
   PROVINCES: ['Harare','Bulawayo','Manicaland','Mashonaland West','Mashonaland East','Mashonaland Central','Midlands','Masvingo','Matabeleland North','Matabeleland South'],
   CITIES_BY_PROV: {
     'Harare':             ['Harare CBD','Borrowdale','Avondale','Mabelreign','Marlborough','Belvedere','Greendale','Hatfield','Highfield','Mbare','Glen View','Budiriro','Kuwadzana','Warren Park','Chitungwiza','Epworth','Norton','Ruwa'],
@@ -18,7 +17,6 @@ window.H = {
     'Matabeleland South': ['Beitbridge','Gwanda','Plumtree','Filabusi']
   },
 
-  // ── Icons ────────────────────────────────────────────────
   ICONS: {
     search:   `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
     user:     `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
@@ -35,7 +33,6 @@ window.H = {
     share:    `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
   },
 
-  // ── Categories ───────────────────────────────────────────
   CATEGORIES: [
     {id:'property',    name:'Property',    icon:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'},
     {id:'vehicles',    name:'Vehicles',    icon:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'},
@@ -57,7 +54,6 @@ window.H = {
     {id:'mega',     name:'Mega Boost',     price:10, days:30, desc:'30 days of maximum visibility across all sections.', badgeText:'Best Value'}
   ],
 
-  // ── App State ────────────────────────────────────────────
   state:            {},
   pageStack:        [],
   currentPageName:  'Home',
@@ -71,12 +67,11 @@ window.H = {
 
   defaultState: {
     users:[], listings:[], conversations:[], reports:[], txns:[],
-    saves:{}, notifs:{}, savedSearches:{}, currentUserId:null, cityFilter:'All Zimbabwe',
+    saves:{}, notifs:{}, currentUserId:null, cityFilter:'All Zimbabwe',
     _sortMode:'newest', _priceMin:'', _priceMax:'',
     adminLogs:[], supportTickets:[], adminSession:null, topupRequests:[]
   },
 
-  // ── Persistence ──────────────────────────────────────────
   loadState() {
     try {
       const raw = localStorage.getItem(this.KEY);
@@ -87,7 +82,6 @@ window.H = {
 
   saveState() {
     try {
-      // Strip sensitive fields before persisting — passwords must never live in localStorage
       const safe = JSON.parse(JSON.stringify(this.state));
       if (safe.users) safe.users.forEach(u => { delete u._localPassword; });
       localStorage.setItem(this.KEY, JSON.stringify(safe));
@@ -95,7 +89,6 @@ window.H = {
     catch(e) { if(e.name==='QuotaExceededError') this.toast('Storage full — try deleting old listings'); }
   },
 
-  // ── Utilities ────────────────────────────────────────────
   uid() {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -129,7 +122,6 @@ window.H = {
     return c==='USD' ? '$'+n : n+' ZiG';
   },
 
-  // ── Filtering ────────────────────────────────────────────
   filterListings(list, q) {
     const _s   = window.H ? window.H.state : {};
     const qry  = (q!==undefined ? q : (document.getElementById('searchIn')?.value||'')).toLowerCase().trim();
@@ -156,7 +148,6 @@ window.H = {
     });
   },
 
-  // ── UI Components ────────────────────────────────────────
   toast(msg, duration=2600) {
     const el = document.getElementById('toastEl'); if(!el) return;
     el.textContent=msg; el.classList.add('show');
@@ -269,13 +260,11 @@ window.H = {
     </div>`;
   },
 
-  // ── Camera ───────────────────────────────────────────────
   stopCam() {
     if (this.camStream)     { this.camStream.getTracks().forEach(t=>t.stop()); this.camStream=null; }
     if (this.livenessTimer) { clearInterval(this.livenessTimer); this.livenessTimer=null; }
   },
 
-  // ── Image Compression ────────────────────────────────────
   compressImage(file, maxDim=1200, q=0.8) {
     return new Promise(res => {
       const r = new FileReader();
@@ -295,7 +284,6 @@ window.H = {
     });
   },
 
-  // ── Ban System ───────────────────────────────────────────
   checkBan() {
     const u=this.currentUser();
     if(!u||u.role==='admin'){document.getElementById('banScreen').classList.remove('show');return false;}
@@ -354,7 +342,6 @@ window.H = {
     this.saveState();
   },
 
-  // ── Navigation ───────────────────────────────────────────
   authLogoTap() { window.location.href='admin.html'; },
 
   async boot() {
@@ -377,9 +364,6 @@ window.H = {
     if(typeof H.syncNotifications==='function') H.syncNotifications();
     if(typeof H._setupRealtimeNotifs==='function') H._setupRealtimeNotifs();
     this._initPullToRefresh();
-    this._initOfflineDetection();
-    this._initPushNotifications();
-    this.checkSavedSearches();
   },
 
   authPage() {
@@ -465,7 +449,7 @@ window.H = {
     if(res instanceof Promise) {
       area.style.opacity='0';
       const html=await res;
-      if(this.currentPageName!==name) return; // navigated away while loading
+      if(this.currentPageName!==name) return;
       area.innerHTML=html;
       area.scrollTop=scrollTo;
       requestAnimationFrame(()=>{ area.style.opacity='1'; });
@@ -488,7 +472,6 @@ window.H = {
     this.openInner('Detail',{id});
   },
 
-  // ── Category Navigation ──────────────────────────────────
   filterByCat(cid) {
     const map = {
       vehicles:    'Vehicles',
@@ -505,7 +488,6 @@ window.H = {
     else { this.openInner('CategoryView', {cid}); }
   },
 
-  // ── Sort & Filter ────────────────────────────────────────
   toggleSort() {
     const sheet=document.getElementById('actionSheet');
     const bg=document.getElementById('sheetBg');
@@ -551,31 +533,10 @@ window.H = {
     this.navTo('Home');
   },
 
-  // ── Theme / Language ─────────────────────────────────────
   applyTheme() {
     const u=this.currentUser();
-    const stored=localStorage.getItem('hostly_theme');
-    const theme=(u&&u.settings&&u.settings.theme)||stored||'light';
+    const theme=(u&&u.settings&&u.settings.theme)||'light';
     document.documentElement.setAttribute('data-theme', theme);
-  },
-  toggleDarkMode() {
-    const cur=document.documentElement.getAttribute('data-theme')||'light';
-    const next=cur==='dark'?'light':'dark';
-    localStorage.setItem('hostly_theme',next);
-    const u=H.currentUser();
-    if(u){u.settings=u.settings||{};u.settings.theme=next;H.saveState();}
-    document.documentElement.setAttribute('data-theme',next);
-    const toggle=document.getElementById('darkModeToggle');
-    if(toggle) toggle.textContent=next==='dark'?'On':'Off';
-  },
-  isExpired(l) { return !!(l.expiresAt && Date.now() > l.expiresAt); },
-  renewListing(id) {
-    const l=(H.state.listings||[]).find(x=>x.id===id); if(!l) return;
-    l.expiresAt=Date.now()+(30*24*60*60*1000);
-    H.saveState();
-    if(typeof H.saveListingToCloud==='function') H.saveListingToCloud(l);
-    H.toast('Listing renewed for 30 days');
-    H.renderPage('MyListings');
   },
   applyLanguage() {
     const u=this.currentUser();
@@ -589,7 +550,6 @@ window.H = {
     if(this.logoTaps>=7){this.logoTaps=0;window.location.href='admin.html';}
   },
 
-  // ── Pull-to-Refresh ──────────────────────────────────────
   _initPullToRefresh() {
     const el=document.getElementById('mainArea'); if(!el) return;
     if(el._ptrCleanup) el._ptrCleanup();
@@ -664,7 +624,6 @@ window.H = {
     };
   },
 
-  // ── Supabase Cloud Sync ──────────────────────────────────
   async saveListingToCloud(listing) {
     try {
       if(!window.supabase||typeof window.supabase.from!=='function') return;
@@ -677,8 +636,7 @@ window.H = {
         city:listing.city||'', suburb:listing.suburb||'',
         photos:listing.photos||[], status:listing.status||'active',
         boost:listing.boost||null, views:listing.views||0,
-        created_at:listing.createdAt?new Date(listing.createdAt).toISOString():new Date().toISOString(),
-        expires_at:listing.expiresAt?new Date(listing.expiresAt).toISOString():null
+        created_at:listing.createdAt?new Date(listing.createdAt).toISOString():new Date().toISOString()
       });
       if(error) console.warn('Cloud save failed:',error.message);
     } catch(e){ console.warn('saveListingToCloud:',e.message); }
@@ -689,22 +647,6 @@ window.H = {
       if(!window.supabase||typeof window.supabase.from!=='function') return;
       await window.supabase.from('listings').delete().eq('id',id);
     } catch(e){ console.warn('deleteListingFromCloud:',e.message); }
-  },
-
-  async uploadPhotoToStorage(blob) {
-    try {
-      const sb = window.supabase;
-      if (!sb || typeof sb.storage === 'undefined') return null;
-      const u = H.currentUser();
-      if (!u) return null;
-      const path = `listings/${u.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
-      const { error } = await sb.storage.from('listings-photos').upload(path, blob, {
-        contentType: 'image/jpeg', cacheControl: '31536000', upsert: false
-      });
-      if (error) { console.warn('uploadPhotoToStorage:', error.message); return null; }
-      const { data } = sb.storage.from('listings-photos').getPublicUrl(path);
-      return data.publicUrl || null;
-    } catch(e) { console.warn('uploadPhotoToStorage:', e.message); return null; }
   },
 
   async fetchListingsFromSupabase() {
@@ -723,8 +665,7 @@ window.H = {
         prov:r.province, city:r.city, suburb:r.suburb,
         photos:Array.isArray(r.photos)?r.photos:(r.photos?[r.photos]:[]),
         status:r.status, boost:r.boost, views:r.views||0,
-        createdAt:r.created_at?new Date(r.created_at).getTime():Date.now(),
-        expiresAt:r.expires_at?new Date(r.expires_at).getTime():null
+        createdAt:r.created_at?new Date(r.created_at).getTime():Date.now()
       }));
       const ids=new Set((H.state.listings||[]).map(l=>l.id));
       cloud.forEach(cl=>{
@@ -760,7 +701,6 @@ window.H = {
     } catch(e){ console.warn('Realtime setup failed:',e.message); }
   },
 
-  // ── Sync job applications from Supabase ──────────────────
   async syncApplications() {
     try {
       const sb = window.supabase;
@@ -815,7 +755,6 @@ window.H = {
     } catch(e) { console.warn('updateApplicationStatusCloud:', e.message); }
   },
 
-  // ── Sync conversations from Supabase ─────────────────────
   async syncConversations() {
     try {
       const sb = window.supabase;
@@ -833,7 +772,6 @@ window.H = {
           local = { id: c.id, members: c.members, listingId: c.listing_id, messages: [] };
           (H.state.conversations = H.state.conversations || []).push(local);
         }
-        // fetch recent messages for this conversation
         const { data: msgs } = await sb.from('messages')
           .select('id, sender_id, sender_name, text, read, created_at')
           .eq('conversation_id', c.id)
@@ -879,7 +817,6 @@ window.H = {
     } catch(e) { console.warn('ensureConversationInCloud:', e.message); }
   },
 
-  // ── Category View (fallback for unmapped categories) ─────
   _registerCategoryView() {
     this.pages.CategoryView=function({cid}){
       const cat=H.CATEGORIES.find(c=>c.id===cid)||{name:'Category',icon:''};
@@ -892,7 +829,6 @@ window.H = {
     };
   },
 
-  // ── About & Ads Pages ────────────────────────────────────
   _registerExtraPages() {
     H.pages.About=function(){
       return '<div class="page active">'+H.innerTopbar('About Hostly')
@@ -952,7 +888,6 @@ window.H = {
     };
   },
 
-  // ── Job Page ─────────────────────────────────────────────
   _registerJobPage() {
     H.pages.PostJob=function(){
       const u=H.currentUser();
@@ -1032,7 +967,6 @@ window.H = {
     };
   },
 
-  // ── Account Menu ─────────────────────────────────────────
   showAccountMenu(btn) {
     const u=this.currentUser(); if(!u) return;
     const sheet=document.getElementById('actionSheet');
@@ -1046,7 +980,6 @@ window.H = {
     const unread=(this.state.conversations||[]).reduce((n,c)=>c.members.includes(u.id)?n+(c.messages||[]).filter(m=>m.from!==u.id&&!m.read).length:n,0);
 
     sheet.innerHTML=`
-      <!-- User info header -->
       <div onclick="${nav('Profile')}" style="display:flex;align-items:center;gap:14px;padding:16px 18px 14px;border-bottom:1px solid var(--border);cursor:pointer">
         <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:#1A3A8F14;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;font-weight:800;color:#1A3A8F;border:2px solid #1A3A8F22">
           ${u.avatar?`<img src="${this.escHtml(u.avatar)}" style="width:100%;height:100%;object-fit:cover">`:this.initials(u.name)}
@@ -1059,7 +992,6 @@ window.H = {
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--sub)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
 
-      <!-- Quick stats -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border)">
         ${[['Ads',activeAds,'MyListings'],['Saved',savedAds,'Favorites'],['Inbox',unread,'Messages']].map(([l,v,p])=>`
           <div onclick="${p==='Messages'?'H.closeSheet();setTimeout(()=>H.navTo(\'Messages\'),50)':nav(p)}" style="padding:12px 4px;text-align:center;cursor:pointer;border-right:1px solid var(--border)">
@@ -1085,7 +1017,6 @@ window.H = {
     sheet.classList.add('open'); bg.classList.add('open');
   },
 
-  // ── Auth Gate ────────────────────────────────────────────
   requireAuth(msg) {
     const sheet=document.getElementById('actionSheet');
     const bg=document.getElementById('sheetBg');
@@ -1097,87 +1028,6 @@ window.H = {
       +'<button onclick="H.closeSheet()" style="display:block;width:100%;padding:12px;background:transparent;color:var(--sub);border:none;font-size:14px;cursor:pointer">Browse as Guest</button>'
       +'</div>';
     sheet.classList.add('open'); bg.classList.add('open');
-  },
-
-  // ── Onboarding ───────────────────────────────────────────
-  // ── Offline Detection (#7) ───────────────────────────────
-  _initOfflineDetection() {
-    const show=()=>{
-      if(document.getElementById('offlineBanner')) return;
-      const b=document.createElement('div');
-      b.id='offlineBanner'; b.className='offline-banner';
-      b.innerHTML='<span>&#9888;&#65039; No internet connection</span>';
-      (document.getElementById('app')||document.body).prepend(b);
-    };
-    const hide=()=>{const b=document.getElementById('offlineBanner');if(b)b.remove();};
-    window.addEventListener('online',hide);
-    window.addEventListener('offline',show);
-    if(!navigator.onLine) show();
-  },
-
-  // ── Error Tracking (#13) ─────────────────────────────────
-  _initErrorTracking() {
-    window.onerror=(msg,src,line,col,err)=>{H._logError({type:'js',msg:String(msg),src,line,col,stack:err&&err.stack});};
-    window.addEventListener('unhandledrejection',e=>{H._logError({type:'promise',msg:String(e.reason),stack:e.reason&&e.reason.stack});});
-  },
-  _logError(data) {
-    try {
-      console.warn('[Hostly]',data.type,data.msg);
-      if(!window.supabase||typeof window.supabase.from!=='function') return;
-      window.supabase.from('error_logs').insert({
-        type:data.type, message:String(data.msg||'').slice(0,500),
-        source:String(data.src||'').slice(0,200),
-        stack:String(data.stack||'').slice(0,1000),
-        user_id:(H.state&&H.state.currentUserId)||null,
-        user_agent:navigator.userAgent.slice(0,300),
-        created_at:new Date().toISOString()
-      }).then(()=>{}).catch(()=>{});
-    } catch(_){}
-  },
-
-  // ── Push Notifications (#3) ──────────────────────────────
-  async _initPushNotifications() {
-    if(typeof Capacitor==='undefined'||!Capacitor.isNativePlatform()) return;
-    try {
-      const PP=Capacitor.Plugins&&Capacitor.Plugins.PushNotifications;
-      if(!PP) return;
-      const perm=await PP.requestPermissions();
-      if(perm.receive!=='granted') return;
-      await PP.register();
-      PP.addListener('registration',async({value:token})=>{
-        const u=H.currentUser(); if(!u) return;
-        u.pushToken=token; H.saveState();
-        if(window.supabase) await window.supabase.from('profiles').update({push_token:token}).eq('id',u.id).catch(()=>{});
-      });
-      PP.addListener('pushNotificationReceived',n=>{H.toast((n.title||'')+(n.body?': '+n.body:''));});
-      PP.addListener('pushNotificationActionPerformed',({notification:{data}})=>{
-        if(data&&data.type==='message'&&data.convId) H.openInner('Chat',{id:data.convId});
-        else if(data&&data.type==='listing'&&data.id) H.openListing(data.id);
-      });
-    } catch(e){console.warn('Push setup:',e);}
-  },
-
-  // ── Saved Searches check (#10) ───────────────────────────
-  checkSavedSearches() {
-    const u=H.currentUser(); if(!u) return;
-    const searches=((H.state.savedSearches||{})[u.id]||[]);
-    if(!searches.length) return;
-    const listings=(H.state.listings||[]).filter(l=>l.status==='active'&&!H.isExpired(l));
-    searches.forEach(s=>{
-      const key='hostly_ss_'+s.id;
-      const last=parseInt(localStorage.getItem(key)||'0',10);
-      if(!last){localStorage.setItem(key,Date.now());return;}
-      const q=(s.query||'').toLowerCase();
-      const matches=listings.filter(l=>l.createdAt>last&&
-        (!q||l.title.toLowerCase().includes(q)||(l.desc||'').toLowerCase().includes(q))&&
-        (!s.cat||l.cat===s.cat));
-      if(matches.length){
-        const label=s.query||s.cat||'your search';
-        H.pushNotif(u.id,`${matches.length} new match${matches.length>1?'es':''} for "${label}"`,
-          matches[0].title+' and more');
-      }
-      localStorage.setItem(key,Date.now());
-    });
   },
 
   _showOnboarding() {
@@ -1213,30 +1063,6 @@ window.H = {
     render();
   },
 
-  // ── Demo Data ────────────────────────────────────────────
-  _seedDemoData() {
-    this.state.listings=(this.state.listings||[]).filter(l=>!l.id.startsWith('demo'));
-    const now=Date.now();
-    this.state.listings.push(
-      {id:'demo1',title:'iPhone 14 Pro Max 256GB',photos:[],desc:'Excellent condition, bought 6 months ago. Comes with original box.',price:850,currency:'USD',cat:'electronics',prov:'Harare',city:'Harare CBD',suburb:'Avondale',sellerId:'demo_seller1',status:'active',createdAt:now-3600000,views:24,sellerName:'Tafadzwa Moyo',sellerPhone:'+263771234567'},
-      {id:'demo2',title:'Toyota Vitz 2018 Low Mileage',photos:[],desc:'Well maintained, full service history. Fuel efficient.',price:7500,currency:'USD',cat:'vehicles',prov:'Harare',city:'Harare CBD',suburb:'Borrowdale',sellerId:'demo_seller2',status:'active',createdAt:now-7200000,views:56,sellerName:'Rumbidzai Ncube',sellerPhone:'+263772345678'},
-      {id:'demo3',title:'3 Bed House for Rent — Borrowdale',photos:[],desc:'Spacious 3 bed house with garden, garage, solar and borehole.',price:1200,currency:'USD',cat:'property',prov:'Harare',city:'Harare CBD',suburb:'Borrowdale',sellerId:'demo_seller3',status:'active',createdAt:now-86400000,views:103,sellerName:'Tatenda Dube',sellerPhone:'+263773456789'},
-      {id:'demo4',title:'Samsung 55" Smart TV 4K',photos:[],desc:'Barely used Samsung QLED TV with remote and stand.',price:450,currency:'USD',cat:'electronics',prov:'Bulawayo',city:'Bulawayo CBD',suburb:'Hillside',sellerId:'demo_seller1',status:'active',createdAt:now-172800000,views:31,sellerName:'Tafadzwa Moyo',sellerPhone:'+263771234567'},
-      {id:'demo5',title:'Sofa Set 7 Seater L-Shape',photos:[],desc:'Modern L-shape sofa in grey fabric. Selling due to relocation.',price:320,currency:'USD',cat:'furniture',prov:'Harare',city:'Harare CBD',suburb:'Greendale',sellerId:'demo_seller2',status:'active',createdAt:now-259200000,views:18,sellerName:'Rumbidzai Ncube',sellerPhone:'+263772345678'},
-      {id:'demo6',title:'Room to Rent — Warren Park',photos:[],desc:'Furnished single room, all utilities included.',price:120,currency:'USD',cat:'rooms',prov:'Harare',city:'Harare CBD',suburb:'Warren Park',sellerId:'demo_seller3',status:'active',createdAt:now-108000000,views:44,sellerName:'Tatenda Dube',sellerPhone:'+263773456789'}
-    );
-    const hasDemoUsers=(this.state.users||[]).some(u=>u.id==='demo_seller1');
-    if(!hasDemoUsers){
-      this.state.users=this.state.users||[];
-      this.state.users.push(
-        {id:'demo_seller1',name:'Tafadzwa Moyo',phone:'+263771234567',email:'tafadzwa@demo.com',role:'user',status:'active',verified:true,joinedAt:now-2592000000,settings:{theme:'light'}},
-        {id:'demo_seller2',name:'Rumbidzai Ncube',phone:'+263772345678',email:'rumbi@demo.com',role:'user',status:'active',verified:false,joinedAt:now-5184000000,settings:{theme:'light'}},
-        {id:'demo_seller3',name:'Tatenda Dube',phone:'+263773456789',email:'tatenda@demo.com',role:'user',status:'active',verified:true,joinedAt:now-7776000000,settings:{theme:'light'}}
-      );
-    }
-    this.saveState();
-  },
-
   openPhotoViewer(photos,idx=0){
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column';
@@ -1247,14 +1073,24 @@ window.H = {
     ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
   },
 
-  // ── Bootstrap ────────────────────────────────────────────
   init() {
     this.state=this.loadState();
-    this._initErrorTracking();
+    var hadDemo = (this.state.listings||[]).some(l=>String(l.id).startsWith('demo')) ||
+                  (this.state.users||[]).some(u=>String(u.id).startsWith('demo'));
+    this.state.listings=(this.state.listings||[]).filter(l=>!String(l.id).startsWith('demo'));
+    this.state.users=(this.state.users||[]).filter(u=>!String(u.id).startsWith('demo'));
+    if (hadDemo) this.saveState();
+    window.onerror = function(msg, src, line, col, err) {
+      try {
+        var sb = window.supabase;
+        if (sb && typeof sb.from === 'function') {
+          sb.from('error_logs').insert({ message: String(msg), source: src+':'+line, stack: err ? String(err.stack||'').slice(0,500) : null, created_at: new Date().toISOString() }).then(function(){});
+        }
+      } catch(e) {}
+    };
     this._registerCategoryView();
     this._registerJobPage();
     this._registerExtraPages();
-    this._seedDemoData();
     setTimeout(()=>this._showOnboarding(),800);
 
     document.addEventListener('DOMContentLoaded',()=>{
@@ -1277,7 +1113,6 @@ window.H = {
   }
 };
 
-// ── Global shortcuts ──────────────────────────────────────
 ['navTo','openInner','goBack','toast','closeModal','closeSheet'].forEach(fn=>{
   window[fn]=(...a)=>H[fn](...a);
 });
