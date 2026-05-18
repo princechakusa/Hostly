@@ -74,12 +74,10 @@
   }
   H._updatePassStrength = updatePassStrength;
 
-  // ── LOGO TAP → ADMIN ─────────────────────────────
   H.authLogoTap = function() {
     H.logoTap && H.logoTap();
   };
 
-  // ── MAIN AUTH PAGE ───────────────────────────────
   H.authStepEmail = function() {
     var card = document.getElementById('authCard');
     if (!card) return;
@@ -121,7 +119,6 @@
     setTimeout(function(){ var e=document.getElementById('newName'); if(e) e.focus(); }, 100);
   };
 
-  // ── OTP VERIFICATION ─────────────────────────────
   H.authShowOtp = function(email) {
     var card = document.getElementById('authCard');
     if (!card) return;
@@ -164,7 +161,6 @@
     H.toast(res.error ? res.error.message : 'Code resent — check your inbox');
   };
 
-  // ── FORGOT PASSWORD ──────────────────────────────
   H.authForgotPassword = function() {
     var card = document.getElementById('authCard');
     if (!card) return;
@@ -196,7 +192,6 @@
       + '<button class="auth-btn secondary" onclick="H.authShowEmailForm()">&larr; Back to Sign In</button>';
   };
 
-  // ── SIGN IN ──────────────────────────────────────
   H.authSignIn = async function() {
     if (authBusy) return;
     if (isLocked()) return;
@@ -230,7 +225,6 @@
     H.saveState(); setAuthBusy(false); H.boot();
   };
 
-  // ── SIGN UP ──────────────────────────────────────
   H.authSignUp = async function() {
     if (authBusy) return;
     var name      = document.getElementById('newName').value.trim();
@@ -287,7 +281,6 @@
     H.boot();
   };
 
-  // ── ADMIN LOGIN ──────────────────────────────────
   H.authAdminPage = function() {
     var card = document.getElementById('authCard');
     if (!card) return;
@@ -327,7 +320,6 @@
     H.boot();
   };
 
-  // ── LOAD PROFILE ─────────────────────────────────
   H.loadProfile = async function(userId) {
     var c = sb(); if (!c) return;
     var res = await c.from('profiles').select('*').eq('id',userId).single();
@@ -347,9 +339,7 @@
     H.saveState();
   };
 
-  // ── LOGOUT ───────────────────────────────────────
   H.logout = async function() {
-    // Clean up realtime subscriptions before signing out
     try {
       var sc = window.supabase;
       if (sc) {
@@ -368,7 +358,6 @@
     H.authPage();
   };
 
-  // ── SOCIAL AUTH ───────────────────────────────────
   H.authGoogle = async function() {
     const c = sb();
     if (!c) { H.toast('Sign-in service unavailable'); return; }
@@ -376,7 +365,6 @@
     if (error) H.toast(error.message || 'Google sign-in failed');
   };
 
-  // ── LEGAL DOCS ───────────────────────────────────
   H.authShowDoc = function(which) {
     H.modal({
       title: which==='terms' ? 'Terms & Conditions' : 'Privacy Policy',
