@@ -390,15 +390,22 @@
     var content = isTerms ? H._fullTermsHTML() : H._fullPrivacyHTML();
 
     function closeSheet() {
+      // Restore body scroll lock before removing sheet
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
       ['legalDocSheet','ldsFooterFixed'].forEach(function(id){
         var el = document.getElementById(id); if (el) el.remove();
       });
     }
 
+    // Lift the global overflow:hidden so iOS Safari allows scroll inside the sheet
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+
     // The sheet IS the scroll container — most reliable on iOS Safari
     var sheet = document.createElement('div');
     sheet.id = 'legalDocSheet';
-    sheet.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9990;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--bg,#F4F1EA);animation:slideUp .28s ease';
+    sheet.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9990;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;background:var(--bg,#F4F1EA);animation:slideUp .28s ease';
 
     sheet.innerHTML = ''
       // Sticky header — stays at top as content scrolls beneath it
