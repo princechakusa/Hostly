@@ -26,12 +26,7 @@
   // ---------------------------------------------------
   // BROWSE PAGE
   // ---------------------------------------------------
-  pages.Browse = async function () {
-    // Load fresh listings from Supabase (if connected)
-    if (typeof H.fetchListingsFromSupabase === 'function') {
-      await H.fetchListingsFromSupabase();
-    }
-
+  pages.Browse = function () {
     const activeListings = (state.listings || []).filter(l => l.status === 'active');
     const u = H.currentUser();
     const recentSearches = (u && u.recentSearches) || [];
@@ -152,12 +147,29 @@
       <div class="listing-list" id="listingList">
         ${activeListings.length
           ? filterListings(activeListings, '').map(renderListCard).join('')
-          : emptyState('No listings yet', 'Listings will appear here once people start posting', null, null)}
+          : H.skeletonCards(6)}
       </div>
     </div>`;
   };
 
   pages.Browse_after = function () {
+    // Background refresh from Supabase — fills skeleton if cache was empty
+    if (typeof H.fetchListingsFromSupabase === 'function') {
+      H.fetchListingsFromSupabase().then(() => {
+        const el = document.getElementById('listingList');
+        if (!el || H.currentPageName !== 'Browse') return;
+        const q = document.getElementById('searchIn')?.value || '';
+        const active = (state.listings || []).filter(l => l.status === 'active');
+        el.innerHTML = active.length
+          ? filterListings(active, q).map(renderListCard).join('')
+          : H.emptyState('No listings yet', 'Listings will appear here once people start posting', null, null);
+      }).catch(() => {
+        const el = document.getElementById('listingList');
+        if (el && !el.querySelector('.list-card-wrap')) {
+          el.innerHTML = H.errorState('Could not load listings', 'Check your connection and pull down to retry.', "H.renderPage('Browse')");
+        }
+      });
+    }
     H._browse = {
       toggleFilters: () => {
         const panel = document.getElementById('filterPanel');

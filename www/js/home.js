@@ -33,7 +33,7 @@
     </div>`;
   }
 
-  H.pages.Home = async function () {
+  H.pages.Home = function () {
     const u = H.currentUser();
     const unreadNotifs = u ? (H.state.notifs[u.id] || []).filter(n => !n.read).length : 0;
     const unreadMsgs   = u ? (H.state.conversations || []).filter(cv =>
@@ -123,7 +123,7 @@
           <div style="position:absolute;right:-24px;top:-24px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
           <div style="position:absolute;right:50px;bottom:-35px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05)"></div>
           <div>
-            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Zimbabwe's #1 Free Platform</div>
+            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Zimbabwe's Free Marketplace</div>
             <div style="font-size:21px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:4px">Buy. Sell. Hire.</div>
             <div style="font-size:12px;color:rgba(255,255,255,0.7)">Real people. Real deals.</div>
           </div>
@@ -205,6 +205,16 @@
         ? results.map(l => `<div>${renderListCard(l)}</div>`).join('')
         : emptyState('No matches', 'Try different keywords or browse a category', null, null);
     }, 300);
+  };
+
+  H.pages.Home_after = function () {
+    if (typeof H.fetchListingsFromSupabase !== 'function') return;
+    const countBefore = (H.state.listings || []).filter(l => l.status === 'active').length;
+    H.fetchListingsFromSupabase().then(() => {
+      if (H.currentPageName !== 'Home') return;
+      const countAfter = (H.state.listings || []).filter(l => l.status === 'active').length;
+      if (countAfter > countBefore) H.toast('New listings loaded — pull down to refresh');
+    }).catch(() => {});
   };
 
   H.toggleCityPicker = function () {

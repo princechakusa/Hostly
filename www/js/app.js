@@ -206,6 +206,28 @@ window.H = {
     </div>`;
   },
 
+  errorState(title, sub, retryFn) {
+    const fn = retryFn ? `onclick="${retryFn}"` : '';
+    return `<div class="error-state">
+      <div class="error-icon">⚠️</div>
+      <div class="error-title">${this.escHtml(title)}</div>
+      <div class="error-sub">${this.escHtml(sub)}</div>
+      ${retryFn ? `<button class="error-retry" ${fn}>Try Again</button>` : ''}
+    </div>`;
+  },
+
+  skeletonCards(n) {
+    const card = `<div class="skel-card">
+      <div class="skel skel-thumb"></div>
+      <div class="skel-body">
+        <div class="skel skel-line w80"></div>
+        <div class="skel skel-line w50"></div>
+        <div class="skel skel-line w35"></div>
+      </div>
+    </div>`;
+    return Array(n || 5).fill(card).join('');
+  },
+
   renderListCard(l) {
     const H      = window.H;
     const seller = (H.state.users||[]).find(u=>u.id===l.sellerId);
@@ -365,7 +387,7 @@ window.H = {
           <img src="img/icon-192.png" alt="Hostly" onclick="H.logoTap()" style="width:90px;height:90px;border-radius:22px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer">
           <div>Host<em>ly</em></div>
         </div>
-        <div class="auth-tag">Zimbabwe&#39;s #1 Free Marketplace</div>
+        <div class="auth-tag">Zimbabwe&#39;s Free Marketplace</div>
         <div class="auth-card" id="authCard"></div>
         <div class="auth-foot">
           By continuing you accept our
@@ -433,12 +455,21 @@ window.H = {
     if(this.canAccessPage&&!this.canAccessPage(name)){this.toast('Access denied');await this.navTo('Home');return;}
     this.currentPageName=name; this.currentPageParams=params||{};
     const fn=this.pages[name]||this.pages.Home;
-    const res=fn(params||{});
-    const html=(res instanceof Promise)?await res:res;
     if(!area) return;
-    area.scrollTop=0;
-    area.innerHTML=html;
-    if(area.style.opacity!=='1') area.style.opacity='1';
+    const res=fn(params||{});
+    if(res instanceof Promise) {
+      // For async pages: fade out, await, fade back in
+      area.style.opacity='0';
+      const html=await res;
+      if(this.currentPageName!==name) return; // navigated away while loading
+      area.scrollTop=0;
+      area.innerHTML=html;
+      requestAnimationFrame(()=>{ area.style.opacity='1'; });
+    } else {
+      area.scrollTop=0;
+      area.innerHTML=res;
+      if(area.style.opacity!=='1') area.style.opacity='1';
+    }
     if(this.pages[name+'_after']) this.pages[name+'_after'](params||{});
     this._initPullToRefresh();
   },
@@ -570,7 +601,10 @@ window.H = {
       try{
         const pageName=H.currentPageName;
         if(typeof H.fetchListingsFromSupabase==='function') await H.fetchListingsFromSupabase();
-        if(typeof H.syncConversations==='function' && H.currentUser()) await H.syncConversations();
+        if(H.currentUser()) {
+          if(typeof H.syncConversations==='function') await H.syncConversations();
+          if(typeof H.syncApplications==='function') H.syncApplications();
+        }
         await H.renderPage(pageName, H.currentPageParams);
         H.toast('Updated');
       } catch(e){ console.warn('Pull refresh error:',e); }
@@ -1017,7 +1051,7 @@ window.H = {
     sheet.innerHTML='<div style="text-align:center;padding:8px 0 16px">'
       +'<div style="width:56px;height:56px;background:#1A3A8F;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>'
       +'<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px">'+(msg||'Sign in to continue')+'</div>'
-      +'<div style="font-size:13px;color:var(--sub);margin-bottom:24px">Join Zimbabwe&#39;s #1 free marketplace</div>'
+      +'<div style="font-size:13px;color:var(--sub);margin-bottom:24px">Join Zimbabwe&#39;s free marketplace</div>'
       +'<button onclick="H.closeSheet();setTimeout(()=>H.authPage(),50)" style="display:block;width:100%;padding:14px;background:#1A3A8F;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Sign In</button>'
       +'<button onclick="H.closeSheet()" style="display:block;width:100%;padding:12px;background:transparent;color:var(--sub);border:none;font-size:14px;cursor:pointer">Browse as Guest</button>'
       +'</div>';
