@@ -105,7 +105,7 @@
           <button class="msg-btn" onclick="H.startChatWith('${seller.id}','${l.id}')">
             ${S.message} Message in App
           </button>
-          <button class="call-btn" onclick="H.callSeller('${sellerPhone}')">
+          <button class="call-btn" onclick="H.callSeller('${H.escHtml(sellerPhone)}')">
             ${S.phone} Call ${H.escHtml(sellerPhone||'Seller')}
           </button>
           <button class="report-btn" onclick="H.reportListing('${l.id}')">
@@ -196,13 +196,14 @@
 
   H.callSeller = function(phone) {
     if (!phone || phone.trim()==='') { H.toast('No phone number available'); return; }
-    const clean = phone.replace(/\s+/g,'');
-    if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
-      location.href = 'tel:'+clean;
-    } else {
-      if (navigator.clipboard) navigator.clipboard.writeText(clean);
-      H.toast('Number copied: '+clean);
-    }
+    const clean = phone.replace(/[^\d+\-() ]/g,'').trim();
+    if (!clean) { H.toast('No phone number available'); return; }
+    // window.open with '_system' works in Capacitor (routes through native intent)
+    // and falls back gracefully in a browser
+    window.open('tel:'+clean, '_system');
+    // Also copy to clipboard as a backup so the number is always accessible
+    if (navigator.clipboard) navigator.clipboard.writeText(clean).catch(()=>{});
+    H.toast('Calling '+clean);
   };
 
   H.startChatWith = function(sellerId, listingId) {
