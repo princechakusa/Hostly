@@ -583,6 +583,16 @@
     seller.reviews.unshift(review);
     seller.ratings.push(rating);
     H.saveState();
+    var _sb = window.supabase;
+    if (_sb && typeof _sb.from === 'function') {
+      _sb.from('reviews').insert({
+        seller_id: sellerId, reviewer_id: me.id,
+        reviewer_name: me.name || 'User', rating: rating,
+        body: text || null, created_at: new Date().toISOString()
+      }).then(function(res) {
+        if (res && res.error) console.warn('Review sync failed:', res.error.message);
+      });
+    }
     H.pushNotif(sellerId, 'New Review', me.name + ' left you a ' + rating + '-star review', 'review');
     H.toast('Review submitted. Thank you!');
     H.renderPage('Reviews', {id: sellerId});

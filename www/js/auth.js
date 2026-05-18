@@ -350,6 +350,14 @@
 
   // ── LOGOUT ───────────────────────────────────────
   H.logout = async function() {
+    // Clean up realtime subscriptions before signing out
+    try {
+      var sc = window.supabase;
+      if (sc) {
+        if (window._msgChannel)   { sc.removeChannel(window._msgChannel);   window._msgChannel   = null; }
+        if (H._notifChannel)      { sc.removeChannel(H._notifChannel);      H._notifChannel      = null; }
+      }
+    } catch(e) {}
     var c = sb();
     if (c) { try { await c.auth.signOut(); } catch(e) {} }
     state.currentUserId = null;

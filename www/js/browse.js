@@ -216,6 +216,35 @@
       voiceSearch: () => {
         H.toast('Voice search coming soon!');
       },
+      saveSearch: () => {
+        const q = document.getElementById('searchIn')?.value?.trim() || '';
+        const u = H.currentUser();
+        if (!u) { H.requireAuth('Sign in to save searches'); return; }
+        if (!q && !browseState.selectedCategory) { H.toast('Type something to save as a search'); return; }
+        state.savedSearches = state.savedSearches || {};
+        state.savedSearches[u.id] = state.savedSearches[u.id] || [];
+        const already = state.savedSearches[u.id].some(s => s.query === q && s.cat === browseState.selectedCategory);
+        if (already) { H.toast('Search already saved'); return; }
+        const newId = H.uid();
+        state.savedSearches[u.id].unshift({ id: newId, query: q, cat: browseState.selectedCategory, savedAt: Date.now() });
+        state.savedSearches[u.id] = state.savedSearches[u.id].slice(0, 10);
+        H.saveState();
+        var _sb = window.supabase;
+        if (_sb && typeof _sb.from === 'function') {
+          _sb.from('saved_searches').insert({
+            user_id: u.id, query: q || null,
+            category: browseState.selectedCategory || null
+          }).then(function(res) { if (res && res.error) console.warn('Saved search sync failed:', res.error.message); });
+        }
+        H.toast('Search saved — we\'ll notify you of new matches');
+      },
+      removeSavedSearch: (id) => {
+        const u = H.currentUser(); if (!u) return;
+        state.savedSearches = state.savedSearches || {};
+        state.savedSearches[u.id] = (state.savedSearches[u.id] || []).filter(s => s.id !== id);
+        H.saveState();
+        H.renderPage('Browse');
+      },
       onFilterChange: () => {
         // Placeholder for future filter logic
       },

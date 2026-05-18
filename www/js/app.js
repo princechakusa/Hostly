@@ -1093,30 +1093,6 @@ window.H = {
     render();
   },
 
-  // ── Demo Data ────────────────────────────────────────────
-  _seedDemoData() {
-    this.state.listings=(this.state.listings||[]).filter(l=>!l.id.startsWith('demo'));
-    const now=Date.now();
-    this.state.listings.push(
-      {id:'demo1',title:'iPhone 14 Pro Max 256GB',photos:[],desc:'Excellent condition, bought 6 months ago. Comes with original box.',price:850,currency:'USD',cat:'electronics',prov:'Harare',city:'Harare CBD',suburb:'Avondale',sellerId:'demo_seller1',status:'active',createdAt:now-3600000,views:24,sellerName:'Tafadzwa Moyo',sellerPhone:'+263771234567'},
-      {id:'demo2',title:'Toyota Vitz 2018 Low Mileage',photos:[],desc:'Well maintained, full service history. Fuel efficient.',price:7500,currency:'USD',cat:'vehicles',prov:'Harare',city:'Harare CBD',suburb:'Borrowdale',sellerId:'demo_seller2',status:'active',createdAt:now-7200000,views:56,sellerName:'Rumbidzai Ncube',sellerPhone:'+263772345678'},
-      {id:'demo3',title:'3 Bed House for Rent — Borrowdale',photos:[],desc:'Spacious 3 bed house with garden, garage, solar and borehole.',price:1200,currency:'USD',cat:'property',prov:'Harare',city:'Harare CBD',suburb:'Borrowdale',sellerId:'demo_seller3',status:'active',createdAt:now-86400000,views:103,sellerName:'Tatenda Dube',sellerPhone:'+263773456789'},
-      {id:'demo4',title:'Samsung 55" Smart TV 4K',photos:[],desc:'Barely used Samsung QLED TV with remote and stand.',price:450,currency:'USD',cat:'electronics',prov:'Bulawayo',city:'Bulawayo CBD',suburb:'Hillside',sellerId:'demo_seller1',status:'active',createdAt:now-172800000,views:31,sellerName:'Tafadzwa Moyo',sellerPhone:'+263771234567'},
-      {id:'demo5',title:'Sofa Set 7 Seater L-Shape',photos:[],desc:'Modern L-shape sofa in grey fabric. Selling due to relocation.',price:320,currency:'USD',cat:'furniture',prov:'Harare',city:'Harare CBD',suburb:'Greendale',sellerId:'demo_seller2',status:'active',createdAt:now-259200000,views:18,sellerName:'Rumbidzai Ncube',sellerPhone:'+263772345678'},
-      {id:'demo6',title:'Room to Rent — Warren Park',photos:[],desc:'Furnished single room, all utilities included.',price:120,currency:'USD',cat:'rooms',prov:'Harare',city:'Harare CBD',suburb:'Warren Park',sellerId:'demo_seller3',status:'active',createdAt:now-108000000,views:44,sellerName:'Tatenda Dube',sellerPhone:'+263773456789'}
-    );
-    const hasDemoUsers=(this.state.users||[]).some(u=>u.id==='demo_seller1');
-    if(!hasDemoUsers){
-      this.state.users=this.state.users||[];
-      this.state.users.push(
-        {id:'demo_seller1',name:'Tafadzwa Moyo',phone:'+263771234567',email:'tafadzwa@demo.com',role:'user',status:'active',verified:true,joinedAt:now-2592000000,settings:{theme:'light'}},
-        {id:'demo_seller2',name:'Rumbidzai Ncube',phone:'+263772345678',email:'rumbi@demo.com',role:'user',status:'active',verified:false,joinedAt:now-5184000000,settings:{theme:'light'}},
-        {id:'demo_seller3',name:'Tatenda Dube',phone:'+263773456789',email:'tatenda@demo.com',role:'user',status:'active',verified:true,joinedAt:now-7776000000,settings:{theme:'light'}}
-      );
-    }
-    this.saveState();
-  },
-
   openPhotoViewer(photos,idx=0){
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;background:#000;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column';
@@ -1130,10 +1106,13 @@ window.H = {
   // ── Bootstrap ────────────────────────────────────────────
   init() {
     this.state=this.loadState();
+    // Clean up any demo data left from previous versions
+    this.state.listings=(this.state.listings||[]).filter(l=>!String(l.id).startsWith('demo'));
+    this.state.users=(this.state.users||[]).filter(u=>!String(u.id).startsWith('demo_'));
+    this._initErrorTracking();
     this._registerCategoryView();
     this._registerJobPage();
     this._registerExtraPages();
-    this._seedDemoData();
     setTimeout(()=>this._showOnboarding(),800);
 
     document.addEventListener('DOMContentLoaded',()=>{
