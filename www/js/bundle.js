@@ -1,4 +1,4 @@
-/* Hostly bundle — built 2026-05-18T07:45:53Z */
+/* Hostly bundle — built 2026-05-18T08:23:26Z */
 
 ;/* === www/js/app.js === */
 ﻿'use strict';
@@ -1672,53 +1672,47 @@ H.init();
   // Opens a full-screen slide-up sheet with the actual legal document content.
   // Uses the same content as HelpTerms / HelpPrivacy pages so it's always in sync.
   H.authShowDoc = function(which) {
-    var existing = document.getElementById('legalDocSheet');
-    if (existing) existing.remove();
+    ['legalDocSheet','ldsFooterFixed'].forEach(function(id){
+      var el = document.getElementById(id); if (el) el.remove();
+    });
 
     var isTerms = which === 'terms';
     var title   = isTerms ? 'Terms of Service' : 'Privacy Policy';
-
     var content = isTerms ? H._fullTermsHTML() : H._fullPrivacyHTML();
 
-    var safeTop = 'env(safe-area-inset-top,0px)';
-    var safeBot = 'env(safe-area-inset-bottom,0px)';
+    function closeSheet() {
+      ['legalDocSheet','ldsFooterFixed'].forEach(function(id){
+        var el = document.getElementById(id); if (el) el.remove();
+      });
+    }
 
+    // The sheet IS the scroll container — most reliable on iOS Safari
     var sheet = document.createElement('div');
     sheet.id = 'legalDocSheet';
-    // Use overflow:hidden + absolute children — more reliable than flex on iOS Safari
-    sheet.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9990;background:var(--bg,#F4F1EA);overflow:hidden;animation:slideUp .28s ease';
+    sheet.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9990;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--bg,#F4F1EA);animation:slideUp .28s ease';
 
     sheet.innerHTML = ''
-      // Header — absolutely positioned at top
-      + '<div id="ldsHeader" style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:calc(' + safeTop + ' + 14px) 16px 14px;background:linear-gradient(135deg,#1A3A8F,#2952cc)">'
+      // Sticky header — stays at top as content scrolls beneath it
+      + '<div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 14px;background:linear-gradient(135deg,#1A3A8F,#2952cc)">'
       +   '<div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.3px">' + title + '</div>'
-      +   '<button onclick="document.getElementById(\'legalDocSheet\').remove()" style="background:rgba(255,255,255,.18);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer">'
+      +   '<button id="ldsCloseBtn" style="background:rgba(255,255,255,.18);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">'
       +     '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
       +   '</button>'
       + '</div>'
-      // Footer — absolutely positioned at bottom
-      + '<div id="ldsFooter" style="position:absolute;bottom:0;left:0;right:0;padding:12px 16px calc(' + safeBot + ' + 12px);background:var(--card,#fff);border-top:1px solid var(--border,#e5e0d6)">'
-      +   '<button onclick="document.getElementById(\'legalDocSheet\').remove()" style="width:100%;padding:14px;background:#1A3A8F;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Got it</button>'
-      + '</div>'
-      // Scroll area — positioned between header and footer via JS after render
-      + '<div id="ldsScroll" style="position:absolute;left:0;right:0;overflow-y:scroll;-webkit-overflow-scrolling:touch">'
-      +   '<div class="doc-content">' + content + '</div>'
-      + '</div>';
+      // Content — extra bottom padding so nothing hides behind the fixed footer
+      + '<div class="doc-content" style="padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)">' + content + '</div>';
+
+    // Footer as separate fixed element so it never interferes with scroll
+    var footer = document.createElement('div');
+    footer.id = 'ldsFooterFixed';
+    footer.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9991;padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px);background:var(--card,#fff);border-top:1px solid var(--border,#e5e0d6)';
+    footer.innerHTML = '<button id="ldsGotItBtn" style="width:100%;padding:14px;background:#1A3A8F;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Got it</button>';
 
     document.body.appendChild(sheet);
+    document.body.appendChild(footer);
 
-    // Size the scroll area to exactly fill between header and footer
-    requestAnimationFrame(function() {
-      var hdr = document.getElementById('ldsHeader');
-      var ftr = document.getElementById('ldsFooter');
-      var scr = document.getElementById('ldsScroll');
-      if (hdr && ftr && scr) {
-        var hh = hdr.offsetHeight;
-        var fh = ftr.offsetHeight;
-        scr.style.top    = hh + 'px';
-        scr.style.bottom = fh + 'px';
-      }
-    });
+    document.getElementById('ldsCloseBtn').onclick = closeSheet;
+    document.getElementById('ldsGotItBtn').onclick = closeSheet;
   };
 
   H._fullTermsHTML = function() {
