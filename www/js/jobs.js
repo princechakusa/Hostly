@@ -58,6 +58,9 @@
       + '<div style="font-size:16px;font-weight:800;color:#1A3A8F;margin-bottom:4px">Hire Talent</div>'
       + '<div style="font-size:12px;color:var(--sub)">' + candidates.length + ' candidate' + (candidates.length !== 1 ? 's' : '') + '</div></div>'
       + '</div>'
+      + '<div onclick="H.openInner(\'CandidateProfile\')" style="margin:0 14px 12px;background:linear-gradient(135deg,#22c55e,#15803d);border-radius:16px;padding:16px 20px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">'
+      + '<div><div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:2px">Looking for Work?</div><div style="font-size:12px;color:rgba(255,255,255,.8)">Set up your profile to appear in Hire Talent</div></div>'
+      + '<div style="font-size:28px">👤</div></div>'
       + '<div style="padding:0 14px 12px">'
       + '<div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:10px">Browse by Category</div>'
       + '<div style="display:flex;flex-wrap:wrap;gap:8px">'
@@ -177,7 +180,37 @@
       + '</div></div>';
   };
 
-  H.pages.HireTalent_after = function () { H._currentTalentSector = 'All'; };
+  H.pages.HireTalent_after = function () {
+    H._currentTalentSector = 'All';
+    var _sb = window.supabase;
+    if (!_sb || typeof _sb.from !== 'function') return;
+    _sb.from('profiles').select('id,name,phone,avatar,verified,job_title,skills,sector,exp,city,open_to_work')
+      .eq('open_to_work', true).limit(100)
+      .then(function (res) {
+        if (res.error || !res.data || !res.data.length) return;
+        res.data.forEach(function (p) {
+          var ex = (H.state.users || []).find(function (u) { return u.id === p.id; });
+          if (!ex) {
+            (H.state.users = H.state.users || []).push({
+              id: p.id, name: p.name || 'User', phone: p.phone || '',
+              avatar: p.avatar || null, verified: p.verified || false,
+              openToWork: true, jobTitle: p.job_title || '',
+              skills: p.skills || '', sector: p.sector || '',
+              exp: p.exp || '', city: p.city || ''
+            });
+          } else {
+            ex.openToWork = true;
+            ex.jobTitle  = p.job_title  || ex.jobTitle  || '';
+            ex.skills    = p.skills     || ex.skills    || '';
+            ex.sector    = p.sector     || ex.sector    || '';
+            ex.exp       = p.exp        || ex.exp       || '';
+            ex.city      = p.city       || ex.city      || '';
+          }
+        });
+        H.saveState();
+        H._filterTalent();
+      });
+  };
 
   H._talentSector = function (sector) {
     H._currentTalentSector = sector;
@@ -242,7 +275,7 @@
       + '<div class="det-topbar"><button class="back" onclick="H.goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="det-topbar-title">Post a Job</div></div>'
       + '<div style="margin:12px 14px;background:#1A3A8F18;border-radius:12px;padding:12px 14px;display:flex;gap:10px">'
       + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1A3A8F" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-      + '<div style="font-size:12px;color:#1A3A8F;font-weight:600;line-height:1.6">Jobs are reviewed before going live. Company name is always visible. Posting is free.</div>'
+      + '<div style="font-size:12px;color:#1A3A8F;font-weight:600;line-height:1.6">Jobs go live immediately. Company name is always visible. Posting is free.</div>'
       + '</div>'
       + '<div style="padding:0 14px 100px">'
       + _field('jCompany', 'Company Name *', 'text', 'Your company or organisation name', H.escHtml(u.company || u.name || ''))
@@ -269,7 +302,7 @@
       + _field('jPhone', 'WhatsApp Number', 'tel', 'e.g. +263771234567', H.escHtml(u.phone || ''))
       + '</div>'
       + '<div style="position:fixed;bottom:0;left:0;right:0;background:var(--card);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);z-index:200">'
-      + '<button onclick="H._submitJob()" style="width:100%;padding:15px;background:linear-gradient(135deg,#1A3A8F,#0f2460);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer">Submit Job for Review →</button>'
+      + '<button onclick="H._submitJob()" style="width:100%;padding:15px;background:linear-gradient(135deg,#1A3A8F,#0f2460);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer">Post Job Now →</button>'
       + '</div></div>';
   };
 
@@ -315,17 +348,14 @@
       id: H.uid(), cat: 'jobs', title: title.trim(), desc: fullDesc,
       price: salMin ? +salMin : 0, currency: 'USD', city: location, prov: location,
       sellerId: u.id, sellerName: anon ? company : (u.name || company),
-      company: company, createdAt: Date.now(), status: 'pending', images: []
+      sellerPhone: u.phone || '', company: company,
+      createdAt: Date.now(), status: 'active', photos: []
     };
     H.state.listings = H.state.listings || [];
     H.state.listings.push(listing);
     H.saveState();
-    try {
-      if (window.supabase && typeof window.supabase.from === 'function') {
-        window.supabase.from('listings').insert(listing).then(function (r) { if (r && r.error) console.warn('Job sync:', r.error.message); });
-      }
-    } catch (e) { console.warn('Job cloud:', e.message); }
-    H.toast('Job submitted for review! It will go live once approved.');
+    if (typeof H.saveListingToCloud === 'function') H.saveListingToCloud(listing);
+    H.toast('Job posted! Candidates can now apply.');
     H.goBack();
   };
 
@@ -570,6 +600,76 @@
         }).join('')
         : H.emptyState('No applications yet', 'Browse jobs and apply directly in the app.', 'Browse Jobs', "H.openInner('FindJobs')"))
       + '</div></div>';
+  };
+
+  // ── CANDIDATE PROFILE ─────────────────────────────────────
+  H.pages.CandidateProfile = function () {
+    var u = H.currentUser();
+    if (!u) return '<div class="page active">' + H.innerTopbar('Job Seeker Profile') + H.emptyState('Sign in required', 'Sign in to set up your job seeker profile', 'Sign In', "H.requireAuth('Job seeker profile')") + '</div>';
+    var ZW = H._ZW_CITIES || [];
+    var expLevels = [['entry','Entry Level (0-2 yrs)'],['mid','3-5 Years'],['senior','5-10 Years'],['expert','10+ Years']];
+    var on = u.openToWork ? '1' : '0';
+    var togBg = u.openToWork ? '#22c55e' : 'var(--border)';
+    var togLeft = u.openToWork ? '23px' : '3px';
+
+    return '<div class="page active">'
+      + H.innerTopbar('Job Seeker Profile')
+      + '<div style="margin:12px 14px;background:#22c55e18;border-radius:12px;padding:12px 14px;display:flex;gap:10px">'
+      + '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#15803d" stroke-width="2" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      + '<div style="font-size:12px;color:#15803d;font-weight:600;line-height:1.6">Employers in Hire Talent can find and contact you when you turn on Open to Work.</div>'
+      + '</div>'
+      + '<div style="padding:0 14px 100px">'
+      + '<div style="margin-bottom:16px;background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'
+      + '<div><div style="font-size:15px;font-weight:700;color:var(--text)">Open to Work</div><div style="font-size:12px;color:var(--sub);margin-top:2px">Appear in employer searches</div></div>'
+      + '<div id="otwTog" onclick="var o=this.dataset.on===\'1\'?\'0\':\'1\';this.dataset.on=o;this.style.background=o===\'1\'?\'#22c55e\':\'var(--border)\';this.querySelector(\'div\').style.left=o===\'1\'?\'23px\':\'3px\'" data-on="' + on + '" style="width:46px;height:26px;border-radius:13px;background:' + togBg + ';position:relative;cursor:pointer;transition:background .2s;flex-shrink:0">'
+      + '<div style="position:absolute;top:3px;left:' + togLeft + ';width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)"></div></div>'
+      + '</div>'
+      + '<div style="margin-bottom:14px"><label style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Current / Desired Job Title</label>'
+      + '<input id="cpTitle" placeholder="e.g. Accountant, Driver, Teacher" value="' + H.escHtml(u.jobTitle || '') + '" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);outline:none;box-sizing:border-box"></div>'
+      + '<div style="margin-bottom:14px"><label style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Skills <span style="font-weight:400;text-transform:none">(comma-separated)</span></label>'
+      + '<input id="cpSkills" placeholder="e.g. Excel, Driving, Sales, Customer Service" value="' + H.escHtml(u.skills || '') + '" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);outline:none;box-sizing:border-box"></div>'
+      + '<div style="margin-bottom:14px"><label style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Industry / Sector</label>'
+      + '<select id="cpSector" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);outline:none"><option value="">Select sector…</option>'
+      + JOB_CATS.map(function (c) { return '<option value="' + H.escHtml(c) + '"' + (u.sector === c ? ' selected' : '') + '>' + H.escHtml(c) + '</option>'; }).join('')
+      + '</select></div>'
+      + '<div style="margin-bottom:14px"><label style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Experience Level</label>'
+      + '<select id="cpExp" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);outline:none"><option value="">Select level…</option>'
+      + expLevels.map(function (e) { return '<option value="' + e[0] + '"' + (u.exp === e[0] ? ' selected' : '') + '>' + H.escHtml(e[1]) + '</option>'; }).join('')
+      + '</select></div>'
+      + '<div style="margin-bottom:20px"><label style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">City</label>'
+      + '<select id="cpCity" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);outline:none"><option value="">Select city…</option>'
+      + ZW.map(function (c) { return '<option value="' + H.escHtml(c) + '"' + (u.city === c ? ' selected' : '') + '>' + H.escHtml(c) + '</option>'; }).join('')
+      + '<option value="Remote"' + (u.city === 'Remote' ? ' selected' : '') + '>Remote / Any</option>'
+      + '</select></div>'
+      + '</div>'
+      + '<div style="position:fixed;bottom:0;left:0;right:0;background:var(--card);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);z-index:200">'
+      + '<button id="cpSaveBtn" onclick="H._saveCandidateProfile()" style="width:100%;padding:15px;background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer">Save Profile</button>'
+      + '</div></div>';
+  };
+
+  H._saveCandidateProfile = function () {
+    var u = H.currentUser(); if (!u) return;
+    var btn = document.getElementById('cpSaveBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    u.openToWork = (document.getElementById('otwTog') || {}).dataset && document.getElementById('otwTog').dataset.on === '1';
+    u.jobTitle   = ((document.getElementById('cpTitle')  || {}).value || '').trim();
+    u.skills     = ((document.getElementById('cpSkills') || {}).value || '').trim();
+    u.sector     = (document.getElementById('cpSector')  || {}).value || '';
+    u.exp        = (document.getElementById('cpExp')     || {}).value || '';
+    u.city       = (document.getElementById('cpCity')    || {}).value || '';
+    H.saveState();
+    var _sb = window.supabase;
+    if (_sb && typeof _sb.from === 'function') {
+      _sb.from('profiles').upsert({
+        id: u.id, open_to_work: u.openToWork,
+        job_title: u.jobTitle || null, skills: u.skills || null,
+        sector: u.sector || null, exp: u.exp || null, city: u.city || null
+      }).then(function (res) {
+        if (res && res.error) console.warn('Candidate profile sync:', res.error.message);
+      });
+    }
+    H.toast(u.openToWork ? 'Profile saved — employers can now find you!' : 'Profile saved — you are hidden from employer searches');
+    H.goBack();
   };
 
   function _ji(label, value) {

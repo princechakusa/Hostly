@@ -182,13 +182,13 @@
         price: s.price, currency: s.currency, cat: s.cat,
         prov: s.prov, city: s.city, suburb: s.suburb,
         photos: s.photos, createdAt: Date.now(),
-        status: (H.state.requireListingApproval || s.cat === 'jobs') ? 'pending' : 'active',
+        status: H.state.requireListingApproval ? 'pending' : 'active',
         boost: null, views: 0
       };
       H.state.listings.unshift(l);
       H.saveState();
       if (typeof H.saveListingToCloud === "function") H.saveListingToCloud(l);
-      H.toast(H.state.requireListingApproval ? 'Ad submitted for admin approval' : '?? Your ad is live!');
+      H.toast(H.state.requireListingApproval ? 'Ad submitted for admin approval' : 'Your ad is live!');
       H.navTo('Home', document.querySelector('[data-nav="Home"]'));
     }
   };
