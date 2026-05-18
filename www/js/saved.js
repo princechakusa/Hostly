@@ -7,9 +7,6 @@
           saveState, fmtPrice, initials, renderListCard, navTo,
           pushNotif, CATEGORIES } = H;
 
-  // ---------------------------------------------------
-  // SAVED LISTINGS
-  // ---------------------------------------------------
   pages.Saved = function () {
     const u    = currentUser();
     const ids  = state.saves[u.id] || [];
@@ -27,14 +24,11 @@
       <div class="listing-list">
         ${list.length
           ? list.map(renderListCard).join('')
-          : emptyState('Nothing saved yet', 'Tap the ? on any listing to save it for later', 'Browse Listings', "H.navTo('Browse',document.querySelector('[data-nav=Browse]'))")}
+          : emptyState('Nothing saved yet', 'Tap the ♡ on any listing to save it for later', 'Browse Listings', "H.navTo('Browse',document.querySelector('[data-nav=Browse]'))")}
       </div>
     </div>`;
   };
 
-  // ---------------------------------------------------
-  // PROFILE (own)
-  // ---------------------------------------------------
   pages.Profile = function () {
     const u         = currentUser();
     const myListings = (state.listings || []).filter(l => l.sellerId === u.id);
@@ -79,7 +73,7 @@
           <div class="mi-icon ${u.verified ? 'blue-ic' : 'green-ic'}">
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
-          <div class="mi-label">${u.verified ? 'Verified ?' : 'Get Verified'}</div>
+          <div class="mi-label">${u.verified ? 'Verified ✓' : 'Get Verified'}</div>
           ${!u.verified ? '<span style="font-size:11px;color:var(--o);font-weight:700">Boost trust</span>' : ''}
           <div class="mi-arrow">›</div>
         </div>
@@ -92,12 +86,6 @@
           <div class="mi-label">Notifications</div>
           <div class="mi-arrow">›</div>
         </div>
-        <div class="mi" onclick="H.toggleDarkMode()">
-          <div class="mi-icon"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
-          <div class="mi-label">Dark Mode</div>
-          <span id="darkModeToggle" class="${(u.settings&&u.settings.theme)==='dark'?'mi-badge-green':''}" style="font-size:12px;font-weight:700;color:var(--sub2);margin-right:4px">${(u.settings&&u.settings.theme)==='dark'?'On':'Off'}</span>
-          <div class="mi-arrow">›</div>
-        </div>
         <div class="mi" onclick="H.openInner('LanguageSettings')">
           <div class="mi-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
           <div class="mi-label">Language</div>
@@ -105,11 +93,6 @@
         </div>
         <div class="mi" onclick="H.openInner('PrivacySettings')">
           <div class="mi-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-          <div class="mi-label">Privacy Settings</div>
-          <div class="mi-arrow">›</div>
-        </div>
-        <div class="mi" onclick="H.openInner('HelpPrivacy')">
-          <div class="mi-icon blue-ic"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
           <div class="mi-label">Privacy Policy</div>
           <div class="mi-arrow">›</div>
         </div>
@@ -135,7 +118,7 @@
       <div class="menu-items" style="padding-bottom:90px">
         <div class="mi" onclick="H.logOut()">
           <div class="mi-icon red-ic"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
-          <div class="mi-label red-lbl">Log Out</div>
+          <div class="mi-label red-lbl">Sign Out</div>
         </div>
         <div class="mi" onclick="H.openInner('DeleteAccount')">
           <div class="mi-icon red-ic"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
@@ -145,9 +128,6 @@
     </div>`;
   };
 
-  // ---------------------------------------------------
-  // MY LISTINGS
-  // ---------------------------------------------------
   pages.MyListings = function () {
     const u    = currentUser();
     const list = (state.listings || []).filter(l => l.sellerId === u.id).sort((a, b) => b.createdAt - a.createdAt);
@@ -156,12 +136,9 @@
       <div style="padding-bottom:90px">
         ${list.length ? list.map(l => {
           const statusClass = l.status === 'active' ? 'status-active' : l.status === 'banned' ? 'status-banned' : 'status-pending';
-          const expiring = l.expiresAt && l.expiresAt - Date.now() < 7 * 24 * 60 * 60 * 1000;
-          const expired  = H.isExpired(l);
-          const daysLeft = l.expiresAt ? Math.max(0, Math.ceil((l.expiresAt - Date.now()) / 86400000)) : null;
           return `<div class="my-listing-card">
             <div class="ml-thumb">
-              ${l.photos && l.photos[0] ? `<img src="${l.photos[0]}">` : (CATEGORIES.find(c => c.id === l.cat) || {}).icon || '??'}
+              ${l.photos && l.photos[0] ? `<img src="${l.photos[0]}">` : (CATEGORIES.find(c => c.id === l.cat) || {}).icon || '📦'}
             </div>
             <div class="ml-body">
               <div class="ml-title">${escHtml(l.title)}</div>
@@ -169,12 +146,10 @@
               <div class="ml-meta">
                 <span class="status-pill ${statusClass}">${l.status}</span>
                 · ${l.views || 0} views · ${timeAgo(l.createdAt)}
-                ${expired ? ' · <span style="color:#dc2626;font-weight:700">Expired</span>' : expiring ? ` · <span style="color:#f59e0b;font-weight:700">${daysLeft}d left</span>` : ''}
               </div>
               <div class="ml-actions">
                 <button class="ml-act-btn" onclick="H.openListing('${l.id}')">View</button>
-                <button class="ml-act-btn" onclick="H.openInner('Boost',{listingId:'${l.id}'})">? Boost</button>
-                ${(expired || expiring) ? `<button class="ml-act-btn" onclick="H.renewListing('${l.id}')">Renew</button>` : ''}
+                <button class="ml-act-btn" onclick="H.openInner('Boost',{listingId:'${l.id}'})">⚡ Boost</button>
                 ${l.status === 'active'
                   ? `<button class="ml-act-btn red" onclick="H.deleteListing('${l.id}')">Delete</button>`
                   : ''}
@@ -186,14 +161,21 @@
     </div>`;
   };
 
-  // Log out helper
   H.logOut = function () {
     modal({
-      title: 'Log out?', body: 'You will be returned to the login screen.',
-      confirmText: 'Log Out',
-      onConfirm: () => {
+      title: 'Sign out?', body: 'You will be returned to the login screen.',
+      confirmText: 'Sign Out',
+      onConfirm: async () => {
+        try {
+          var sc = window.supabase;
+          if (sc && sc.auth && typeof sc.auth.signOut === 'function') {
+            await sc.auth.signOut();
+          }
+        } catch (e) {}
         state.currentUserId = null;
+        state.adminSession = null;
         saveState();
+        try { sessionStorage.clear(); } catch (e) {}
         location.reload();
       }
     });
