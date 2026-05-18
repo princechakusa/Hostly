@@ -363,17 +363,25 @@
   };
 
   // ── SOCIAL AUTH ───────────────────────────────────
+  var OAUTH_REDIRECT = 'https://princechakusa.github.io/Hostly/www/';
+
   H.authGoogle = async function() {
     const c = sb();
     if (!c) { H.toast('Sign-in service unavailable'); return; }
-    const { error } = await c.auth.signInWithOAuth({ provider: 'google' });
+    const { error } = await c.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: OAUTH_REDIRECT }
+    });
     if (error) H.toast(error.message || 'Google sign-in failed');
   };
 
   H.authFacebook = async function() {
     const c = sb();
     if (!c) { H.toast('Sign-in service unavailable'); return; }
-    const { error } = await c.auth.signInWithOAuth({ provider: 'facebook' });
+    const { error } = await c.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: { redirectTo: OAUTH_REDIRECT }
+    });
     if (error) H.toast(error.message || 'Facebook sign-in failed');
   };
 
