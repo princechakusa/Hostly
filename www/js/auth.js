@@ -255,7 +255,8 @@
     setAuthBusy(true);
     var c = sb();
     if (c) {
-      var res = await c.auth.signUp({email:email, password:password, options:{data:{full_name:name}}});
+      var redirectTo = 'https://princechakusa.github.io/Hostly/';
+      var res = await c.auth.signUp({email:email, password:password, options:{data:{full_name:name}, emailRedirectTo:redirectTo}});
       if (res.error) {
         var msg = res.error.message;
         if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('unique constraint')) {
@@ -403,7 +404,7 @@
       +     '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
       +   '</button>'
       + '</div>'
-      + '<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 32px)">'
+      + '<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 32px)">'
       +   '<div class="doc-content">' + content + '</div>'
       + '</div>'
       + '<div style="flex-shrink:0;padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px);background:var(--card,#fff);border-top:1px solid var(--border,#e5e0d6)">'

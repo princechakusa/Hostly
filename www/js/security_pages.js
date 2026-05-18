@@ -191,17 +191,22 @@
 
   pages.DeleteAccount_after = function () {
     H._deleteAccount = {
-      confirm: () => {
+      confirm: async () => {
         const val = document.getElementById('deleteConfirm')?.value?.trim();
         if (val !== 'DELETE') { H.toast('Type DELETE to confirm'); return; }
-        const u = H.currentUser();
-        H.state.listings      = (H.state.listings || []).filter(l => l.sellerId !== u.id);
-        H.state.conversations = (H.state.conversations || []).filter(c => !c.members.includes(u.id));
-        H.state.users         = (H.state.users || []).filter(x => x.id !== u.id);
+        const btn = document.querySelector('.btn-pri[onclick*="confirm"]');
+        if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+        try {
+          const c = H.supabaseClient || (typeof sb === 'function' ? sb() : null);
+          if (c) {
+            await c.rpc('delete_my_account');
+            await c.auth.signOut();
+          }
+        } catch(e) { console.warn('delete_my_account rpc:', e); }
         H.state.currentUserId = null;
         H.saveState();
         H.toast('Account deleted');
-        H.navTo('Home', null);
+        setTimeout(() => H.navTo('Home', null), 800);
       }
     };
   };

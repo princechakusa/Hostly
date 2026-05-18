@@ -1,4 +1,4 @@
-/* Hostly bundle — built 2026-05-18T05:35:42Z */
+/* Hostly bundle — built 2026-05-18T07:32:31Z */
 
 ;/* === www/js/app.js === */
 ﻿'use strict';
@@ -1547,7 +1547,8 @@ H.init();
     setAuthBusy(true);
     var c = sb();
     if (c) {
-      var res = await c.auth.signUp({email:email, password:password, options:{data:{full_name:name}}});
+      var redirectTo = 'https://princechakusa.github.io/Hostly/';
+      var res = await c.auth.signUp({email:email, password:password, options:{data:{full_name:name}, emailRedirectTo:redirectTo}});
       if (res.error) {
         var msg = res.error.message;
         if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('unique constraint')) {
@@ -1695,7 +1696,7 @@ H.init();
       +     '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
       +   '</button>'
       + '</div>'
-      + '<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 32px)">'
+      + '<div style="overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 32px)">'
       +   '<div class="doc-content">' + content + '</div>'
       + '</div>'
       + '<div style="flex-shrink:0;padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 12px);background:var(--card,#fff);border-top:1px solid var(--border,#e5e0d6)">'
@@ -7499,35 +7500,39 @@ H.init();
 
   // --- Language Settings ------------------------------------
   pages.LanguageSettings = function () {
-    const u = H.currentUser();
-    const currentLang = u.language || 'English';
-
     return `<div class="page active">
-      ${H.innerTopbar('Language Settings')}
+      ${H.innerTopbar('Language')}
       <div class="form-wrap">
-        <div class="language-selector">
-          ${['English', 'Shona', 'Ndebele'].map(lang => `
-            <label class="lang-option ${currentLang === lang ? 'selected' : ''}">
-              <input type="radio" name="language" value="${lang}" ${currentLang === lang ? 'checked' : ''} onchange="H._languageSettings.setLang('${lang}')">
-              <span>${lang}</span>
-            </label>
-          `).join('')}
+        <div class="section-box">
+          <label class="lang-option selected" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border,#e5e0d6)">
+            <input type="radio" name="language" checked disabled>
+            <div style="flex:1">
+              <div style="font-weight:700;color:var(--text)">English</div>
+              <div style="font-size:12px;color:var(--muted)">Current language</div>
+            </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent,#1A3A8F)" stroke-width="2.5" width="20" height="20"><polyline points="20 6 9 17 4 12"/></svg>
+          </label>
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border,#e5e0d6);opacity:.5">
+            <input type="radio" name="language" disabled>
+            <div style="flex:1">
+              <div style="font-weight:700;color:var(--text)">Shona · ChiShona</div>
+              <div style="font-size:12px;color:var(--muted)">Coming soon</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 0;opacity:.5">
+            <input type="radio" name="language" disabled>
+            <div style="flex:1">
+              <div style="font-weight:700;color:var(--text)">Ndebele · IsiNdebele</div>
+              <div style="font-size:12px;color:var(--muted)">Coming soon</div>
+            </div>
+          </div>
         </div>
+        <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:8px">Shona and Ndebele translations are in progress and will be added in a future update.</p>
       </div>
     </div>`;
   };
 
-  pages.LanguageSettings_after = function () {
-    H._languageSettings = {
-      setLang: (lang) => {
-        const u = H.currentUser();
-        u.language = lang;
-        H.applyLanguage();
-        H.saveState();
-        H.toast('Language updated');
-      }
-    };
-  };
+  pages.LanguageSettings_after = function () {};
 
   // --- Blocked Users ----------------------------------------
   pages.BlockedUsers = function () {
@@ -7764,17 +7769,22 @@ H.init();
 
   pages.DeleteAccount_after = function () {
     H._deleteAccount = {
-      confirm: () => {
+      confirm: async () => {
         const val = document.getElementById('deleteConfirm')?.value?.trim();
         if (val !== 'DELETE') { H.toast('Type DELETE to confirm'); return; }
-        const u = H.currentUser();
-        H.state.listings      = (H.state.listings || []).filter(l => l.sellerId !== u.id);
-        H.state.conversations = (H.state.conversations || []).filter(c => !c.members.includes(u.id));
-        H.state.users         = (H.state.users || []).filter(x => x.id !== u.id);
+        const btn = document.querySelector('.btn-pri[onclick*="confirm"]');
+        if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+        try {
+          const c = H.supabaseClient || (typeof sb === 'function' ? sb() : null);
+          if (c) {
+            await c.rpc('delete_my_account');
+            await c.auth.signOut();
+          }
+        } catch(e) { console.warn('delete_my_account rpc:', e); }
         H.state.currentUserId = null;
         H.saveState();
         H.toast('Account deleted');
-        H.navTo('Home', null);
+        setTimeout(() => H.navTo('Home', null), 800);
       }
     };
   };
