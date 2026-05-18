@@ -2,11 +2,9 @@
 (function (H) {
   const pages = H.pages;
 
-  // ── Helpers ──────────────────────────────────────────────
   const activeCount = uid => (H.state.listings || []).filter(l => l.sellerId === uid && l.status === 'active').length;
   const soldCount   = uid => (H.state.listings || []).filter(l => l.sellerId === uid && l.status === 'sold').length;
 
-  // ── Icons ────────────────────────────────────────────────
   const IC = {
     pencil: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/><line x1="15" y1="5" x2="19" y2="9"/></svg>',
     shield: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
@@ -21,7 +19,6 @@
   const starEmpty = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
   const stars = n => Array.from({length:5}, (_,i) => i < Math.round(n) ? starFill : starEmpty).join('');
 
-  // ── Profile Page ─────────────────────────────────────────
   pages.Profile = function (params) {
     const viewId = params && params.id;
     const u = viewId
@@ -54,18 +51,9 @@
       </div>
 
       <div class="profile-stats">
-        <div class="stat-box">
-          <div class="stat-val">${activeCount(u.id)}</div>
-          <div class="stat-label">Active Ads</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-val">${avgRating}</div>
-          <div class="stat-label">Rating (${ratingCount})</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-val">${soldCount(u.id)}</div>
-          <div class="stat-label">Sold</div>
-        </div>
+        <div class="stat-box"><div class="stat-val">${activeCount(u.id)}</div><div class="stat-label">Active Ads</div></div>
+        <div class="stat-box"><div class="stat-val">${avgRating}</div><div class="stat-label">Rating (${ratingCount})</div></div>
+        <div class="stat-box"><div class="stat-val">${soldCount(u.id)}</div><div class="stat-label">Sold</div></div>
       </div>
 
       ${isOwn ? `
@@ -98,7 +86,6 @@
     </div>`;
   };
 
-  // ── Edit Profile ─────────────────────────────────────────
   pages.EditProfile = function () {
     const u = H.currentUser();
     if (!u) return H.emptyState('Not logged in', 'Please sign in');
@@ -106,17 +93,13 @@
     return `<div class="page active">
       ${H.innerTopbar('Edit Profile')}
       <div class="form-wrap">
-        <!-- Avatar picker -->
         <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0 16px">
           <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;background:#1A3A8F14;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#1A3A8F;margin-bottom:10px;border:2.5px solid #1A3A8F22">
             ${u.avatar ? `<img id="avatarPreview" src="${H.escHtml(u.avatar)}" style="width:100%;height:100%;object-fit:cover">` : `<span id="avatarPreview">${H.initials(u.name)}</span>`}
           </div>
-          <label for="profilePicFile" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer;background:#1A3A8F14;padding:7px 16px;border-radius:20px">
-            Change Photo
-          </label>
+          <label for="profilePicFile" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer;background:#1A3A8F14;padding:7px 16px;border-radius:20px">Change Photo</label>
           <input type="file" id="profilePicFile" accept="image/*" capture="user" style="display:none" onchange="H._editProfile.onPicChange(event)">
         </div>
-
         <div class="fg"><div class="fl">Full Name <span style="color:#EF4444">*</span></div>
           <input class="fi" id="editName" value="${H.escHtml(u.name || '')}" placeholder="Your full name" maxlength="60">
         </div>
@@ -131,10 +114,8 @@
         <div class="fg"><div class="fl">Bio</div>
           <textarea class="fi" rows="3" id="editBio" placeholder="Tell buyers about yourself..." maxlength="200">${H.escHtml(u.bio || '')}</textarea>
         </div>
-
         <div id="editSaveMsg" style="display:none;font-size:13px;color:#16A34A;text-align:center;padding:8px 0;font-weight:600">✓ Saved!</div>
         <div id="editErrMsg"  style="display:none;font-size:13px;color:#EF4444;text-align:center;padding:8px 0"></div>
-
         <div class="btn-group">
           <button id="editSaveBtn" class="btn-pri" onclick="H._editProfile.save()">Save Changes</button>
           <button class="btn-sec" onclick="H.openInner('ChangePassword')">Change Password</button>
@@ -154,7 +135,6 @@
         const u = H.currentUser();
         u.avatar = compressed;
         H.saveState();
-        // Update preview in place without full re-render
         const prev = document.getElementById('avatarPreview');
         if (prev) { prev.outerHTML = `<img id="avatarPreview" src="${compressed}" style="width:100%;height:100%;object-fit:cover">`; }
       },
@@ -166,37 +146,20 @@
         const btn   = document.getElementById('editSaveBtn');
         const errEl = document.getElementById('editErrMsg');
         const okEl  = document.getElementById('editSaveMsg');
-
         const showErr = (msg) => { if(errEl){errEl.textContent=msg;errEl.style.display='';} H.toast(msg); };
-
         if (!name || name.length < 2) { showErr('Please enter your full name (min 2 characters)'); return; }
-
-        // Optional phone validation — international format
-        if (phone && !/^\+?[0-9\s\-]{7,16}$/.test(phone)) {
-          showErr('Phone number looks invalid. Use format: +263 77 123 4567'); return;
-        }
-
+        if (phone && !/^\+?[0-9\s\-]{7,16}$/.test(phone)) { showErr('Phone number looks invalid. Use format: +263 77 123 4567'); return; }
         if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
         if (errEl) errEl.style.display = 'none';
-
         u.name  = name;
         if (phone) u.phone = phone;
         u.bio   = bio;
         H.saveState();
-
-        // Sync to Supabase profiles table
         const c = window.supabase && typeof window.supabase.from === 'function' ? window.supabase : null;
         if (c) {
-          const res = await c.from('profiles').upsert({
-            id: u.id, name: u.name, phone: u.phone || null,
-            bio: u.bio || null, avatar: u.avatar || null,
-            updated_at: new Date().toISOString()
-          });
-          if (res && res.error) {
-            console.warn('Profile sync failed:', res.error.message);
-          }
+          const res = await c.from('profiles').upsert({ id: u.id, name: u.name, phone: u.phone || null, bio: u.bio || null, avatar: u.avatar || null, updated_at: new Date().toISOString() });
+          if (res && res.error) console.warn('Profile sync failed:', res.error.message);
         }
-
         if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
         if (okEl) { okEl.style.display = ''; setTimeout(() => { if(okEl) okEl.style.display='none'; }, 2500); }
         H.toast('Profile updated!');
@@ -204,44 +167,26 @@
     };
   };
 
-  // ── My Listings ──────────────────────────────────────────
   pages.MyListings = function () {
     const u = H.currentUser();
     if (!u) return H.emptyState('Not logged in', 'Please sign in');
-
     const all      = (H.state.listings || []).filter(l => l.sellerId === u.id);
     const active   = all.filter(l => l.status === 'active');
     const pending  = all.filter(l => l.status === 'pending');
     const sold     = all.filter(l => l.status === 'sold');
     const rejected = all.filter(l => l.status === 'rejected');
-
     const btn = (label, fn, c, bg, bo) =>
       `<button onclick="${fn}" style="flex:1;padding:8px 2px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:${bg};color:${c};border:1.5px solid ${bo};font-family:inherit;white-space:nowrap">${label}</button>`;
-
     const actionBars = {
-      active:   (id) => btn('Edit',        `H._myListings.edit('${id}')`,       '#1A3A8F','#EFF6FF','#BFDBFE')
-                      + btn('Mark Sold',   `H._myListings.markSold('${id}')`,   '#16a34a','#dcfce7','#bbf7d0')
-                      + btn('Delete',      `H._myListings.del('${id}')`,        '#ef4444','#fef2f2','#fecaca'),
-      pending:  (id) => btn('Edit',        `H._myListings.edit('${id}')`,       '#1A3A8F','#EFF6FF','#BFDBFE')
-                      + btn('Delete',      `H._myListings.del('${id}')`,        '#ef4444','#fef2f2','#fecaca'),
-      sold:     (id) => btn('Post Again',  `H._myListings.reactivate('${id}')`, '#1A3A8F','#EFF6FF','#BFDBFE')
-                      + btn('Delete',      `H._myListings.del('${id}')`,        '#ef4444','#fef2f2','#fecaca'),
-      rejected: (id) => btn('Edit & Resubmit', `H._myListings.edit('${id}')`,  '#D97706','#FFFBEB','#FDE68A')
-                      + btn('Delete',      `H._myListings.del('${id}')`,        '#ef4444','#fef2f2','#fecaca'),
+      active:   (id) => btn('Edit',`H._myListings.edit('${id}')`,'#1A3A8F','#EFF6FF','#BFDBFE')+btn('Mark Sold',`H._myListings.markSold('${id}')`,'#16a34a','#dcfce7','#bbf7d0')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'),
+      pending:  (id) => btn('Edit',`H._myListings.edit('${id}')`,'#1A3A8F','#EFF6FF','#BFDBFE')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'),
+      sold:     (id) => btn('Post Again',`H._myListings.reactivate('${id}')`,'#1A3A8F','#EFF6FF','#BFDBFE')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'),
+      rejected: (id) => btn('Edit & Resubmit',`H._myListings.edit('${id}')`,'#D97706','#FFFBEB','#FDE68A')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'),
     };
-
-    const myCard = (l, status) =>
-      `<div style="margin-bottom:14px">
-        ${H.renderListCard(l)}
-        <div style="display:flex;gap:6px;margin-top:6px">
-          ${(actionBars[status] || actionBars.active)(l.id)}
-        </div>
-      </div>`;
-
+    const myCard = (l, status) => `<div style="margin-bottom:14px">${H.renderListCard(l)}<div style="display:flex;gap:6px;margin-top:6px">${(actionBars[status]||actionBars.active)(l.id)}</div></div>`;
     const section = (list, label, status) => list.length
       ? `<div style="padding:12px">${list.map(l => myCard(l, status)).join('')}</div>`
       : `<div style="color:var(--sub);padding:32px 20px;text-align:center;font-size:13px">No ${label.toLowerCase()} listings</div>`;
-
     return `<div class="page active">
       ${H.innerTopbar('My Listings')}
       <div class="listing-tabs">
@@ -270,39 +215,14 @@
         if (el) el.classList.add('active');
       });
     });
-
     H._myListings = {
       edit: (id) => H.openInner('EditListing', { listingId: id }),
-      markSold: (id) => {
-        const l = (H.state.listings || []).find(x => x.id === id);
-        if (!l) return;
-        l.status = 'sold';
-        l.soldAt = Date.now();
-        H.saveState();
-        H.toast('Listing marked as sold');
-        H.renderPage('MyListings');
-      },
-      del: (id) => {
-        if (!window.confirm('Delete this listing permanently?')) return;
-        H.state.listings = (H.state.listings || []).filter(x => x.id !== id);
-        H.saveState();
-        H.toast('Listing deleted');
-        H.renderPage('MyListings');
-      },
-      reactivate: (id) => {
-        const l = (H.state.listings || []).find(x => x.id === id);
-        if (!l) return;
-        l.status = 'active';
-        delete l.soldAt;
-        l.renewedAt = Date.now();
-        H.saveState();
-        H.toast('Listing reactivated!');
-        H.renderPage('MyListings');
-      },
+      markSold: (id) => { const l=(H.state.listings||[]).find(x=>x.id===id); if(!l)return; l.status='sold'; l.soldAt=Date.now(); H.saveState(); H.toast('Listing marked as sold'); H.renderPage('MyListings'); },
+      del: (id) => { if(!window.confirm('Delete this listing permanently?'))return; H.state.listings=(H.state.listings||[]).filter(x=>x.id!==id); H.saveState(); H.toast('Listing deleted'); H.renderPage('MyListings'); },
+      reactivate: (id) => { const l=(H.state.listings||[]).find(x=>x.id===id); if(!l)return; l.status='active'; delete l.soldAt; l.renewedAt=Date.now(); H.saveState(); H.toast('Listing reactivated!'); H.renderPage('MyListings'); },
     };
   };
 
-  // ── Edit Listing ─────────────────────────────────────────
   pages.EditListing = function (params) {
     const id = params && params.listingId;
     const l  = id ? (H.state.listings || []).find(x => x.id === id) : null;
@@ -310,15 +230,9 @@
     return `<div class="page active">
       ${H.innerTopbar('Edit Listing')}
       <div class="form-wrap">
-        <div class="fg"><div class="fl">Title</div>
-          <input class="fi" id="elTitle" value="${H.escHtml(l.title || '')}" placeholder="Listing title" maxlength="80">
-        </div>
-        <div class="fg"><div class="fl">Price (USD)</div>
-          <input class="fi" id="elPrice" type="number" min="0" value="${H.escHtml(String(l.price || ''))}" placeholder="0">
-        </div>
-        <div class="fg"><div class="fl">Description</div>
-          <textarea class="fi" id="elDesc" rows="5" placeholder="Describe your item...">${H.escHtml(l.description || '')}</textarea>
-        </div>
+        <div class="fg"><div class="fl">Title</div><input class="fi" id="elTitle" value="${H.escHtml(l.title || '')}" placeholder="Listing title" maxlength="80"></div>
+        <div class="fg"><div class="fl">Price (USD)</div><input class="fi" id="elPrice" type="number" min="0" value="${H.escHtml(String(l.price || ''))}" placeholder="0"></div>
+        <div class="fg"><div class="fl">Description</div><textarea class="fi" id="elDesc" rows="5" placeholder="Describe your item...">${H.escHtml(l.description || '')}</textarea></div>
         <div id="elErr" style="display:none;color:#ef4444;font-size:13px;font-weight:600;padding:6px 0"></div>
         <button id="elSaveBtn" class="btn-pri" onclick="H._editListing.save('${id}')">Save Changes</button>
         <button class="btn-sec" onclick="H.goBack()">Cancel</button>
@@ -334,21 +248,14 @@
         const desc  = document.getElementById('elDesc')?.value.trim();
         const errEl = document.getElementById('elErr');
         const btn   = document.getElementById('elSaveBtn');
-        const showErr = (m) => { if (errEl) { errEl.textContent = m; errEl.style.display = ''; } };
-
+        const showErr = (m) => { if(errEl){errEl.textContent=m;errEl.style.display='';} };
         if (!title) { showErr('Title is required'); return; }
         if (isNaN(price) || price < 0) { showErr('Enter a valid price'); return; }
         if (!desc) { showErr('Description is required'); return; }
-
         const l = (H.state.listings || []).find(x => x.id === id);
         if (!l) { showErr('Listing not found'); return; }
-
-        l.title       = title;
-        l.price       = price;
-        l.description = desc;
-        l.updatedAt   = Date.now();
+        l.title=title; l.price=price; l.description=desc; l.updatedAt=Date.now();
         if (l.status === 'rejected') l.status = 'pending';
-
         if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
         H.saveState();
         H.toast('Listing updated!');
@@ -357,14 +264,11 @@
     };
   };
 
-  // ── Favorites ────────────────────────────────────────────
   pages.Favorites = function () {
     const u = H.currentUser();
     if (!u) return H.emptyState('Not logged in', 'Please sign in');
-
     const saved = (H.state.saves && H.state.saves[u.id]) || [];
     const list  = (H.state.listings || []).filter(l => saved.includes(l.id) && l.status === 'active');
-
     const savedCard = (l) =>
       `<div style="margin-bottom:14px">
         ${H.renderListCard(l)}
@@ -373,13 +277,10 @@
           <button onclick="H.openListing('${l.id}')" style="flex:2;padding:9px 4px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:#EFF6FF;color:#1A3A8F;border:1.5px solid #BFDBFE;font-family:inherit">View Listing</button>
         </div>
       </div>`;
-
     return `<div class="page active">
       ${H.innerTopbar(list.length ? `Saved & Favorites (${list.length})` : 'Saved & Favorites')}
       <div style="padding:14px">
-        ${list.length
-          ? list.map(savedCard).join('')
-          : H.emptyState('No saved listings', 'Tap the heart on any listing to save it', 'Browse', "H.navTo('Browse')")}
+        ${list.length ? list.map(savedCard).join('') : H.emptyState('No saved listings', 'Tap the heart on any listing to save it', 'Browse', "H.navTo('Browse')")}
       </div>
       <div style="height:24px"></div>
     </div>`;
@@ -388,8 +289,7 @@
   pages.Favorites_after = function () {
     H._favorites = {
       unsave: (id) => {
-        const u = H.currentUser();
-        if (!u) return;
+        const u = H.currentUser(); if (!u) return;
         H.state.saves = H.state.saves || {};
         H.state.saves[u.id] = (H.state.saves[u.id] || []).filter(sid => sid !== id);
         H.saveState();
@@ -399,54 +299,23 @@
     };
   };
 
-  // ── Identity Verification ────────────────────────────────
   pages.ProfileVerify = function () {
     const u = H.currentUser();
     if (!u) return H.emptyState('Not logged in', 'Please sign in');
-
-    if (u.verified) return `<div class="page active">
-      ${H.innerTopbar('Identity Verification')}
-      <div class="section-box" style="text-align:center;padding:32px 20px">
-        <div style="font-size:48px;margin-bottom:12px">✅</div>
-        <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Identity Verified</div>
-        <div style="font-size:14px;color:var(--sub)">You have a verified badge on all your listings.</div>
-        <div style="font-size:12px;color:var(--sub);margin-top:8px">Verified on ${new Date(u.verifiedAt || Date.now()).toLocaleDateString()}</div>
-      </div>
-    </div>`;
-
-    if (u.verificationPending) return `<div class="page active">
-      ${H.innerTopbar('Identity Verification')}
-      <div class="section-box" style="text-align:center;padding:32px 20px">
-        <div style="font-size:48px;margin-bottom:12px">⏳</div>
-        <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Verification Pending</div>
-        <div style="font-size:14px;color:var(--sub)">Your request is under review. We will notify you within 24 hours.</div>
-      </div>
-    </div>`;
-
+    if (u.verified) return `<div class="page active">${H.innerTopbar('Identity Verification')}<div class="section-box" style="text-align:center;padding:32px 20px"><div style="font-size:48px;margin-bottom:12px">✅</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Identity Verified</div><div style="font-size:14px;color:var(--sub)">You have a verified badge on all your listings.</div><div style="font-size:12px;color:var(--sub);margin-top:8px">Verified on ${new Date(u.verifiedAt || Date.now()).toLocaleDateString()}</div></div></div>`;
+    if (u.verificationPending) return `<div class="page active">${H.innerTopbar('Identity Verification')}<div class="section-box" style="text-align:center;padding:32px 20px"><div style="font-size:48px;margin-bottom:12px">⏳</div><div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Verification Pending</div><div style="font-size:14px;color:var(--sub)">Your request is under review. We will notify you within 24 hours.</div></div></div>`;
     return `<div class="page active">
       ${H.innerTopbar('Verify Identity')}
       <div class="section-box" style="text-align:center;padding:24px 20px">
-        <div style="font-size:48px;margin-bottom:12px">🪪</div>
+        <div style="font-size:48px;margin-bottom:12px">🢻</div>
         <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Get Verified</div>
         <div style="font-size:14px;color:var(--sub)">Build trust with buyers by verifying your identity with a valid ID.</div>
       </div>
       <div class="form-wrap">
-        <div class="fg"><div class="fl">ID Type</div>
-          <select class="fi" id="idType">
-            <option>National ID</option>
-            <option>Passport</option>
-            <option>Driver&#39;s License</option>
-          </select>
-        </div>
-        <div class="fg"><div class="fl">ID Number</div>
-          <input class="fi" id="idNum" placeholder="Enter your ID number">
-        </div>
+        <div class="fg"><div class="fl">ID Type</div><select class="fi" id="idType"><option>National ID</option><option>Passport</option><option>Driver&#39;s License</option></select></div>
+        <div class="fg"><div class="fl">ID Number</div><input class="fi" id="idNum" placeholder="Enter your ID number"></div>
         <div class="fg"><div class="fl">ID Photo (Front)</div>
-          <label class="img-upload-zone" for="idPhotoFront">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            <div class="img-upload-title">Upload front of ID</div>
-            <div class="img-upload-sub">JPG or PNG</div>
-          </label>
+          <label class="img-upload-zone" for="idPhotoFront"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><div class="img-upload-title">Upload front of ID</div><div class="img-upload-sub">JPG or PNG</div></label>
           <input type="file" id="idPhotoFront" accept="image/*" capture style="display:none">
         </div>
         <button class="btn-pri" onclick="H._profileVerify.submit()">Submit for Verification</button>
@@ -468,24 +337,19 @@
     };
   };
 
-  // ── Reviews & Ratings ────────────────────────────────────
   pages.Reviews = function (params) {
     const viewId = params && params.id;
     const me = H.currentUser();
     const u  = viewId ? (H.state.users || []).find(x => x.id === viewId) : me;
     if (!u) return '<div class="page active">' + H.innerTopbar('Reviews') + H.emptyState('User not found', '', null, null) + '</div>';
-
     const isOwn = !viewId || (me && viewId === me.id);
     const reviews = u.reviews || [];
     const avg = reviews.length ? (reviews.reduce((a,r) => a + (r.rating||0), 0) / reviews.length).toFixed(1) : null;
     const dist = [5,4,3,2,1].map(n => ({ n, count: reviews.filter(r => Math.round(r.rating||0)===n).length }));
     const maxDist = Math.max(1, ...dist.map(d => d.count));
-
     const alreadyReviewed = me && reviews.some(r => r.reviewerId === me.id);
-
     return `<div class="page active">
       ${H.innerTopbar(isOwn ? 'My Reviews' : H.escHtml(u.name) + '\'s Reviews')}
-
       <div style="background:var(--card);padding:20px 16px;border-bottom:1px solid var(--border)">
         <div style="display:flex;gap:20px;align-items:center">
           <div style="text-align:center">
@@ -494,60 +358,32 @@
             <div style="font-size:12px;color:var(--sub)">${reviews.length} review${reviews.length===1?'':'s'}</div>
           </div>
           <div style="flex:1">
-            ${dist.map(d => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-              <div style="font-size:11px;color:var(--sub);width:8px">${d.n}</div>
-              <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
-                <div style="height:100%;background:#f59e0b;width:${Math.round((d.count/maxDist)*100)}%;border-radius:3px;transition:width .3s"></div>
-              </div>
-              <div style="font-size:11px;color:var(--sub);width:14px;text-align:right">${d.count}</div>
-            </div>`).join('')}
+            ${dist.map(d => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="font-size:11px;color:var(--sub);width:8px">${d.n}</div><div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;background:#f59e0b;width:${Math.round((d.count/maxDist)*100)}%;border-radius:3px;transition:width .3s"></div></div><div style="font-size:11px;color:var(--sub);width:14px;text-align:right">${d.count}</div></div>`).join('')}
           </div>
         </div>
-        ${!isOwn && me && !alreadyReviewed ? `
-        <button onclick="H.leaveReview('${u.id}')" style="width:100%;margin-top:16px;padding:12px;background:#1A3A8F;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">
-          Leave a Review
-        </button>` : ''}
+        ${!isOwn && me && !alreadyReviewed ? `<button onclick="H.leaveReview('${u.id}')" style="width:100%;margin-top:16px;padding:12px;background:#1A3A8F;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">Leave a Review</button>` : ''}
         ${!isOwn && me && alreadyReviewed ? `<div style="text-align:center;margin-top:14px;font-size:13px;color:var(--sub)">You have already reviewed this seller</div>` : ''}
       </div>
-
       <div style="padding:12px 14px 88px">
         ${reviews.length ? reviews.slice().sort((a,b) => b.date - a.date).slice(0,20).map(r => `
           <div style="background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-              <div>
-                <div style="font-size:14px;font-weight:700;color:var(--text)">${H.escHtml(r.reviewerName || 'Anonymous')}</div>
-                <div style="display:flex;gap:2px;margin-top:3px">${stars(r.rating||0)}</div>
-              </div>
+              <div><div style="font-size:14px;font-weight:700;color:var(--text)">${H.escHtml(r.reviewerName || 'Anonymous')}</div><div style="display:flex;gap:2px;margin-top:3px">${stars(r.rating||0)}</div></div>
               <div style="font-size:12px;color:var(--sub)">${H.timeAgo(r.date)}</div>
             </div>
             ${r.text ? `<div style="font-size:13px;color:var(--text);line-height:1.6;margin-top:8px">${H.escHtml(r.text)}</div>` : ''}
-          </div>`).join('')
-          : `<div style="text-align:center;padding:48px 20px">
-            <div style="font-size:40px;margin-bottom:12px">⭐</div>
-            <div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px">No reviews yet</div>
-            <div style="font-size:13px;color:var(--sub)">Reviews from buyers will appear here after transactions</div>
-          </div>`}
+          </div>`).join('') : `<div style="text-align:center;padding:48px 20px"><div style="font-size:40px;margin-bottom:12px">⭐</div><div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px">No reviews yet</div><div style="font-size:13px;color:var(--sub)">Reviews from buyers will appear here after transactions</div></div>`}
       </div>
     </div>`;
   };
 
-  // ── Leave a Review ────────────────────────────────────────
   H.leaveReview = function (sellerId) {
     const me = H.currentUser();
     if (!me) { H.requireAuth('Sign in to leave a review'); return; }
     if (sellerId === me.id) { H.toast('You cannot review yourself'); return; }
-
-    let selectedRating = 0;
-
     H.modal({
       title: 'Leave a Review',
-      body: `<div style="text-align:center;margin-bottom:14px">
-        <div style="font-size:13px;color:var(--sub);margin-bottom:10px">Tap to rate your experience</div>
-        <div id="starPicker" style="display:flex;justify-content:center;gap:8px">
-          ${[1,2,3,4,5].map(n => `<button data-star="${n}" onclick="H._pickStar(${n})" style="font-size:32px;background:none;border:none;cursor:pointer;padding:4px;line-height:1">☆</button>`).join('')}
-        </div>
-      </div>
-      <textarea id="reviewText" rows="3" placeholder="Share your experience with this seller…" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;background:var(--card);color:var(--text);outline:none;box-sizing:border-box;resize:vertical;font-family:Inter,sans-serif"></textarea>`,
+      body: `<div style="text-align:center;margin-bottom:14px"><div style="font-size:13px;color:var(--sub);margin-bottom:10px">Tap to rate your experience</div><div id="starPicker" style="display:flex;justify-content:center;gap:8px">${[1,2,3,4,5].map(n => `<button data-star="${n}" onclick="H._pickStar(${n})" style="font-size:32px;background:none;border:none;cursor:pointer;padding:4px;line-height:1">☆</button>`).join('')}</div></div><textarea id="reviewText" rows="3" placeholder="Share your experience with this seller…" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;background:var(--card);color:var(--text);outline:none;box-sizing:border-box;resize:vertical;font-family:Inter,sans-serif"></textarea>`,
       confirmText: 'Submit Review',
       onConfirm: () => {
         const rating = H._selectedStar || 0;
@@ -576,20 +412,25 @@
     seller.ratings  = seller.ratings  || [];
     const dup = seller.reviews.find(r => r.reviewerId === me.id);
     if (dup) { H.toast('You have already reviewed this seller'); return; }
-    const review = {
-      id: H.uid(), reviewerId: me.id, reviewerName: me.name || 'User',
-      rating, text, date: Date.now()
-    };
+    const review = { id: H.uid(), reviewerId: me.id, reviewerName: me.name || 'User', rating, text, date: Date.now() };
     seller.reviews.unshift(review);
     seller.ratings.push(rating);
     H.saveState();
+    var _sb = window.supabase;
+    if (_sb && typeof _sb.from === 'function') {
+      _sb.from('reviews').insert({
+        seller_id: sellerId, reviewer_id: me.id,
+        reviewer_name: me.name || 'User', rating: rating,
+        body: text || null, created_at: new Date().toISOString()
+      }).then(function(res) {
+        if (res && res.error) console.warn('Review sync failed:', res.error.message);
+      });
+    }
     H.pushNotif(sellerId, 'New Review', me.name + ' left you a ' + rating + '-star review', 'review');
     H.toast('Review submitted. Thank you!');
     H.renderPage('Reviews', {id: sellerId});
   };
 
-  // ── Applied Jobs (candidate view) ─────────────────────────
-  // Registered as pages.AppliedJobs in jobs.js — linked from account menu here
   H._openAppliedJobs = function () { H.openInner('AppliedJobs'); };
 
 })(window.H = window.H || {});
