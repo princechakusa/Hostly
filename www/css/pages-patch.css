@@ -224,3 +224,8 @@
 .save-search-btn:active{color:#fff}
 .saved-search-tag{background:rgba(26,58,143,.12);border:1.5px solid rgba(26,58,143,.3);color:#1A3A8F}
 [data-theme="dark"] .saved-search-tag{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.8)}
+
+/* ── ADMIN ENHANCEMENTS ──────────────────────────────── */
+.admin-alert-row{display:flex;align-items:center;padding:12px 14px;border-bottom:.5px solid var(--border);font-size:13px;color:var(--text-mid);cursor:pointer;gap:6px}
+.admin-alert-row:last-child{border-bottom:none}
+.admin-alert-row:active{background:var(--bg)}
