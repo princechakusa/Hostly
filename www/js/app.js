@@ -582,7 +582,6 @@ window.H = {
     if(u&&u.language) document.querySelectorAll('.current-lang').forEach(el=>el.textContent=u.language);
   },
 
-  // ── Logo easter-egg (7 taps → admin) ─────────────────────
   logoTap() {
     this.logoTaps++;
     clearTimeout(this.logoTapsTimer);

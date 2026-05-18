@@ -1,4 +1,4 @@
-/* Hostly bundle — built 2026-05-18T07:38:40Z */
+/* Hostly bundle — built 2026-05-18T07:45:53Z */
 
 ;/* === www/js/app.js === */
 ﻿'use strict';
@@ -585,7 +585,6 @@ window.H = {
     if(u&&u.language) document.querySelectorAll('.current-lang').forEach(el=>el.textContent=u.language);
   },
 
-  // ── Logo easter-egg (7 taps → admin) ─────────────────────
   logoTap() {
     this.logoTaps++;
     clearTimeout(this.logoTapsTimer);
@@ -7138,6 +7137,24 @@ H.init();
 
         const u   = H.currentUser();
         const cfg = METHODS[this.method] || METHODS.ecocash;
+
+        // Save to Supabase so admin can see it
+        try {
+          const c = window.supabase;
+          if (c) {
+            const { error } = await c.from('topup_requests').insert({
+              user_id: u.id, user_name: u.name,
+              amount: amt, method: cfg.label,
+              reference: ref, status: 'pending'
+            });
+            if (error && error.code !== '23505') {
+              // 23505 = duplicate reference (already submitted), other errors are real
+              console.warn('topup insert:', error.message);
+            }
+          }
+        } catch(e) { console.warn('topup supabase:', e); }
+
+        // Also keep in local state as fallback
         H.state.topupRequests = H.state.topupRequests || [];
         H.state.topupRequests.push({
           id: H.uid(), userId: u.id, userName: u.name,
