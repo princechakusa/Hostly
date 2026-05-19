@@ -429,9 +429,7 @@
   H.authGoogle = async function() {
     const c = sb();
     if (!c) { H.toast('Sign-in service unavailable'); return; }
-    // Use root origin — must match what's whitelisted in Supabase redirect URLs
-    // Root index.html forwards ?code= and #hash to www/index.html automatically
-    const redirectTo = window.location.origin + '/';
+    const redirectTo = window.location.origin + window.location.pathname;
     const { error } = await c.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo }
