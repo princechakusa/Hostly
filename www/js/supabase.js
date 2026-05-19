@@ -170,7 +170,7 @@
           req.status = 'approved';
           var u = window.H.currentUser && window.H.currentUser();
           if (u && u.id === req.userId) {
-            u.walletUSD = (u.walletUSD || 0) + (req.amount || 0);
+            u.walletUSD = +((u.walletUSD || 0) + (req.amount || 0)).toFixed(2);
             window.H.state.txns = window.H.state.txns || [];
             window.H.state.txns.unshift({ id: window.H.uid(), userId: u.id, type: 'topup', amt: req.amount, t: Date.now(), note: 'Wallet Top Up · ' + req.method });
             if (typeof window.H.saveState === 'function') window.H.saveState();

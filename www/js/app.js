@@ -148,11 +148,26 @@ window.H = {
     });
   },
 
-  toast(msg, duration=2600) {
+  toast(msg, duration=4000, isError=false) {
     const el = document.getElementById('toastEl'); if(!el) return;
+    el.setAttribute('aria-live', isError ? 'assertive' : 'polite');
     el.textContent=msg; el.classList.add('show');
     clearTimeout(window._toastTimer);
     window._toastTimer = setTimeout(()=>el.classList.remove('show'), duration);
+  },
+
+  shareListing(id) {
+    const l = (this.state.listings||[]).find(x=>x.id===id); if(!l) return;
+    const url = window.location.origin + window.location.pathname + '?listing=' + id;
+    const title = l.title || 'PaMarket Listing';
+    const text  = (l.title||'') + (l.price ? ' — $' + l.price : '') + ' on PaMarket Zimbabwe';
+    if (navigator.share) {
+      navigator.share({ title, text, url }).catch(()=>{});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(()=>this.toast('Link copied!')).catch(()=>this.toast('Copy the URL from your address bar'));
+    } else {
+      this.toast('Share: ' + url, 6000);
+    }
   },
 
   modal({ title, body, confirmText='OK', cancelText='Cancel', danger=false, onConfirm }) {

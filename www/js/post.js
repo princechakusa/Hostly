@@ -140,14 +140,20 @@
     onProv(p)    { postState.prov = p; postState.city = CITIES_BY_PROV[p][0]; refreshBody(); },
     removePhoto(i) { postState.photos.splice(i, 1); document.getElementById('photoGrid').innerHTML = renderPhotoGrid(); },
     onPhotos(e)  {
+      const ALLOWED = ['image/jpeg','image/png','image/gif','image/webp'];
+      const MAX_BYTES = 5 * 1024 * 1024;
       const files = Array.from(e.target.files || []);
       const remaining = 8 - postState.photos.length;
+      let rejected = 0;
       files.slice(0, remaining).forEach(f => {
+        if (!ALLOWED.includes(f.type)) { rejected++; return; }
+        if (f.size > MAX_BYTES) { rejected++; return; }
         compressImage(f, 1200, 0.78).then(d => {
           postState.photos.push(d);
           document.getElementById('photoGrid').innerHTML = renderPhotoGrid();
         });
       });
+      if (rejected) H.toast(rejected + ' photo(s) skipped — use JPG/PNG under 5 MB', 4000, true);
       e.target.value = '';
     },
     next() {
@@ -175,6 +181,7 @@
       if (postState.step > 1) { postState.step--; refreshSteps(); refreshBody(); }
     },
     submit() {
+      if (H.checkBan && H.checkBan()) return;
       const s = postState;
       const u = H.currentUser();
       const l = {

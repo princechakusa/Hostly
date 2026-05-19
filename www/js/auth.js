@@ -197,8 +197,16 @@
 
   H.authResendOtp = async function() {
     if (!H._otpEmail) return;
+    var now = Date.now();
+    H._otpResendTimes = (H._otpResendTimes || []).filter(function(t){ return now - t < 10 * 60 * 1000; });
+    if (H._otpResendTimes.length >= 3) {
+      var waitSec = Math.ceil((10 * 60 * 1000 - (now - H._otpResendTimes[0])) / 1000);
+      H.toast('Too many resends — try again in ' + waitSec + 's', 4000, true);
+      return;
+    }
+    H._otpResendTimes.push(now);
     var c = sb();
-    if (!c) { H.toast('Connection error'); return; }
+    if (!c) { H.toast('Connection error', 4000, true); return; }
     var res = await c.auth.resend({ type: 'signup', email: H._otpEmail });
     H.toast(res.error ? res.error.message : 'Code resent — check your inbox');
   };

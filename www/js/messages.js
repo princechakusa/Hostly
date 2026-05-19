@@ -132,6 +132,7 @@
 
 
   H.sendChat = function () {
+    if (H.checkBan && H.checkBan()) return;
     const inp = document.getElementById('chatIn');
     const text = inp ? inp.value.trim() : '';
     if (!text) return;
