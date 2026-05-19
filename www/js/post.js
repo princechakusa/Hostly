@@ -50,7 +50,7 @@
       <div class="fg"><div class="fl">Description</div>
         <textarea class="fi" rows="4" id="postDesc" placeholder="Describe what you're selling · condition, features, why you're selling..." maxlength="2000">${H.escHtml(s.desc)}</textarea>
       </div>
-      <div class="step-btns"><button class="btn-next" onclick="H._post.next()">Continue ?</button></div>`;
+      <div class="step-btns"><button class="btn-next" onclick="H._post.next()">Continue →</button></div>`;
 
     if (s.step === 2) return `
       <div class="fg"><div class="fl">Price</div>
@@ -76,8 +76,8 @@
         <input class="fi" id="suburbIn" value="${H.escHtml(s.suburb)}" placeholder="e.g. Avondale West">
       </div>
       <div class="step-btns">
-        <button class="btn-prev" onclick="H._post.prev()">? Back</button>
-        <button class="btn-next" onclick="H._post.next()">Continue ?</button>
+        <button class="btn-prev" onclick="H._post.prev()">← Back</button>
+        <button class="btn-next" onclick="H._post.next()">Continue →</button>
       </div>`;
 
     if (s.step === 3) return `
@@ -92,34 +92,34 @@
         <div class="photo-grid" id="photoGrid">${renderPhotoGrid()}</div>
       </div>
       <div class="tip-box">
-        <div class="tip-title">?? Photos sell 3× faster</div>
+        <div class="tip-title">📸 Photos sell 3× faster</div>
         <div class="tip-body">Listings with 5+ clear photos in good lighting get 3× more enquiries.</div>
       </div>
       <div class="step-btns">
-        <button class="btn-prev" onclick="H._post.prev()">? Back</button>
-        <button class="btn-next" onclick="H._post.next()">Preview ?</button>
+        <button class="btn-prev" onclick="H._post.prev()">← Back</button>
+        <button class="btn-next" onclick="H._post.next()">Preview →</button>
       </div>`;
 
     if (s.step === 4) return `
       <div class="preview-card">
-        <div class="preview-label">? Ad Preview</div>
+        <div class="preview-label">👁 Ad Preview</div>
         <div class="preview-title">${H.escHtml(s.title || 'Untitled')}</div>
         <div class="preview-price">${H.escHtml(H.fmtPrice(s.price, s.currency))}</div>
-        <div class="preview-meta">?? ${H.escHtml(s.suburb || s.city)}, ${H.escHtml(s.prov)} · ${(CATEGORIES.find(c => c.id === s.cat) || {}).name || 'Other'} · ${s.photos.length} photo${s.photos.length === 1 ? '' : 's'}</div>
+        <div class="preview-meta">📍 ${H.escHtml(s.suburb || s.city)}, ${H.escHtml(s.prov)} · ${(CATEGORIES.find(c => c.id === s.cat) || {}).name || 'Other'} · ${s.photos.length} photo${s.photos.length === 1 ? '' : 's'}</div>
       </div>
       <div class="tip-box">
-        <div class="tip-title">?? Listing Rules</div>
+        <div class="tip-title">📋 Listing Rules</div>
         <div class="tip-body">By posting you confirm this item is legal, you own it, and the photos are real. Scam listings result in account suspension.</div>
       </div>
       <div class="step-btns">
-        <button class="btn-prev" onclick="H._post.prev()">? Back</button>
-        <button class="btn-submit" onclick="H._post.submit()">Post Ad ?</button>
+        <button class="btn-prev" onclick="H._post.prev()">← Back</button>
+        <button class="btn-submit" onclick="H._post.submit()">Post Ad →</button>
       </div>`;
   }
 
   function renderPhotoGrid() {
     return postState.photos.map((p, i) =>
-      `<div class="photo-thumb"><img src="${p}"><button class="rm" onclick="H._post.removePhoto(${i})">·</button></div>`
+      `<div class="photo-thumb"><img src="${p}"><button class="rm" onclick="H._post.removePhoto(${i})">×</button></div>`
     ).join('');
   }
 

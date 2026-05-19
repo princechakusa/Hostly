@@ -1,277 +1,357 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hostly Admin</title>
+<title>PaMarket</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:Inter,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;}
 
 /* ── LOGIN ── */
-.wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
-.card{background:#1e293b;border-radius:20px;padding:40px;width:100%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,0.5);}
-.login-title{font-size:28px;font-weight:800;text-align:center;margin-bottom:6px;}
-.login-title em{font-style:normal;color:#3b82f6;}
-.login-sub{font-size:13px;color:#94a3b8;text-align:center;margin-bottom:28px;}
-.fg{margin-bottom:14px;}
-.fl{font-size:13px;color:#94a3b8;margin-bottom:6px;display:block;}
-.fi{width:100%;padding:12px;background:#0f172a;border:1.5px solid #334155;border-radius:10px;color:#e2e8f0;font-size:14px;outline:none;transition:border-color .2s;}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.login-card{background:#1e293b;border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,.55);}
+.login-logo{font-size:30px;font-weight:800;text-align:center;margin-bottom:6px;letter-spacing:-1px;}
+.login-logo em{font-style:normal;color:#3b82f6;}
+.login-sub{font-size:13px;color:#64748b;text-align:center;margin-bottom:28px;}
+.fg{margin-bottom:15px;}
+.fl{font-size:12px;color:#94a3b8;margin-bottom:6px;display:block;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.fi{width:100%;padding:12px 14px;background:#0f172a;border:1.5px solid #334155;border-radius:10px;color:#e2e8f0;font-size:14px;outline:none;transition:border-color .2s;}
 .fi:focus{border-color:#3b82f6;}
-.btn-login{width:100%;padding:14px;background:#3b82f6;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:background .2s;}
+.btn-login{width:100%;padding:13px;background:#3b82f6;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;transition:background .2s;}
 .btn-login:hover{background:#2563eb;}
-.btn-login:disabled{opacity:.6;cursor:not-allowed;}
-.err-box{background:#7f1d1d;color:#fca5a5;padding:12px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;}
+.btn-login:disabled{opacity:.55;cursor:not-allowed;}
+.err-box{background:rgba(127,29,29,.7);color:#fca5a5;border:1px solid #991b1b;padding:11px 13px;border-radius:8px;font-size:13px;margin-bottom:14px;display:none;line-height:1.5;}
 
 /* ── DASHBOARD ── */
 #dash{display:none;}
-.hdr{background:#1e293b;padding:0 24px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #334155;height:58px;position:sticky;top:0;z-index:100;}
-.hdr-title{font-size:18px;font-weight:800;flex:1;}
-.hdr-title em{font-style:normal;color:#3b82f6;}
+.hdr{background:#1e293b;padding:0 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #334155;height:56px;position:sticky;top:0;z-index:200;}
+.hdr-brand{font-size:19px;font-weight:800;flex:1;letter-spacing:-0.5px;}
+.hdr-brand em{font-style:normal;color:#3b82f6;}
 .hdr-btn{border:none;padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;transition:all .2s;}
-.btn-refresh{background:#334155;color:#e2e8f0;}
-.btn-refresh:hover{background:#475569;}
-.btn-logout{background:#7f1d1d;color:#fca5a5;}
-.btn-logout:hover{background:#991b1b;}
+.btn-refresh{background:#1e3a5f;color:#93c5fd;}
+.btn-refresh:hover{background:#1e40af;}
+.btn-logout{background:#450a0a;color:#fca5a5;}
+.btn-logout:hover{background:#7f1d1d;}
 
 .body{padding:20px;max-width:1400px;margin:0 auto;}
 
 /* Stats */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;}
-.stat-card{background:#1e293b;border-radius:12px;padding:16px;text-align:center;border:1px solid #334155;}
-.stat-n{font-size:26px;font-weight:800;color:#3b82f6;}
-.stat-l{font-size:11px;color:#94a3b8;margin-top:3px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px;}
+.stat-card{background:#1e293b;border-radius:12px;padding:16px 14px;border:1px solid #334155;transition:border-color .2s;}
+.stat-card:hover{border-color:#475569;}
+.stat-n{font-size:28px;font-weight:800;color:#3b82f6;line-height:1;}
+.stat-n.warn{color:#f59e0b;}
+.stat-n.danger{color:#f87171;}
+.stat-l{font-size:11px;color:#64748b;margin-top:5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+
+/* Alerts */
+.alerts{margin-bottom:16px;display:flex;flex-direction:column;gap:8px;}
+.alert{background:#1c1917;border-left:3px solid #f59e0b;padding:10px 14px;border-radius:0 8px 8px 0;font-size:13px;color:#fbbf24;display:flex;align-items:center;gap:8px;}
+.alert.red{border-color:#ef4444;color:#f87171;background:#1c0909;}
 
 /* Tabs */
-.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
-.tab{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;background:#1e293b;color:#94a3b8;transition:all .2s;border:1px solid #334155;}
+.tabs{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap;}
+.tab{padding:8px 15px;border-radius:8px;border:1px solid #334155;cursor:pointer;font-size:12px;font-weight:600;background:#1e293b;color:#64748b;transition:all .2s;white-space:nowrap;}
+.tab:hover{color:#e2e8f0;border-color:#475569;}
 .tab.on{background:#3b82f6;color:#fff;border-color:#3b82f6;}
 .pnl{display:none;}
 .pnl.on{display:block;}
 
 /* Toolbar */
 .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
-.search-box{flex:1;min-width:180px;padding:9px 12px;background:#1e293b;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;}
+.search-box{flex:1;min-width:180px;padding:9px 13px;background:#1e293b;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;transition:border-color .2s;}
 .search-box:focus{border-color:#3b82f6;}
-.filter-sel{padding:9px 10px;background:#1e293b;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;cursor:pointer;}
+.filter-sel{padding:9px 10px;background:#1e293b;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;cursor:pointer;transition:border-color .2s;}
 .filter-sel:focus{border-color:#3b82f6;}
 
 /* Table */
 .tbl-wrap{background:#1e293b;border-radius:12px;overflow:auto;border:1px solid #334155;}
 table{width:100%;border-collapse:collapse;min-width:600px;}
-th{text-align:left;padding:11px 12px;font-size:11px;color:#64748b;border-bottom:1px solid #334155;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;}
-td{padding:10px 12px;font-size:13px;border-bottom:1px solid #0f172a;vertical-align:middle;}
+th{text-align:left;padding:11px 12px;font-size:10px;color:#475569;border-bottom:1px solid #334155;white-space:nowrap;text-transform:uppercase;letter-spacing:.6px;font-weight:700;}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid rgba(51,65,85,.5);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(59,130,246,.04);}
+tr:hover td{background:rgba(59,130,246,.03);}
 
 /* Badges */
-.b{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block;}
+.b{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;display:inline-block;letter-spacing:.3px;}
 .b-active{background:#14532d;color:#86efac;}
 .b-pending{background:#713f12;color:#fde68a;}
 .b-rejected{background:#7f1d1d;color:#fca5a5;}
-.b-removed{background:#374151;color:#9ca3af;}
+.b-removed{background:#1f2937;color:#6b7280;}
 .b-banned{background:#7f1d1d;color:#fca5a5;}
+.b-suspended{background:#451a03;color:#fb923c;}
 .b-blue{background:#1e3a5f;color:#93c5fd;}
-.b-approved{background:#14532d;color:#86efac;}
+.b-green{background:#14532d;color:#86efac;}
 .b-open{background:#713f12;color:#fde68a;}
 .b-resolved{background:#14532d;color:#86efac;}
+.b-admin{background:#4c1d95;color:#c4b5fd;}
+.b-moderator{background:#0c4a6e;color:#7dd3fc;}
 
 /* Action buttons */
 .actions{display:flex;gap:4px;flex-wrap:wrap;}
 .ab{padding:4px 9px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:700;transition:all .2s;white-space:nowrap;}
-.ab:hover{filter:brightness(1.15);}
+.ab:hover{filter:brightness(1.2);}
+.ab-view{background:#1e3a5f;color:#93c5fd;}
+.ab-edit{background:#1c2a5e;color:#a5b4fc;}
 .ab-approve{background:#14532d;color:#86efac;}
 .ab-reject{background:#78350f;color:#fde68a;}
-.ab-edit{background:#1e3a5f;color:#93c5fd;}
-.ab-delete{background:#7f1d1d;color:#fca5a5;}
+.ab-remove{background:#1f2937;color:#6b7280;}
+.ab-delete{background:#450a0a;color:#fca5a5;}
 .ab-ban{background:#7f1d1d;color:#fca5a5;}
 .ab-unban{background:#14532d;color:#86efac;}
-.ab-remove{background:#374151;color:#9ca3af;}
 .ab-resolve{background:#14532d;color:#86efac;}
-.ab-view{background:#1e3a5f;color:#93c5fd;}
+.ab-verify{background:#1e3a5f;color:#7dd3fc;}
+.ab-credit{background:#14532d;color:#86efac;}
 
-/* Top-up cards */
-.tu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
-.tu-card{background:#1e293b;border-radius:12px;padding:16px;border:1px solid #334155;}
-.tu-card:hover{border-color:#475569;}
-.tu-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
-.tu-amount{font-size:24px;font-weight:800;color:#3b82f6;}
-.tu-actions{display:flex;gap:6px;flex-wrap:wrap;}
+/* Section headings */
+.section-head{font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #334155;}
+.section-sub{font-size:12px;color:#64748b;margin-bottom:16px;}
+
+/* Wallet adjustment card */
+.wallet-section{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155;margin-bottom:20px;}
+.wallet-search-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.wallet-result{background:#0f172a;border-radius:10px;padding:16px;border:1px solid #334155;margin-bottom:12px;}
+.wallet-result-name{font-weight:700;font-size:14px;margin-bottom:4px;}
+.wallet-result-meta{font-size:12px;color:#64748b;margin-bottom:12px;}
+.wallet-adjust-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.adj-input{width:140px;padding:9px 12px;background:#1e293b;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;}
+.adj-input:focus{border-color:#3b82f6;}
+
+/* Top wallet users */
+.top-users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;}
+.top-user-card{background:#1e293b;border-radius:10px;padding:14px;border:1px solid #334155;display:flex;align-items:center;gap:12px;}
+.top-user-rank{font-size:18px;font-weight:800;color:#475569;width:28px;text-align:center;flex-shrink:0;}
+.top-user-rank.gold{color:#f59e0b;}
+.top-user-rank.silver{color:#94a3b8;}
+.top-user-rank.bronze{color:#b45309;}
+.top-user-info{flex:1;min-width:0;}
+.top-user-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.top-user-phone{font-size:11px;color:#64748b;margin-top:2px;}
+.top-user-bal{font-size:16px;font-weight:800;color:#3b82f6;white-space:nowrap;}
+
+/* Alert section */
+.alert-section{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155;margin-bottom:20px;}
+.alert-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:600px){.alert-form-row{grid-template-columns:1fr;}}
+.alert-textarea{width:100%;padding:11px 13px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;resize:vertical;min-height:90px;transition:border-color .2s;}
+.alert-textarea:focus{border-color:#3b82f6;}
+.target-count{font-size:12px;color:#64748b;margin-bottom:10px;}
+.target-count b{color:#3b82f6;}
+.btn-send{padding:11px 24px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;}
+.btn-send:hover{background:#2563eb;}
+.btn-send:disabled{opacity:.5;cursor:not-allowed;}
+
+/* Error logs */
+.log-meta{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.btn-clear-logs{padding:7px 13px;background:#450a0a;color:#fca5a5;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;transition:background .2s;}
+.btn-clear-logs:hover{background:#7f1d1d;}
 
 /* Empty / loading */
-.empty{color:#64748b;padding:48px;text-align:center;font-size:13px;}
-.empty-icon{font-size:32px;margin-bottom:8px;}
-.loading-msg{color:#64748b;padding:48px;text-align:center;font-style:italic;font-size:13px;}
+.empty{color:#475569;padding:48px 24px;text-align:center;font-size:13px;}
+.empty-icon{font-size:32px;margin-bottom:10px;}
+.loading-msg{color:#475569;padding:48px;text-align:center;font-style:italic;font-size:13px;}
+.empty-msg{background:#1e293b;border-radius:10px;padding:24px;border:1px solid #334155;color:#64748b;font-size:13px;text-align:center;}
 
 /* ── MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px);}
 .modal-overlay.hidden{display:none;}
-.modal{background:#1e293b;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;border:1px solid #334155;box-shadow:0 25px 60px rgba(0,0,0,.6);}
-.modal-hdr{padding:18px 20px;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#1e293b;z-index:1;}
-.modal-title{font-size:16px;font-weight:700;}
-.modal-close{background:none;border:none;color:#64748b;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;}
+.modal{background:#1e293b;border-radius:16px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;border:1px solid #334155;box-shadow:0 30px 70px rgba(0,0,0,.7);}
+.modal-hdr{padding:17px 20px;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#1e293b;z-index:1;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{background:none;border:none;color:#475569;font-size:20px;cursor:pointer;line-height:1;padding:2px 7px;border-radius:5px;}
 .modal-close:hover{color:#e2e8f0;background:#334155;}
 .modal-body{padding:20px;}
-.modal-footer{padding:14px 20px;border-top:1px solid #334155;display:flex;gap:8px;justify-content:flex-end;}
+.modal-footer{padding:13px 20px;border-top:1px solid #334155;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
 .mfg{margin-bottom:14px;}
-.mfl{font-size:12px;color:#94a3b8;margin-bottom:5px;display:block;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.mfl{font-size:11px;color:#94a3b8;margin-bottom:5px;display:block;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
 .mfi{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;transition:border-color .2s;}
 .mfi:focus{border-color:#3b82f6;}
-.mfi-sel{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;cursor:pointer;}
+.mfi-sel{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;cursor:pointer;transition:border-color .2s;}
 .mfi-sel:focus{border-color:#3b82f6;}
+.mfi-ta{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;resize:vertical;min-height:70px;transition:border-color .2s;}
+.mfi-ta:focus{border-color:#3b82f6;}
 .btn-save{padding:10px 22px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;}
 .btn-save:hover{background:#2563eb;}
-.btn-save:disabled{opacity:.6;cursor:not-allowed;}
+.btn-save:disabled{opacity:.55;cursor:not-allowed;}
 .btn-cancel{padding:10px 18px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;}
 .btn-cancel:hover{background:#475569;}
 .btn-danger{padding:10px 18px;background:#7f1d1d;color:#fca5a5;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s;}
 .btn-danger:hover{background:#991b1b;}
 
-/* Info rows in modal */
-.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #334155;font-size:13px;}
+/* Info rows */
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:8px 0;border-bottom:1px solid rgba(51,65,85,.5);font-size:13px;}
 .info-row:last-child{border-bottom:none;}
-.info-label{color:#64748b;}
-.info-val{font-weight:600;text-align:right;}
+.info-label{color:#475569;flex-shrink:0;font-weight:600;}
+.info-val{font-weight:600;text-align:right;word-break:break-all;}
+.info-desc{color:#94a3b8;font-size:12px;line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #334155;}
 
 /* Toast */
-.toast{position:fixed;bottom:24px;right:24px;background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:320px;}
+.toast{position:fixed;bottom:20px;right:20px;background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;max-width:300px;box-shadow:0 10px 30px rgba(0,0,0,.4);line-height:1.4;}
 .toast.show{transform:translateY(0);opacity:1;}
-.toast.success{border-color:#16a34a;background:#14532d;color:#86efac;}
+.toast.success{border-color:#166534;background:#14532d;color:#86efac;}
 .toast.error{border-color:#dc2626;background:#7f1d1d;color:#fca5a5;}
 
-/* Confirm dialog */
-.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+/* Confirm */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
 .confirm-overlay.hidden{display:none;}
-.confirm-box{background:#1e293b;border-radius:14px;padding:24px;max-width:380px;width:100%;border:1px solid #334155;text-align:center;}
-.confirm-icon{font-size:36px;margin-bottom:12px;}
+.confirm-box{background:#1e293b;border-radius:14px;padding:28px 24px;max-width:360px;width:100%;border:1px solid #334155;text-align:center;}
+.confirm-icon{font-size:38px;margin-bottom:14px;}
 .confirm-title{font-size:16px;font-weight:700;margin-bottom:8px;}
-.confirm-msg{font-size:13px;color:#94a3b8;margin-bottom:20px;line-height:1.5;}
+.confirm-msg{font-size:13px;color:#94a3b8;margin-bottom:22px;line-height:1.55;}
+.confirm-input{width:100%;padding:10px 12px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#e2e8f0;font-size:13px;outline:none;margin-bottom:16px;transition:border-color .2s;}
+.confirm-input:focus{border-color:#3b82f6;}
 .confirm-btns{display:flex;gap:8px;justify-content:center;}
 
 /* Responsive */
-@media(max-width:600px){
-.hdr{padding:0 12px;}
-.body{padding:12px;}
-.stats{grid-template-columns:repeat(2,1fr);}
+@media(max-width:640px){
+  .hdr{padding:0 12px;}
+  .body{padding:12px;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .tab{font-size:11px;padding:7px 10px;}
+  .top-users-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:400px){
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .top-users-grid{grid-template-columns:1fr;}
 }
 </style>
-
 </head>
 <body>
 
-<!-- LOGIN -->
-
-<div class="wrap" id="loginWrap">
-  <div class="card">
-    <div class="login-title">Host<em>ly</em></div>
-    <div class="login-sub">Admin Portal · Director Access</div>
+<!-- ══════════════════════════════════════════════════════ LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-logo">Host<em>ly</em></div>
+    <div class="login-sub">Internal Tools</div>
     <div class="err-box" id="errMsg"></div>
-    <div class="fg"><label class="fl">Email</label><input class="fi" id="aEmail" type="email" placeholder="admin@hostly.co.zw"></div>
-    <div class="fg"><label class="fl">Password</label><input class="fi" id="aPass" type="password" placeholder="••••••••"></div>
+    <div class="fg">
+      <label class="fl">Email</label>
+      <input class="fi" id="aEmail" type="email" autocomplete="username">
+    </div>
+    <div class="fg">
+      <label class="fl">Password</label>
+      <input class="fi" id="aPass" type="password" autocomplete="current-password">
+    </div>
     <button class="btn-login" id="loginBtn">Sign In</button>
   </div>
 </div>
 
-<!-- DASHBOARD -->
-
+<!-- ══════════════════════════════════════════════════ DASHBOARD -->
 <div id="dash">
+
+  <!-- Header -->
   <div class="hdr">
-    <div class="hdr-title">Host<em>ly</em> Admin</div>
-    <button class="hdr-btn btn-refresh" id="refreshBtn">↻ Refresh</button>
+    <div class="hdr-brand">Host<em>ly</em></div>
+    <button class="hdr-btn btn-refresh" id="refreshBtn">&#8635; Refresh</button>
     <button class="hdr-btn btn-logout" id="logoutBtn">Sign Out</button>
   </div>
+
   <div class="body">
-    <div class="stats" id="statsDiv"></div>
-    <div class="tabs">
-      <button class="tab on" id="tab1">📋 Listings</button>
-      <button class="tab" id="tab2">👤 Users</button>
-      <button class="tab" id="tab3">💰 Top-Ups</button>
-      <button class="tab" id="tab4">🚩 Reports</button>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsDiv"></div>
+
+    <!-- Alerts -->
+    <div class="alerts" id="alertsDiv"></div>
+
+    <!-- Tabs -->
+    <div class="tabs" id="tabsRow">
+      <button class="tab on" data-tab="1">Overview</button>
+      <button class="tab" data-tab="2">Listings</button>
+      <button class="tab" data-tab="3">Users</button>
+      <button class="tab" data-tab="4">Top-Ups</button>
+      <button class="tab" data-tab="5">Reports</button>
+      <button class="tab" data-tab="6">Error Logs</button>
+      <button class="tab" data-tab="7">Send Alert</button>
     </div>
 
-```
-<!-- LISTINGS -->
-<div class="pnl on" id="pnl1">
-  <div class="toolbar">
-    <input class="search-box" id="listSearch" placeholder="Search listings…" oninput="renderListings()">
-    <select class="filter-sel" id="listFilter" onchange="renderListings()">
-      <option value="">All Statuses</option>
-      <option value="pending">Pending</option>
-      <option value="active">Active</option>
-      <option value="rejected">Rejected</option>
-      <option value="removed">Removed</option>
-    </select>
-  </div>
-  <div id="listContent"><p class="loading-msg">Loading listings…</p></div>
-</div>
+    <!-- ── Panel 1: Overview ── -->
+    <div class="pnl on" id="pnl1">
+      <div id="overviewContent"><p class="loading-msg">Loading overview...</p></div>
+    </div>
 
-<!-- USERS -->
-<div class="pnl" id="pnl2">
-  <div class="toolbar">
-    <input class="search-box" id="userSearch" placeholder="Search users…" oninput="renderUsers()">
-    <select class="filter-sel" id="userFilter" onchange="renderUsers()">
-      <option value="">All Statuses</option>
-      <option value="active">Active</option>
-      <option value="banned_perm">Banned</option>
-    </select>
-  </div>
-  <div id="userContent"><p class="loading-msg">Loading users…</p></div>
-</div>
+    <!-- ── Panel 2: Listings ── -->
+    <div class="pnl" id="pnl2">
+      <div class="toolbar">
+        <input class="search-box" id="listSearch" placeholder="Search by title, seller, category..." oninput="renderListings()">
+        <select class="filter-sel" id="listFilter" onchange="renderListings()">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="rejected">Rejected</option>
+          <option value="removed">Removed</option>
+        </select>
+      </div>
+      <div id="listContent"><p class="loading-msg">Loading listings...</p></div>
+    </div>
 
-<!-- TOP-UPS -->
-<div class="pnl" id="pnl3">
-  <div class="toolbar">
-    <input class="search-box" id="topupSearch" placeholder="Search top-ups…" oninput="renderTopups()">
-    <select class="filter-sel" id="topupFilter" onchange="renderTopups()">
-      <option value="">All Statuses</option>
-      <option value="pending">Pending</option>
-      <option value="approved">Approved</option>
-      <option value="rejected">Rejected</option>
-    </select>
-  </div>
-  <div id="topupContent"><p class="loading-msg">Loading top-ups…</p></div>
-</div>
+    <!-- ── Panel 3: Users ── -->
+    <div class="pnl" id="pnl3">
+      <div class="toolbar">
+        <input class="search-box" id="userSearch" placeholder="Search by name or phone..." oninput="renderUsers()">
+        <select class="filter-sel" id="userFilter" onchange="renderUsers()">
+          <option value="">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="banned">Banned</option>
+          <option value="suspended">Suspended</option>
+        </select>
+      </div>
+      <div id="userContent"><p class="loading-msg">Loading users...</p></div>
+    </div>
 
-<!-- REPORTS -->
-<div class="pnl" id="pnl4">
-  <div class="toolbar">
-    <input class="search-box" id="reportSearch" placeholder="Search reports…" oninput="renderReports()">
-    <select class="filter-sel" id="reportFilter" onchange="renderReports()">
-      <option value="">All Statuses</option>
-      <option value="open">Open</option>
-      <option value="resolved">Resolved</option>
-    </select>
-  </div>
-  <div id="reportContent"><p class="loading-msg">Loading reports…</p></div>
-</div>
-```
+    <!-- ── Panel 4: Top-Ups ── -->
+    <div class="pnl" id="pnl4">
+      <div id="topupContent"><p class="loading-msg">Loading...</p></div>
+    </div>
 
-  </div>
-</div>
+    <!-- ── Panel 5: Reports ── -->
+    <div class="pnl" id="pnl5">
+      <div class="toolbar">
+        <input class="search-box" id="reportSearch" placeholder="Search reports..." oninput="renderReports()">
+        <select class="filter-sel" id="reportFilter" onchange="renderReports()">
+          <option value="">All Statuses</option>
+          <option value="open">Open</option>
+          <option value="resolved">Resolved</option>
+        </select>
+      </div>
+      <div id="reportContent"><p class="loading-msg">Loading reports...</p></div>
+    </div>
 
-<!-- MODAL -->
+    <!-- ── Panel 6: Error Logs ── -->
+    <div class="pnl" id="pnl6">
+      <div id="errorContent"><p class="loading-msg">Loading error logs...</p></div>
+    </div>
 
+    <!-- ── Panel 7: Send Alert ── -->
+    <div class="pnl" id="pnl7">
+      <div id="alertContent"></div>
+    </div>
+
+  </div><!-- /body -->
+</div><!-- /dash -->
+
+<!-- ══════════════════════════════════════════════════════ MODAL -->
 <div class="modal-overlay hidden" id="modalOverlay">
   <div class="modal" id="modalBox">
     <div class="modal-hdr">
-      <div class="modal-title" id="modalTitle">Edit</div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-title" id="modalTitle">Details</div>
+      <button class="modal-close" onclick="closeModal()">&#10005;</button>
     </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-footer" id="modalFooter"></div>
   </div>
 </div>
 
-<!-- CONFIRM DIALOG -->
-
+<!-- ══════════════════════════════════════════════════ CONFIRM -->
 <div class="confirm-overlay hidden" id="confirmOverlay">
   <div class="confirm-box">
-    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <div class="confirm-icon" id="confirmIcon">&#9888;&#65039;</div>
     <div class="confirm-title" id="confirmTitle">Are you sure?</div>
     <div class="confirm-msg" id="confirmMsg"></div>
+    <input class="confirm-input" id="confirmInput" style="display:none" placeholder="">
     <div class="confirm-btns">
       <button class="btn-cancel" onclick="resolveConfirm(false)">Cancel</button>
       <button class="btn-danger" id="confirmOkBtn" onclick="resolveConfirm(true)">Confirm</button>
@@ -279,483 +359,1016 @@ tr:hover td{background:rgba(59,130,246,.04);}
   </div>
 </div>
 
-<!-- TOAST -->
-
+<!-- ══════════════════════════════════════════════════════ TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- ══════════════════════════════════════════════════════ SCRIPT -->
 <script>
+'use strict';
+
+// ── Supabase client ───────────────────────────────────────────
 var sb = supabase.createClient(
   "https://gxgytumhknmnwspxjzxw.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4Z3l0dW1oa25tbndzcHhqenh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzMwNDUsImV4cCI6MjA5MzY0OTA0NX0.ddJhWdUy7JVrSfdaSK8a0On3zuwssY2H4DWsxBhgbJs"
 );
 
-var DATA = { listings:[], users:[], topups:[], reports:[] };
+// ── App state ─────────────────────────────────────────────────
+var DATA = { listings:[], users:[], reports:[], errorLogs:[], reportsExist:true };
 var confirmResolver = null;
+var confirmInputResolver = null;
+var currentTab = 1;
+var TOTAL_TABS = 7;
 
-// ── HELPERS ───────────────────────────────────────────────
-function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+// ── Helpers ───────────────────────────────────────────────────
+function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function fmt(n){ return Number(n||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmtDate(s){ if(!s) return "—"; return new Date(s).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}); }
-function fmtDateTime(s){ if(!s) return "—"; return new Date(s).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}); }
+function fmtDate(s){ if(!s) return "—"; var d=new Date(s); return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}); }
+function fmtDT(s){ if(!s) return "—"; var d=new Date(s); return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})+" "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}); }
 
 function toast(msg, type){
   var el = document.getElementById("toast");
   el.textContent = msg;
   el.className = "toast show " + (type||"");
-  setTimeout(function(){ el.className = "toast"; }, 3200);
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.className = "toast"; }, 3400);
 }
 
-function confirm2(title, msg, icon, danger){
+function confirm2(title, msg, icon, dangerLabel, inputPlaceholder){
   return new Promise(function(resolve){
     confirmResolver = resolve;
     document.getElementById("confirmTitle").textContent = title;
     document.getElementById("confirmMsg").textContent = msg;
     document.getElementById("confirmIcon").textContent = icon||"⚠️";
-    document.getElementById("confirmOkBtn").className = danger ? "btn-danger" : "btn-save";
-    document.getElementById("confirmOkBtn").textContent = danger ? "Delete" : "Confirm";
+    var okBtn = document.getElementById("confirmOkBtn");
+    okBtn.className = (dangerLabel && dangerLabel !== "Confirm") ? "btn-danger" : "btn-save";
+    okBtn.textContent = dangerLabel || "Confirm";
+    var inp = document.getElementById("confirmInput");
+    if(inputPlaceholder){
+      inp.style.display = "block";
+      inp.placeholder = inputPlaceholder;
+      inp.value = "";
+    } else {
+      inp.style.display = "none";
+      inp.value = "";
+    }
     document.getElementById("confirmOverlay").classList.remove("hidden");
   });
 }
+
 function resolveConfirm(val){
   document.getElementById("confirmOverlay").classList.add("hidden");
-  if(confirmResolver){ confirmResolver(val); confirmResolver=null; }
+  var inputVal = document.getElementById("confirmInput").value.trim();
+  if(confirmResolver){
+    confirmResolver(val ? (inputVal || true) : false);
+    confirmResolver = null;
+  }
 }
 
-// ── MODAL ─────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────
 function openModal(title, bodyHTML, footerHTML){
   document.getElementById("modalTitle").textContent = title;
   document.getElementById("modalBody").innerHTML = bodyHTML;
-  document.getElementById("modalFooter").innerHTML = footerHTML;
+  document.getElementById("modalFooter").innerHTML = footerHTML || '<button class="btn-cancel" onclick="closeModal()">Close</button>';
   document.getElementById("modalOverlay").classList.remove("hidden");
 }
 function closeModal(){ document.getElementById("modalOverlay").classList.add("hidden"); }
 document.getElementById("modalOverlay").addEventListener("click", function(e){ if(e.target===this) closeModal(); });
 
-// ── AUTH ──────────────────────────────────────────────────
+// ── Tabs ──────────────────────────────────────────────────────
+document.getElementById("tabsRow").addEventListener("click", function(e){
+  var btn = e.target.closest(".tab");
+  if(!btn) return;
+  var n = parseInt(btn.dataset.tab);
+  showTab(n);
+});
+
+function showTab(n){
+  currentTab = n;
+  for(var i=1;i<=TOTAL_TABS;i++){
+    var tab = document.querySelector('[data-tab="'+i+'"]');
+    var pnl = document.getElementById("pnl"+i);
+    if(tab) tab.classList.toggle("on", i===n);
+    if(pnl) pnl.classList.toggle("on", i===n);
+  }
+  // Lazy render panels
+  if(n===4) renderTopups();
+  if(n===6) renderErrorLogs();
+  if(n===7) renderAlertPanel();
+}
+
+// ── Auth ──────────────────────────────────────────────────────
 document.getElementById("loginBtn").addEventListener("click", doLogin);
 document.getElementById("aPass").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
 document.getElementById("logoutBtn").addEventListener("click", doLogout);
-document.getElementById("refreshBtn").addEventListener("click", loadAllData);
-
-for(var i=1;i<=4;i++){
-  (function(n){ document.getElementById("tab"+n).addEventListener("click", function(){ showTab(n); }); })(i);
-}
-
-function showTab(n){
-  for(var i=1;i<=4;i++){
-    document.getElementById("tab"+i).classList.toggle("on", i===n);
-    document.getElementById("pnl"+i).classList.toggle("on", i===n);
-  }
-}
+document.getElementById("refreshBtn").addEventListener("click", refreshAll);
 
 async function doLogin(){
   var email = document.getElementById("aEmail").value.trim();
   var pass  = document.getElementById("aPass").value;
   var errEl = document.getElementById("errMsg");
   errEl.style.display = "none";
-  if(!email||!pass){ errEl.style.display="block"; errEl.textContent="Enter email and password."; return; }
-  var btn = document.getElementById("loginBtn");
-  btn.disabled=true; btn.textContent="Signing in…";
-  var { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
-  if(error||!data.user){
-    errEl.style.display="block"; errEl.textContent=(error?error.message:"Invalid credentials.");
-    btn.disabled=false; btn.textContent="Sign In"; return;
+  if(!email || !pass){
+    errEl.style.display = "block";
+    errEl.textContent = "Please enter your email and password.";
+    return;
   }
-  showDash();
+  var btn = document.getElementById("loginBtn");
+  btn.disabled = true;
+  btn.textContent = "Signing in...";
+  try {
+    var res = await sb.auth.signInWithPassword({ email: email, password: pass });
+    if(res.error || !res.data || !res.data.user){
+      errEl.style.display = "block";
+      errEl.textContent = res.error ? res.error.message : "Invalid credentials.";
+      btn.disabled = false;
+      btn.textContent = "Sign In";
+      return;
+    }
+    // Verify admin role in profiles table
+    var uid = res.data.user.id;
+    var pr = await sb.from("profiles").select("role").eq("id", uid).single();
+    if(pr.error || !pr.data || pr.data.role !== "admin"){
+      await sb.auth.signOut();
+      errEl.style.display = "block";
+      errEl.textContent = "Access denied. Insufficient permissions.";
+      btn.disabled = false;
+      btn.textContent = "Sign In";
+      return;
+    }
+    showDash();
+  } catch(ex){
+    errEl.style.display = "block";
+    errEl.textContent = "An error occurred. Please try again.";
+    btn.disabled = false;
+    btn.textContent = "Sign In";
+  }
 }
 
-async function doLogout(){ await sb.auth.signOut(); location.reload(); }
+async function doLogout(){
+  await sb.auth.signOut();
+  location.reload();
+}
 
-// ── DASHBOARD ─────────────────────────────────────────────
+// ── Dashboard init ────────────────────────────────────────────
 async function showDash(){
-  document.getElementById("loginWrap").style.display="none";
-  document.getElementById("dash").style.display="block";
+  document.getElementById("loginWrap").style.display = "none";
+  document.getElementById("dash").style.display = "block";
   await loadAllData();
 }
 
-async function loadAllData(){
+async function refreshAll(){
   var btn = document.getElementById("refreshBtn");
-  btn.textContent="↻ Loading…"; btn.disabled=true;
-  await Promise.all([loadListings(), loadUsers(), loadTopups(), loadReports()]);
-  renderAll();
-  btn.textContent="↻ Refresh"; btn.disabled=false;
+  btn.textContent = "Loading...";
+  btn.disabled = true;
+  await loadAllData();
+  btn.textContent = "↻ Refresh";
+  btn.disabled = false;
 }
 
-async function loadListings(){ var {data}=await sb.from("listings").select("*").order("created_at",{ascending:false}); if(data) DATA.listings=data; }
-async function loadUsers(){ var {data}=await sb.from("users").select("*").order("created_at",{ascending:false}); if(data) DATA.users=data; }
-async function loadTopups(){ var {data}=await sb.from("topup_requests").select("*").order("created_at",{ascending:false}); if(data) DATA.topups=data; }
-async function loadReports(){ var {data}=await sb.from("reports").select("*").order("created_at",{ascending:false}); if(data) DATA.reports=data; }
+async function loadAllData(){
+  await Promise.all([
+    loadListings(),
+    loadUsers(),
+    loadReports(),
+    loadErrorLogs()
+  ]);
+  renderStats();
+  renderAlerts();
+  renderOverview();
+  if(currentTab===2) renderListings();
+  if(currentTab===3) renderUsers();
+  if(currentTab===4) renderTopups();
+  if(currentTab===5) renderReports();
+  if(currentTab===6) renderErrorLogs();
+}
 
-function renderAll(){ renderStats(); renderListings(); renderUsers(); renderTopups(); renderReports(); }
+async function loadListings(){
+  try {
+    var {data, error} = await sb.from("listings").select("*").order("created_at",{ascending:false});
+    if(!error && data) DATA.listings = data;
+  } catch(e){}
+}
 
-// ── STATS ─────────────────────────────────────────────────
+async function loadUsers(){
+  try {
+    var {data, error} = await sb.from("profiles").select("*").order("created_at",{ascending:false});
+    if(!error && data) DATA.users = data;
+  } catch(e){}
+}
+
+async function loadReports(){
+  try {
+    var {data, error} = await sb.from("reports").select("*").order("created_at",{ascending:false});
+    if(error){
+      DATA.reports = [];
+      DATA.reportsExist = false;
+    } else {
+      DATA.reports = data || [];
+      DATA.reportsExist = true;
+    }
+  } catch(e){
+    DATA.reports = [];
+    DATA.reportsExist = false;
+  }
+}
+
+async function loadErrorLogs(){
+  try {
+    var {data, error} = await sb.from("error_logs").select("*").order("created_at",{ascending:false}).limit(200);
+    if(!error && data) DATA.errorLogs = data;
+  } catch(e){}
+}
+
+// ── Stats ─────────────────────────────────────────────────────
 function renderStats(){
-  var l=DATA.listings,u=DATA.users,t=DATA.topups,r=DATA.reports;
-  var totalRev = DATA.topups.filter(function(x){return x.status==="approved";}).reduce(function(a,x){return a+Number(x.amount||0);},0);
-  document.getElementById("statsDiv").innerHTML =
-    scard(l.length,"Total Listings")+
-    scard(l.filter(function(x){return x.status==="active";}).length,"Active")+
-    scard(l.filter(function(x){return x.status==="pending";}).length,"Pending Review")+
-    scard(u.length,"Total Users")+
-    scard(u.filter(function(x){return x.status==="banned_perm";}).length,"Banned Users")+
-    scard(t.filter(function(x){return x.status==="pending";}).length,"Pending Top-Ups")+
-    scard("$"+fmt(totalRev),"Revenue Approved")+
-    scard(r.filter(function(x){return x.status==="open";}).length,"Open Reports");
-}
-function scard(n,l){ return "<div class=\"stat-card\"><div class=\"stat-n\">"+n+"</div><div class=\"stat-l\">"+esc(l)+"</div></div>"; }
+  var l = DATA.listings, u = DATA.users, r = DATA.reports;
+  var totalUsers   = u.length;
+  var activeList   = l.filter(function(x){ return x.status==="active"; }).length;
+  var pendingList  = l.filter(function(x){ return x.status==="pending"; }).length;
+  var openReports  = r.filter(function(x){ return x.status==="open"; }).length;
+  var bannedUsers  = u.filter(function(x){ return x.status==="banned"; }).length;
+  var totalWallet  = u.reduce(function(a,x){ return a + Number(x.wallet_usd||0); }, 0);
 
-// ── LISTINGS ──────────────────────────────────────────────
-function renderListings(){
-  var q=(document.getElementById("listSearch").value||"").toLowerCase();
-  var f=document.getElementById("listFilter").value;
-  var l=DATA.listings.filter(function(x){
-    var match=!q||(x.title||"").toLowerCase().includes(q)||(x.seller_name||"").toLowerCase().includes(q)||(x.category||"").toLowerCase().includes(q);
-    var fmatch=!f||x.status===f;
-    return match&&fmatch;
-  });
-  if(!l.length){ document.getElementById("listContent").innerHTML="<div class=\"empty\"><div class=\"empty-icon\">🏠</div>No listings found.</div>"; return; }
-  document.getElementById("listContent").innerHTML =
-    "<div class=\"tbl-wrap\"><table><thead><tr>"+
-    "<th>Title</th><th>Seller</th><th>Category</th><th>Province</th><th>Price</th><th>Date</th><th>Status</th><th>Actions</th>"+
-    "</tr></thead><tbody>"+
-    l.map(function(x){
-      var bc=x.status==="active"?"b-active":x.status==="pending"?"b-pending":x.status==="rejected"?"b-rejected":"b-removed";
-      return "<tr>"+
+  document.getElementById("statsDiv").innerHTML =
+    scard(totalUsers, "Total Users", "")+
+    scard(activeList, "Active Listings", "")+
+    scard(pendingList, "Pending Review", pendingList>0?"warn":"")+
+    scard(openReports, "Open Reports", openReports>0?"warn":"")+
+    scard(bannedUsers, "Banned Users", bannedUsers>0?"danger":"")+
+    scard("$"+fmt(totalWallet), "Total Wallet Balance", "");
+}
+
+function scard(n, label, cls){
+  return '<div class="stat-card"><div class="stat-n'+(cls?" "+cls:"")+'">'+(n)+'</div><div class="stat-l">'+esc(label)+'</div></div>';
+}
+
+// ── Alerts ────────────────────────────────────────────────────
+function renderAlerts(){
+  var l = DATA.listings, r = DATA.reports;
+  var pending = l.filter(function(x){ return x.status==="pending"; }).length;
+  var openR   = r.filter(function(x){ return x.status==="open"; }).length;
+  var html = "";
+  if(pending>0) html += '<div class="alert">&#128276; '+pending+' listing'+(pending>1?"s":"")+' waiting for review. <a href="#" onclick="showTab(2);document.getElementById(\'listFilter\').value=\'pending\';renderListings();return false;" style="color:#fbbf24;margin-left:6px;text-decoration:underline;">Review now</a></div>';
+  if(openR>0)   html += '<div class="alert red">&#128681; '+openR+' open report'+(openR>1?"s":"")+' need attention. <a href="#" onclick="showTab(5);return false;" style="color:#f87171;margin-left:6px;text-decoration:underline;">View reports</a></div>';
+  document.getElementById("alertsDiv").innerHTML = html;
+}
+
+// ── Overview Panel ────────────────────────────────────────────
+function renderOverview(){
+  var l = DATA.listings, u = DATA.users;
+  var pending  = l.filter(function(x){ return x.status==="pending"; });
+  var openReps = DATA.reports.filter(function(x){ return x.status==="open"; });
+  var recentL  = l.slice(0,5);
+  var recentU  = u.slice(0,5);
+
+  var html = "";
+
+  // Recent activity
+  html += '<div class="section-head">Recent Listings</div>';
+  if(recentL.length===0){
+    html += '<div class="empty-msg">No listings yet.</div>';
+  } else {
+    html += '<div class="tbl-wrap"><table><thead><tr><th>Title</th><th>Seller</th><th>Status</th><th>Date</th></tr></thead><tbody>';
+    recentL.forEach(function(x){
+      var bc = badgeClass(x.status,"listing");
+      html += "<tr><td><b>"+esc(x.title||"Untitled")+"</b></td><td>"+esc(x.seller_name||"—")+"</td><td><span class='b "+bc+"'>"+esc(x.status)+"</span></td><td>"+fmtDate(x.created_at)+"</td></tr>";
+    });
+    html += "</tbody></table></div>";
+  }
+
+  html += '<div style="margin-top:20px"></div>';
+  html += '<div class="section-head">Needs Attention</div>';
+  if(pending.length===0 && openReps.length===0){
+    html += '<div class="empty-msg" style="color:#4ade80">&#10003; Everything looks good. No pending items.</div>';
+  }
+  if(pending.length>0){
+    html += '<div class="section-sub">'+pending.length+' listing'+(pending.length>1?"s":"")+' awaiting approval:</div>';
+    html += '<div class="tbl-wrap" style="margin-bottom:16px"><table><thead><tr><th>Title</th><th>Seller</th><th>Category</th><th>Province</th><th>Price</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+    pending.forEach(function(x){
+      html += "<tr>"+
         "<td><b>"+esc(x.title||"Untitled")+"</b></td>"+
         "<td>"+esc(x.seller_name||"—")+"</td>"+
         "<td>"+esc(x.category||"—")+"</td>"+
         "<td>"+esc(x.province||"—")+"</td>"+
-        "<td><b>"+(x.price?"$"+fmt(x.price):"—")+"</b></td>"+
+        "<td>"+(x.price?"$"+fmt(x.price):"—")+"</td>"+
         "<td>"+fmtDate(x.created_at)+"</td>"+
-        "<td><span class=\"b "+bc+"\">"+esc(x.status||"—")+"</span></td>"+
-        "<td><div class=\"actions\">"+
-          "<button class=\"ab ab-view\" onclick=\"viewListing('"+x.id+"')\">View</button>"+
-          "<button class=\"ab ab-edit\" onclick=\"editListing('"+x.id+"')\">Edit</button>"+
-          (x.status==="pending"?"<button class=\"ab ab-approve\" onclick=\"approveListing('"+x.id+"')\">Approve</button><button class=\"ab ab-reject\" onclick=\"rejectListing('"+x.id+"')\">Reject</button>":"")+
-          (x.status==="active"?"<button class=\"ab ab-remove\" onclick=\"removeListing('"+x.id+"')\">Remove</button>":"")+
-          "<button class=\"ab ab-delete\" onclick=\"deleteListing('"+x.id+"')\">Delete</button>"+
-        "</div></td></tr>";
-    }).join("")+"</tbody></table></div>";
+        "<td><div class='actions'>"+
+          "<button class='ab ab-view' onclick='viewListing(\""+x.id+"\")'>View</button>"+
+          "<button class='ab ab-approve' onclick='approveListing(\""+x.id+"\")'>Approve</button>"+
+          "<button class='ab ab-reject' onclick='rejectListing(\""+x.id+"\")'>Reject</button>"+
+        "</div></td>"+
+      "</tr>";
+    });
+    html += "</tbody></table></div>";
+  }
+  if(openReps.length>0){
+    html += '<div class="section-sub">'+openReps.length+' open report'+(openReps.length>1?"s":"")+' to review:</div>';
+    html += '<div class="tbl-wrap"><table><thead><tr><th>Type</th><th>Reason</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+    openReps.slice(0,10).forEach(function(x){
+      html += "<tr>"+
+        "<td><span class='b b-blue'>"+esc(x.target_type||"—")+"</span></td>"+
+        "<td>"+esc(x.reason||"—")+"</td>"+
+        "<td>"+fmtDate(x.created_at)+"</td>"+
+        "<td><div class='actions'>"+
+          "<button class='ab ab-view' onclick='viewReport(\""+x.id+"\")'>View</button>"+
+          "<button class='ab ab-resolve' onclick='resolveReport(\""+x.id+"\")'>Resolve</button>"+
+        "</div></td>"+
+      "</tr>";
+    });
+    html += "</tbody></table></div>";
+  }
+
+  document.getElementById("overviewContent").innerHTML = html;
+}
+
+// ── Listings Panel ────────────────────────────────────────────
+function badgeClass(status, type){
+  if(type==="listing"){
+    var m = {active:"b-active",pending:"b-pending",rejected:"b-rejected",removed:"b-removed"};
+    return m[status] || "b-removed";
+  }
+  if(type==="user"){
+    var m2 = {active:"b-active",banned:"b-banned",suspended:"b-suspended"};
+    return m2[status] || "b-active";
+  }
+  return "b-blue";
+}
+
+function renderListings(){
+  var q = (document.getElementById("listSearch").value||"").toLowerCase();
+  var f = document.getElementById("listFilter").value;
+  var l = DATA.listings.filter(function(x){
+    var match = !q || (x.title||"").toLowerCase().includes(q) || (x.seller_name||"").toLowerCase().includes(q) || (x.category||"").toLowerCase().includes(q) || (x.province||"").toLowerCase().includes(q);
+    return match && (!f || x.status===f);
+  });
+  if(!l.length){
+    document.getElementById("listContent").innerHTML = '<div class="empty"><div class="empty-icon">&#127968;</div>No listings found.</div>';
+    return;
+  }
+  var rows = l.map(function(x){
+    var bc = badgeClass(x.status,"listing");
+    return "<tr>"+
+      "<td><b>"+esc(x.title||"Untitled")+"</b></td>"+
+      "<td>"+esc(x.seller_name||"—")+"<br><span style='font-size:11px;color:#475569'>"+esc(x.seller_phone||"")+"</span></td>"+
+      "<td>"+esc(x.category||"—")+"</td>"+
+      "<td>"+esc(x.province||"—")+"</td>"+
+      "<td><b>"+(x.price?"$"+fmt(x.price):"—")+"</b></td>"+
+      "<td>"+fmtDate(x.created_at)+"</td>"+
+      "<td><span class='b "+bc+"'>"+esc(x.status||"—")+"</span></td>"+
+      "<td><div class='actions'>"+
+        "<button class='ab ab-view' onclick='viewListing(\""+x.id+"\")'>View</button>"+
+        (x.status==="pending"
+          ? "<button class='ab ab-approve' onclick='approveListing(\""+x.id+"\")'>Approve</button><button class='ab ab-reject' onclick='rejectListing(\""+x.id+"\")'>Reject</button>"
+          : "")+
+        (x.status==="active"
+          ? "<button class='ab ab-remove' onclick='removeListing(\""+x.id+"\")'>Remove</button>"
+          : "")+
+        "<button class='ab ab-delete' onclick='deleteListing(\""+x.id+"\")'>Delete</button>"+
+      "</div></td>"+
+    "</tr>";
+  }).join("");
+  document.getElementById("listContent").innerHTML =
+    "<div class='tbl-wrap'><table><thead><tr>"+
+    "<th>Title</th><th>Seller</th><th>Category</th><th>Province</th><th>Price</th><th>Date</th><th>Status</th><th>Actions</th>"+
+    "</tr></thead><tbody>"+rows+"</tbody></table></div>";
 }
 
 function viewListing(id){
-  var x=DATA.listings.find(function(l){return l.id===id;}); if(!x) return;
-  var bc=x.status==="active"?"b-active":x.status==="pending"?"b-pending":x.status==="rejected"?"b-rejected":"b-removed";
-  var body=
-    "<div class=\"info-row\"><span class=\"info-label\">Title</span><span class=\"info-val\">"+esc(x.title)+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Seller</span><span class=\"info-val\">"+esc(x.seller_name||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Category</span><span class=\"info-val\">"+esc(x.category||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Province</span><span class=\"info-val\">"+esc(x.province||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Price</span><span class=\"info-val\">"+(x.price?"$"+fmt(x.price):"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Currency</span><span class=\"info-val\">"+esc(x.currency||"USD")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Status</span><span class=\"info-val\"><span class=\"b "+bc+"\">"+esc(x.status)+"</span></span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Created</span><span class=\"info-val\">"+fmtDateTime(x.created_at)+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">ID</span><span class=\"info-val\" style=\"font-size:11px;color:#64748b\">"+esc(x.id)+"</span></div>";
-  openModal("Listing Details", body, "<button class=\"btn-cancel\" onclick=\"closeModal()\">Close</button>");
-}
-
-function editListing(id){
-  var x=DATA.listings.find(function(l){return l.id===id;}); if(!x) return;
-  var body=
-    "<div class=\"mfg\"><label class=\"mfl\">Title</label><input class=\"mfi\" id=\"eTitle\" value=\""+esc(x.title||"")+"\"></div>"+
-    "<div class=\"mfg\"><label class=\"mfl\">Category</label><input class=\"mfi\" id=\"eCat\" value=\""+esc(x.category||"")+"\"></div>"+
-    "<div class=\"mfg\"><label class=\"mfl\">Province</label><input class=\"mfi\" id=\"eProv\" value=\""+esc(x.province||"")+"\"></div>"+
-    "<div class=\"mfg\"><label class=\"mfl\">Price (USD)</label><input class=\"mfi\" id=\"ePrice\" type=\"number\" value=\""+(x.price||"")+"\"></div>"+
-    "<div class=\"mfg\"><label class=\"mfl\">Status</label><select class=\"mfi-sel\" id=\"eStatus\">"+
-      ["pending","active","rejected","removed"].map(function(s){return "<option value=\""+s+"\""+(x.status===s?" selected":"")+">"+s+"</option>";}).join("")+
-    "</select></div>";
-  var footer=
-    "<button class=\"btn-cancel\" onclick=\"closeModal()\">Cancel</button>"+
-    "<button class=\"btn-save\" onclick=\"saveListingEdit('"+id+"')\">Save Changes</button>";
-  openModal("Edit Listing", body, footer);
-}
-
-async function saveListingEdit(id){
-  var updates={
-    title:document.getElementById("eTitle").value.trim(),
-    category:document.getElementById("eCat").value.trim(),
-    province:document.getElementById("eProv").value.trim(),
-    price:parseFloat(document.getElementById("ePrice").value)||null,
-    status:document.getElementById("eStatus").value
-  };
-  var {error}=await sb.from("listings").update(updates).eq("id",id);
-  if(error){ toast("Error: "+error.message,"error"); return; }
-  closeModal(); await loadListings(); renderListings(); renderStats(); toast("Listing updated!","success");
+  var x = DATA.listings.find(function(l){ return l.id===id; }); if(!x) return;
+  var bc = badgeClass(x.status,"listing");
+  var photos = [];
+  try { photos = JSON.parse(x.photos||"[]"); if(!Array.isArray(photos)) photos=[]; } catch(e){}
+  var body =
+    row("Title", esc(x.title))+
+    row("Description", '<span style="color:#94a3b8;white-space:pre-wrap">'+esc(x.description||"—")+"</span>")+
+    row("Seller", esc(x.seller_name||"—"))+
+    row("Seller Phone", esc(x.seller_phone||"—"))+
+    row("Category", esc(x.category||"—"))+
+    row("Province", esc(x.province||"—"))+
+    row("City", esc(x.city||"—"))+
+    row("Price", x.price ? "<b style='color:#3b82f6'>$"+fmt(x.price)+"</b>" : "—")+
+    row("Currency", esc(x.currency||"USD"))+
+    row("Status", "<span class='b "+bc+"'>"+esc(x.status)+"</span>")+
+    row("Created", fmtDT(x.created_at))+
+    row("Updated", fmtDT(x.updated_at))+
+    row("ID", "<span style='font-size:10px;color:#475569'>"+esc(x.id)+"</span>");
+  if(photos.length>0){
+    body += '<div style="margin-top:12px"><div style="font-size:11px;color:#94a3b8;margin-bottom:6px;font-weight:700;text-transform:uppercase">Photos</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
+    photos.forEach(function(p){ body += '<img src="'+esc(p)+'" style="width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #334155">'; });
+    body += "</div></div>";
+  }
+  var footer =
+    '<button class="btn-cancel" onclick="closeModal()">Close</button>'+
+    (x.status==="pending"
+      ? '<button class="btn-save" onclick="closeModal();approveListing(\''+id+'\')">Approve</button>'+
+        '<button class="btn-danger" onclick="closeModal();rejectListing(\''+id+'\')">Reject</button>'
+      : "")+
+    (x.status==="active"
+      ? '<button class="btn-danger" onclick="closeModal();removeListing(\''+id+'\')">Remove</button>'
+      : "");
+  openModal("Listing Details", body, footer);
 }
 
 async function approveListing(id){
-  var ok=await confirm2("Approve Listing","This listing will go live and be visible to all users.","✅",false);
+  var ok = await confirm2("Approve Listing","This listing will go live and be visible to all users.","✅","Approve");
   if(!ok) return;
-  var {error}=await sb.from("listings").update({status:"active"}).eq("id",id);
+  var {error} = await sb.from("listings").update({status:"active",updated_at:new Date().toISOString()}).eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadListings(); renderListings(); renderStats(); toast("Listing approved and live!","success");
+  await loadListings(); renderListings(); renderStats(); renderOverview();
+  toast("Listing approved and live!","success");
 }
 
 async function rejectListing(id){
-  var reason=prompt("Reason for rejection (will be logged):"); if(!reason) return;
-  var {error}=await sb.from("listings").update({status:"rejected"}).eq("id",id);
+  var reason = await confirm2("Reject Listing","This listing will be rejected. Optionally enter a reason:","❌","Reject","Reason (optional)");
+  if(reason===false) return;
+  var {error} = await sb.from("listings").update({status:"rejected",updated_at:new Date().toISOString()}).eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadListings(); renderListings(); renderStats(); toast("Listing rejected.","");
+  await loadListings(); renderListings(); renderStats(); renderOverview();
+  toast("Listing rejected.","");
 }
 
 async function removeListing(id){
-  var ok=await confirm2("Remove Listing","This listing will be hidden from the platform but not deleted.","🚫",false);
+  var ok = await confirm2("Remove Listing","This listing will be hidden from the marketplace but not permanently deleted.","&#128683;","Remove");
   if(!ok) return;
-  var {error}=await sb.from("listings").update({status:"removed"}).eq("id",id);
+  var {error} = await sb.from("listings").update({status:"removed",updated_at:new Date().toISOString()}).eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadListings(); renderListings(); renderStats(); toast("Listing removed.","");
+  await loadListings(); renderListings(); renderStats(); renderOverview();
+  toast("Listing removed from marketplace.","");
 }
 
 async function deleteListing(id){
-  var x=DATA.listings.find(function(l){return l.id===id;});
-  var ok=await confirm2("Permanently Delete","\""+esc(x?x.title:"this listing")+"\" will be deleted forever. This cannot be undone.","🗑️",true);
+  var x = DATA.listings.find(function(l){ return l.id===id; });
+  var title = x ? x.title : "this listing";
+  var ok = await confirm2("Permanently Delete","\""+esc(title)+"\" will be deleted forever. This cannot be undone.","&#128465;&#65039;","Delete");
   if(!ok) return;
-  var {error}=await sb.from("listings").delete().eq("id",id);
+  var {error} = await sb.from("listings").delete().eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadListings(); renderListings(); renderStats(); toast("Listing permanently deleted.","");
+  await loadListings(); renderListings(); renderStats(); renderOverview();
+  toast("Listing permanently deleted.","");
 }
 
-// ── USERS ─────────────────────────────────────────────────
+// ── Users Panel ───────────────────────────────────────────────
 function renderUsers(){
-  var q=(document.getElementById("userSearch").value||"").toLowerCase();
-  var f=document.getElementById("userFilter").value;
-  var u=DATA.users.filter(function(x){
-    var match=!q||(x.name||"").toLowerCase().includes(q)||(x.email||"").toLowerCase().includes(q);
-    var fmatch=!f||x.status===f;
-    return match&&fmatch;
+  var q = (document.getElementById("userSearch").value||"").toLowerCase();
+  var f = document.getElementById("userFilter").value;
+  var u = DATA.users.filter(function(x){
+    var match = !q || (x.name||"").toLowerCase().includes(q) || (x.phone||"").toLowerCase().includes(q);
+    return match && (!f || x.status===f);
   });
-  if(!u.length){ document.getElementById("userContent").innerHTML="<div class=\"empty\"><div class=\"empty-icon\">👤</div>No users found.</div>"; return; }
+  if(!u.length){
+    document.getElementById("userContent").innerHTML = '<div class="empty"><div class="empty-icon">&#128100;</div>No users found.</div>';
+    return;
+  }
+  var rows = u.map(function(x){
+    var bc = badgeClass(x.status||"active","user");
+    var roleBc = x.role==="admin"?"b-admin":x.role==="moderator"?"b-moderator":"b-blue";
+    return "<tr>"+
+      "<td><b>"+esc(x.name||"—")+"</b>"+(x.verified?"<span style='color:#22c55e;font-size:11px;margin-left:4px'>&#10003; verified</span>":"")+"</td>"+
+      "<td>"+esc(x.phone||"—")+"</td>"+
+      "<td><span class='b "+roleBc+"'>"+esc(x.role||"user")+"</span></td>"+
+      "<td><b style='color:#3b82f6'>$"+fmt(x.wallet_usd)+"</b></td>"+
+      "<td>"+fmtDate(x.created_at)+"</td>"+
+      "<td><span class='b "+bc+"'>"+esc(x.status||"active")+"</span></td>"+
+      "<td><div class='actions'>"+
+        "<button class='ab ab-view' onclick='viewUser(\""+x.id+"\")'>View</button>"+
+        "<button class='ab ab-edit' onclick='editUser(\""+x.id+"\")'>Edit</button>"+
+        (!x.verified ? "<button class='ab ab-verify' onclick='verifyUser(\""+x.id+"\")'>Verify</button>" : "")+
+        (x.status!=="banned"
+          ? "<button class='ab ab-ban' onclick='banUser(\""+x.id+"\")'>Ban</button>"
+          : "<button class='ab ab-unban' onclick='unbanUser(\""+x.id+"\")'>Unban</button>")+
+      "</div></td>"+
+    "</tr>";
+  }).join("");
   document.getElementById("userContent").innerHTML =
-    "<div class=\"tbl-wrap\"><table><thead><tr>"+
-    "<th>Name</th><th>Email</th><th>Role</th><th>Wallet</th><th>Joined</th><th>Status</th><th>Actions</th>"+
-    "</tr></thead><tbody>"+
-    u.map(function(x){
-      var bc=x.status==="active"?"b-active":x.status==="banned_perm"?"b-banned":"b-pending";
-      return "<tr>"+
-        "<td><b>"+esc(x.name||"—")+"</b></td>"+
-        "<td>"+esc(x.email||"—")+"</td>"+
-        "<td><span class=\"b b-blue\">"+esc(x.role||"user")+"</span></td>"+
-        "<td><b style=\"color:#3b82f6\">$"+fmt(x.wallet_usd)+"</b></td>"+
-        "<td>"+fmtDate(x.created_at)+"</td>"+
-        "<td><span class=\"b "+bc+"\">"+esc(x.status||"active")+"</span></td>"+
-        "<td><div class=\"actions\">"+
-          "<button class=\"ab ab-view\" onclick=\"viewUser('"+x.id+"')\">View</button>"+
-          "<button class=\"ab ab-edit\" onclick=\"editUser('"+x.id+"')\">Edit</button>"+
-          (x.status!=="banned_perm"
-            ?"<button class=\"ab ab-ban\" onclick=\"banUser('"+x.id+"')\">Ban</button>"
-            :"<button class=\"ab ab-unban\" onclick=\"unbanUser('"+x.id+"')\">Unban</button>")+
-          "<button class=\"ab ab-delete\" onclick=\"deleteUser('"+x.id+"')\">Delete</button>"+
-        "</div></td></tr>";
-    }).join("")+"</tbody></table></div>";
+    "<div class='tbl-wrap'><table><thead><tr>"+
+    "<th>Name</th><th>Phone</th><th>Role</th><th>Wallet</th><th>Joined</th><th>Status</th><th>Actions</th>"+
+    "</tr></thead><tbody>"+rows+"</tbody></table></div>";
 }
 
 function viewUser(id){
-  var x=DATA.users.find(function(u){return u.id===id;}); if(!x) return;
-  var bc=x.status==="active"?"b-active":x.status==="banned_perm"?"b-banned":"b-pending";
-  var body=
-    "<div class=\"info-row\"><span class=\"info-label\">Name</span><span class=\"info-val\">"+esc(x.name||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Email</span><span class=\"info-val\">"+esc(x.email||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Role</span><span class=\"info-val\">"+esc(x.role||"user")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Wallet Balance</span><span class=\"info-val\" style=\"color:#3b82f6\">$"+fmt(x.wallet_usd)+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Status</span><span class=\"info-val\"><span class=\"b "+bc+"\">"+esc(x.status||"active")+"</span></span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Joined</span><span class=\"info-val\">"+fmtDateTime(x.created_at)+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">ID</span><span class=\"info-val\" style=\"font-size:11px;color:#64748b\">"+esc(x.id)+"</span></div>";
-  openModal("User Details", body, "<button class=\"btn-cancel\" onclick=\"closeModal()\">Close</button>");
+  var x = DATA.users.find(function(u){ return u.id===id; }); if(!x) return;
+  var bc = badgeClass(x.status||"active","user");
+  var roleBc = x.role==="admin"?"b-admin":x.role==="moderator"?"b-moderator":"b-blue";
+  var userListings = DATA.listings.filter(function(l){ return l.seller_id===id; });
+  var body =
+    row("Name", esc(x.name||"—"))+
+    row("Phone", esc(x.phone||"—"))+
+    row("Role", "<span class='b "+roleBc+"'>"+esc(x.role||"user")+"</span>")+
+    row("Wallet Balance", "<b style='color:#3b82f6'>$"+fmt(x.wallet_usd)+"</b>")+
+    row("Verified", x.verified?"<span style='color:#22c55e'>&#10003; Yes</span>":"<span style='color:#94a3b8'>No</span>")+
+    row("Status", "<span class='b "+bc+"'>"+esc(x.status||"active")+"</span>")+
+    (x.ban_reason ? row("Ban Reason", esc(x.ban_reason)) : "")+
+    row("Joined", fmtDT(x.created_at))+
+    row("Updated", fmtDT(x.updated_at))+
+    row("Listings", String(userListings.length)+" listing"+(userListings.length!==1?"s":""))+
+    row("ID", "<span style='font-size:10px;color:#475569'>"+esc(x.id)+"</span>");
+  var footer =
+    '<button class="btn-cancel" onclick="closeModal()">Close</button>'+
+    '<button class="btn-save" onclick="closeModal();editUser(\''+id+'\')">Edit</button>'+
+    (x.status!=="banned"
+      ? '<button class="btn-danger" onclick="closeModal();banUser(\''+id+'\')">Ban</button>'
+      : '<button class="btn-save" onclick="closeModal();unbanUser(\''+id+'\')">Unban</button>');
+  openModal("User Profile", body, footer);
 }
 
 function editUser(id){
-  var x=DATA.users.find(function(u){return u.id===id;}); if(!x) return;
-  var body=
-    "<div class=\"mfg\"><label class=\"mfl\">Full Name</label><input class=\"mfi\" id=\"euName\" value=\""+esc(x.name||"")+"\"></div>"+
-    "<div class=\"mfg\"><label class=\"mfl\">Email</label><input class=\"mfi\" id=\"euEmail\" type=\"email\" value=\""+esc(x.email||"")+"\"></div>"+
-    "<div class=\"mfg\"><label class=\"mfl\">Role</label><select class=\"mfi-sel\" id=\"euRole\">"+
-      ["user","seller","admin"].map(function(r){return "<option value=\""+r+"\""+(x.role===r?" selected":"")+">"+r+"</option>";}).join("")+
+  var x = DATA.users.find(function(u){ return u.id===id; }); if(!x) return;
+  var body =
+    '<div class="mfg"><label class="mfl">Full Name</label><input class="mfi" id="euName" value="'+esc(x.name||"")+'"></div>'+
+    '<div class="mfg"><label class="mfl">Role</label><select class="mfi-sel" id="euRole">'+
+      ["user","moderator","admin"].map(function(r){ return '<option value="'+r+'"'+(x.role===r?" selected":"")+">"+r+"</option>"; }).join("")+
     "</select></div>"+
-    "<div class=\"mfg\"><label class=\"mfl\">Wallet Balance (USD)</label><input class=\"mfi\" id=\"euWallet\" type=\"number\" step=\"0.01\" value=\""+(x.wallet_usd||0)+"\"></div>"+
-    "<div class=\"mfg\"><label class=\"mfl\">Status</label><select class=\"mfi-sel\" id=\"euStatus\">"+
-      ["active","banned_perm"].map(function(s){return "<option value=\""+s+"\""+(x.status===s?" selected":"")+">"+s+"</option>";}).join("")+
-    "</select></div>";
-  var footer=
-    "<button class=\"btn-cancel\" onclick=\"closeModal()\">Cancel</button>"+
-    "<button class=\"btn-save\" onclick=\"saveUserEdit('"+id+"')\">Save Changes</button>";
+    '<div class="mfg"><label class="mfl">Wallet Balance (USD)</label><input class="mfi" id="euWallet" type="number" step="0.01" min="0" value="'+(x.wallet_usd||0)+'"></div>'+
+    '<div class="mfg"><label class="mfl">Status</label><select class="mfi-sel" id="euStatus">'+
+      [["active","Active"],["banned","Banned"],["suspended","Suspended"]].map(function(pair){ return '<option value="'+pair[0]+'"'+(x.status===pair[0]?" selected":"")+">"+ pair[1]+"</option>"; }).join("")+
+    "</select></div>"+
+    '<div class="mfg" id="banReasonGroup" style="'+(x.status==="banned"?"":"display:none")+'"><label class="mfl">Ban Reason</label><input class="mfi" id="euBanReason" value="'+esc(x.ban_reason||"")+'"></div>';
+  var footer =
+    '<button class="btn-cancel" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn-save" onclick="saveUserEdit(\''+id+'\')">Save Changes</button>';
   openModal("Edit User", body, footer);
+  // Show/hide ban reason field
+  setTimeout(function(){
+    var sel = document.getElementById("euStatus");
+    if(sel) sel.addEventListener("change", function(){
+      var grp = document.getElementById("banReasonGroup");
+      if(grp) grp.style.display = this.value==="banned" ? "" : "none";
+    });
+  }, 50);
 }
 
 async function saveUserEdit(id){
-  var updates={
-    name:document.getElementById("euName").value.trim(),
-    email:document.getElementById("euEmail").value.trim(),
-    role:document.getElementById("euRole").value,
-    wallet_usd:parseFloat(document.getElementById("euWallet").value)||0,
-    status:document.getElementById("euStatus").value
+  var updates = {
+    name: document.getElementById("euName").value.trim(),
+    role: document.getElementById("euRole").value,
+    wallet_usd: parseFloat(document.getElementById("euWallet").value) || 0,
+    status: document.getElementById("euStatus").value,
+    ban_reason: document.getElementById("euBanReason") ? document.getElementById("euBanReason").value.trim() : null,
+    updated_at: new Date().toISOString()
   };
-  var {error}=await sb.from("users").update(updates).eq("id",id);
+  if(updates.status !== "banned") updates.ban_reason = null;
+  var {error} = await sb.from("profiles").update(updates).eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  closeModal(); await loadUsers(); renderUsers(); renderStats(); toast("User updated!","success");
+  closeModal();
+  await loadUsers(); renderUsers(); renderStats();
+  toast("User updated successfully.","success");
+}
+
+async function verifyUser(id){
+  var ok = await confirm2("Verify User","This will mark the user as verified.","&#10003;","Verify");
+  if(!ok) return;
+  var {error} = await sb.from("profiles").update({verified:true, updated_at:new Date().toISOString()}).eq("id",id);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadUsers(); renderUsers();
+  toast("User verified.","success");
 }
 
 async function banUser(id){
-  var x=DATA.users.find(function(u){return u.id===id;});
-  var ok=await confirm2("Ban User","\""+esc(x?x.name:"this user")+"\" will be banned and lose all platform access.","🚫",true);
-  if(!ok) return;
-  var {error}=await sb.from("users").update({status:"banned_perm"}).eq("id",id);
+  var x = DATA.users.find(function(u){ return u.id===id; });
+  var reason = await confirm2("Ban User","\""+esc(x?x.name:"this user")+"\" will be banned. Enter reason:","&#128683;","Ban","Ban reason (required)");
+  if(!reason) return;
+  if(typeof reason !== "string" || reason.trim()===""){
+    toast("A ban reason is required.","error"); return;
+  }
+  var {error} = await sb.from("profiles").update({status:"banned", ban_reason:reason.trim(), updated_at:new Date().toISOString()}).eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadUsers(); renderUsers(); renderStats(); toast("User banned.","");
+  await loadUsers(); renderUsers(); renderStats();
+  toast("User banned.","");
 }
 
 async function unbanUser(id){
-  var ok=await confirm2("Unban User","This user will regain full access to the platform.","✅",false);
+  var ok = await confirm2("Unban User","This user will regain full access to the platform.","&#10003;","Unban");
   if(!ok) return;
-  var {error}=await sb.from("users").update({status:"active"}).eq("id",id);
+  var {error} = await sb.from("profiles").update({status:"active", ban_reason:null, updated_at:new Date().toISOString()}).eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadUsers(); renderUsers(); renderStats(); toast("User unbanned.","success");
+  await loadUsers(); renderUsers(); renderStats();
+  toast("User unbanned successfully.","success");
 }
 
-async function deleteUser(id){
-  var x=DATA.users.find(function(u){return u.id===id;});
-  var ok=await confirm2("Permanently Delete User","\""+esc(x?x.name:"this user")+"\" and all their data will be deleted forever. This cannot be undone.","🗑️",true);
-  if(!ok) return;
-  var {error}=await sb.from("users").delete().eq("id",id);
-  if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadUsers(); renderUsers(); renderStats(); toast("User permanently deleted.","");
-}
-
-// ── TOP-UPS ───────────────────────────────────────────────
+// ── Top-Ups Panel ─────────────────────────────────────────────
 function renderTopups(){
-  var q=(document.getElementById("topupSearch").value||"").toLowerCase();
-  var f=document.getElementById("topupFilter").value;
-  var t=DATA.topups.filter(function(x){
-    var match=!q||(x.user_name||"").toLowerCase().includes(q)||(x.reference||"").toLowerCase().includes(q)||(x.method||"").toLowerCase().includes(q);
-    var fmatch=!f||x.status===f;
-    return match&&fmatch;
-  });
-  if(!t.length){ document.getElementById("topupContent").innerHTML="<div class=\"empty\"><div class=\"empty-icon\">💰</div>No top-up requests found.</div>"; return; }
-  document.getElementById("topupContent").innerHTML =
-    "<div class=\"tu-grid\">"+
-    t.map(function(x){
-      var bc=x.status==="approved"?"b-approved":x.status==="pending"?"b-pending":"b-rejected";
-      return "<div class=\"tu-card\">"+
-        "<div class=\"tu-head\">"+
-          "<div>"+
-            "<div style=\"font-weight:700;font-size:14px;margin-bottom:3px\">"+esc(x.user_name||"Unknown User")+"</div>"+
-            "<div style=\"font-size:12px;color:#64748b\">"+esc(x.method||"—")+"</div>"+
-            "<div style=\"font-size:12px;color:#64748b\">Ref: "+esc(x.reference||"—")+"</div>"+
-            "<div style=\"font-size:11px;color:#475569;margin-top:4px\">"+fmtDateTime(x.created_at)+"</div>"+
-          "</div>"+
-          "<div style=\"text-align:right\">"+
-            "<div class=\"tu-amount\">$"+fmt(x.amount)+"</div>"+
-            "<span class=\"b "+bc+"\">"+esc(x.status)+"</span>"+
-          "</div>"+
-        "</div>"+
-        "<div class=\"tu-actions\">"+
-          (x.status==="pending"
-            ?"<button class=\"ab ab-approve\" onclick=\"approveTopup('"+x.id+"',"+x.amount+",'"+x.user_id+"')\">✓ Approve</button>"+
-              "<button class=\"ab ab-reject\" onclick=\"rejectTopup('"+x.id+"')\">✕ Reject</button>"
-            :"")+
-          "<button class=\"ab ab-delete\" onclick=\"deleteTopup('"+x.id+"')\">Delete</button>"+
-        "</div>"+
-      "</div>";
-    }).join("")+
-    "</div>";
-}
+  var u = DATA.users;
+  var top20 = u.slice().sort(function(a,b){ return Number(b.wallet_usd||0)-Number(a.wallet_usd||0); }).slice(0,20);
 
-async function approveTopup(id,amt,userId){
-  var ok=await confirm2("Approve Top-Up","$"+fmt(amt)+" will be credited to the user's wallet.","💰",false);
-  if(!ok) return;
-  var {error}=await sb.from("topup_requests").update({status:"approved"}).eq("id",id);
-  if(error){ toast("Error: "+error.message,"error"); return; }
-  var user=DATA.users.find(function(u){return u.id===userId;});
-  if(user){
-    var newBal=(Number(user.wallet_usd)||0)+Number(amt);
-    await sb.from("users").update({wallet_usd:newBal}).eq("id",userId);
+  var html =
+    '<div class="wallet-section">'+
+    '<div class="section-head">Manual Wallet Adjustment</div>'+
+    '<div class="section-sub">Search for a user to credit an EcoCash payment to their wallet. Changes are saved directly to their profile balance.</div>'+
+    '<div class="wallet-search-row">'+
+      '<input class="search-box" id="tuSearch" placeholder="Search by name or phone..." style="max-width:340px">'+
+      '<button class="btn-send" onclick="searchWalletUser()" style="padding:9px 18px;font-size:13px">Search</button>'+
+    '</div>'+
+    '<div id="walletUserResult"></div>'+
+    '</div>';
+
+  // Top 20 by wallet
+  html += '<div class="section-head">Top 20 Users by Wallet Balance</div>';
+  if(top20.length===0){
+    html += '<div class="empty-msg">No users found.</div>';
+  } else {
+    html += '<div class="top-users-grid">';
+    top20.forEach(function(x,i){
+      var rankCls = i===0?"gold":i===1?"silver":i===2?"bronze":"";
+      html +=
+        '<div class="top-user-card">'+
+          '<div class="top-user-rank '+rankCls+'">'+(i+1)+'</div>'+
+          '<div class="top-user-info">'+
+            '<div class="top-user-name">'+esc(x.name||"—")+'</div>'+
+            '<div class="top-user-phone">'+esc(x.phone||"—")+'</div>'+
+          '</div>'+
+          '<div>'+
+            '<div class="top-user-bal">$'+fmt(x.wallet_usd)+'</div>'+
+            '<button class="ab ab-credit" style="margin-top:4px;display:block;width:100%;text-align:center" onclick="openCreditModal(\''+x.id+'\')">Adjust</button>'+
+          '</div>'+
+        '</div>';
+    });
+    html += '</div>';
   }
-  await loadTopups(); await loadUsers(); renderTopups(); renderUsers(); renderStats();
-  toast("$"+fmt(amt)+" credited to wallet!","success");
+
+  document.getElementById("topupContent").innerHTML = html;
 }
 
-async function rejectTopup(id){
-  var ok=await confirm2("Reject Top-Up","This top-up request will be rejected.","❌",true);
+function searchWalletUser(){
+  var q = (document.getElementById("tuSearch").value||"").toLowerCase().trim();
+  var container = document.getElementById("walletUserResult");
+  if(!q){ container.innerHTML = ""; return; }
+  var matches = DATA.users.filter(function(x){
+    return (x.name||"").toLowerCase().includes(q) || (x.phone||"").toLowerCase().includes(q);
+  }).slice(0,5);
+  if(!matches.length){
+    container.innerHTML = '<div class="empty-msg">No users found matching "'+esc(q)+'".</div>';
+    return;
+  }
+  var html = matches.map(function(x){
+    return '<div class="wallet-result">'+
+      '<div class="wallet-result-name">'+esc(x.name||"—")+(x.verified?"<span style='color:#22c55e;font-size:11px;margin-left:6px'>&#10003; verified</span>":"")+'</div>'+
+      '<div class="wallet-result-meta">'+esc(x.phone||"—")+' &nbsp;|&nbsp; Balance: <b style="color:#3b82f6">$'+fmt(x.wallet_usd)+'</b> &nbsp;|&nbsp; '+esc(x.status||"active")+'</div>'+
+      '<div class="wallet-adjust-row">'+
+        '<input class="adj-input" id="adjAmt_'+x.id+'" type="number" step="0.01" min="0" placeholder="Amount USD">'+
+        '<select class="filter-sel" id="adjType_'+x.id+'">'+
+          '<option value="add">+ Add</option>'+
+          '<option value="subtract">- Subtract</option>'+
+          '<option value="set">= Set to</option>'+
+        '</select>'+
+        '<button class="ab ab-credit" onclick="applyWalletAdjust(\''+x.id+'\',\''+esc(x.name||"user")+'\')" style="padding:8px 14px;font-size:12px">Apply</button>'+
+      '</div>'+
+    '</div>';
+  }).join("");
+  container.innerHTML = html;
+}
+
+async function applyWalletAdjust(uid, name){
+  var amtEl = document.getElementById("adjAmt_"+uid);
+  var typeEl = document.getElementById("adjType_"+uid);
+  if(!amtEl||!typeEl) return;
+  var amt = parseFloat(amtEl.value);
+  var type = typeEl.value;
+  if(isNaN(amt)||amt<0){ toast("Enter a valid amount.","error"); return; }
+  var user = DATA.users.find(function(u){ return u.id===uid; });
+  if(!user){ toast("User not found.","error"); return; }
+  var currentBal = Number(user.wallet_usd||0);
+  var newBal;
+  var desc;
+  if(type==="add"){    newBal=currentBal+amt; desc="Add $"+fmt(amt)+" → new balance $"+fmt(newBal); }
+  else if(type==="subtract"){ newBal=Math.max(0,currentBal-amt); desc="Subtract $"+fmt(amt)+" → new balance $"+fmt(newBal); }
+  else {               newBal=amt;           desc="Set balance to $"+fmt(newBal); }
+
+  var ok = await confirm2("Adjust Wallet","User: "+name+"\n"+desc,"&#128178;","Apply");
   if(!ok) return;
-  var {error}=await sb.from("topup_requests").update({status:"rejected"}).eq("id",id);
+  var {error} = await sb.from("profiles").update({wallet_usd:newBal, updated_at:new Date().toISOString()}).eq("id",uid);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadTopups(); renderTopups(); renderStats(); toast("Top-up rejected.","");
+  await loadUsers(); renderTopups();
+  toast("Wallet updated to $"+fmt(newBal)+".","success");
 }
 
-async function deleteTopup(id){
-  var ok=await confirm2("Delete Top-Up Record","This record will be permanently deleted.","🗑️",true);
-  if(!ok) return;
-  var {error}=await sb.from("topup_requests").delete().eq("id",id);
-  if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadTopups(); renderTopups(); renderStats(); toast("Top-up record deleted.","");
+function openCreditModal(uid){
+  var x = DATA.users.find(function(u){ return u.id===uid; }); if(!x) return;
+  var body =
+    row("User", esc(x.name||"—"))+
+    row("Phone", esc(x.phone||"—"))+
+    row("Current Balance", "<b style='color:#3b82f6'>$"+fmt(x.wallet_usd)+"</b>")+
+    '<div style="margin-top:16px">'+
+      '<div class="mfg"><label class="mfl">Adjustment Type</label><select class="mfi-sel" id="creditType">'+
+        '<option value="add">+ Add funds</option>'+
+        '<option value="subtract">- Subtract funds</option>'+
+        '<option value="set">= Set exact balance</option>'+
+      '</select></div>'+
+      '<div class="mfg"><label class="mfl">Amount (USD)</label><input class="mfi" id="creditAmt" type="number" step="0.01" min="0" placeholder="0.00"></div>'+
+    '</div>';
+  var footer =
+    '<button class="btn-cancel" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn-save" onclick="applyModalCredit(\''+uid+'\')">Apply</button>';
+  openModal("Adjust Wallet — "+esc(x.name||"User"), body, footer);
 }
 
-// ── REPORTS ───────────────────────────────────────────────
+async function applyModalCredit(uid){
+  var amt = parseFloat(document.getElementById("creditAmt").value);
+  var type = document.getElementById("creditType").value;
+  if(isNaN(amt)||amt<0){ toast("Enter a valid amount.","error"); return; }
+  var user = DATA.users.find(function(u){ return u.id===uid; });
+  if(!user){ toast("User not found.","error"); return; }
+  var currentBal = Number(user.wallet_usd||0);
+  var newBal;
+  if(type==="add")           newBal = currentBal + amt;
+  else if(type==="subtract") newBal = Math.max(0, currentBal - amt);
+  else                       newBal = amt;
+  var {error} = await sb.from("profiles").update({wallet_usd:newBal, updated_at:new Date().toISOString()}).eq("id",uid);
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  closeModal();
+  await loadUsers(); renderTopups(); renderStats();
+  toast("Wallet updated to $"+fmt(newBal)+".","success");
+}
+
+// ── Reports Panel ─────────────────────────────────────────────
 function renderReports(){
-  var q=(document.getElementById("reportSearch").value||"").toLowerCase();
-  var f=document.getElementById("reportFilter").value;
-  var r=DATA.reports.filter(function(x){
-    var match=!q||(x.reason||"").toLowerCase().includes(q)||(x.target_type||"").toLowerCase().includes(q);
-    var fmatch=!f||x.status===f;
-    return match&&fmatch;
+  if(!DATA.reportsExist){
+    document.getElementById("reportContent").innerHTML = '<div class="empty-msg"><div style="font-size:28px;margin-bottom:10px">&#128681;</div>No reports table yet. Reports will appear here once users start flagging content.</div>';
+    return;
+  }
+  var q = (document.getElementById("reportSearch").value||"").toLowerCase();
+  var f = document.getElementById("reportFilter").value;
+  var r = DATA.reports.filter(function(x){
+    var match = !q || (x.reason||"").toLowerCase().includes(q) || (x.target_type||"").toLowerCase().includes(q) || (x.target_id||"").toLowerCase().includes(q);
+    return match && (!f || x.status===f);
   });
-  if(!r.length){ document.getElementById("reportContent").innerHTML="<div class=\"empty\"><div class=\"empty-icon\">🚩</div>No reports found.</div>"; return; }
+  if(!r.length){
+    document.getElementById("reportContent").innerHTML = '<div class="empty"><div class="empty-icon">&#128681;</div>No reports found.</div>';
+    return;
+  }
+  var rows = r.map(function(x){
+    var bc = x.status==="open"?"b-open":"b-resolved";
+    return "<tr>"+
+      "<td><span class='b b-blue'>"+esc(x.target_type||"—")+"</span></td>"+
+      "<td><span style='font-size:11px;color:#475569'>"+esc(x.target_id||"—")+"</span></td>"+
+      "<td>"+esc(x.reason||"—")+"</td>"+
+      "<td>"+fmtDate(x.created_at)+"</td>"+
+      "<td><span class='b "+bc+"'>"+esc(x.status||"open")+"</span></td>"+
+      "<td><div class='actions'>"+
+        "<button class='ab ab-view' onclick='viewReport(\""+x.id+"\")'>View</button>"+
+        (x.status==="open" ? "<button class='ab ab-resolve' onclick='resolveReport(\""+x.id+"\")'>Resolve</button>" : "")+
+        "<button class='ab ab-delete' onclick='deleteReport(\""+x.id+"\")'>Delete</button>"+
+      "</div></td>"+
+    "</tr>";
+  }).join("");
   document.getElementById("reportContent").innerHTML =
-    "<div class=\"tbl-wrap\"><table><thead><tr>"+
-    "<th>Type</th><th>Reason</th><th>Date</th><th>Status</th><th>Actions</th>"+
-    "</tr></thead><tbody>"+
-    r.map(function(x){
-      var bc=x.status==="open"?"b-open":"b-resolved";
-      return "<tr>"+
-        "<td><span class=\"b b-blue\">"+esc(x.target_type||"—")+"</span></td>"+
-        "<td>"+esc(x.reason||"—")+"</td>"+
-        "<td>"+fmtDate(x.created_at)+"</td>"+
-        "<td><span class=\"b "+bc+"\">"+esc(x.status||"open")+"</span></td>"+
-        "<td><div class=\"actions\">"+
-          "<button class=\"ab ab-view\" onclick=\"viewReport('"+x.id+"')\">View</button>"+
-          (x.status==="open"?"<button class=\"ab ab-resolve\" onclick=\"resolveReport('"+x.id+"')\">Resolve</button>":"")+
-          "<button class=\"ab ab-delete\" onclick=\"deleteReport('"+x.id+"')\">Delete</button>"+
-        "</div></td></tr>";
-    }).join("")+"</tbody></table></div>";
+    "<div class='tbl-wrap'><table><thead><tr>"+
+    "<th>Type</th><th>Target ID</th><th>Reason</th><th>Date</th><th>Status</th><th>Actions</th>"+
+    "</tr></thead><tbody>"+rows+"</tbody></table></div>";
 }
 
 function viewReport(id){
-  var x=DATA.reports.find(function(r){return r.id===id;}); if(!x) return;
-  var bc=x.status==="open"?"b-open":"b-resolved";
-  var body=
-    "<div class=\"info-row\"><span class=\"info-label\">Target Type</span><span class=\"info-val\">"+esc(x.target_type||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Target ID</span><span class=\"info-val\" style=\"font-size:11px;color:#64748b\">"+esc(x.target_id||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Reason</span><span class=\"info-val\">"+esc(x.reason||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Reported By</span><span class=\"info-val\" style=\"font-size:11px;color:#64748b\">"+esc(x.reported_by||"—")+"</span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Status</span><span class=\"info-val\"><span class=\"b "+bc+"\">"+esc(x.status||"open")+"</span></span></div>"+
-    "<div class=\"info-row\"><span class=\"info-label\">Reported On</span><span class=\"info-val\">"+fmtDateTime(x.created_at)+"</span></div>";
-  var footer=
-    "<button class=\"btn-cancel\" onclick=\"closeModal()\">Close</button>"+
-    (x.status==="open"?"<button class=\"btn-save\" onclick=\"closeModal();resolveReport('"+id+"')\">Resolve</button>":"");
+  var x = DATA.reports.find(function(r){ return r.id===id; }); if(!x) return;
+  var bc = x.status==="open"?"b-open":"b-resolved";
+  var targetListing = x.target_type==="listing" ? DATA.listings.find(function(l){ return l.id===x.target_id; }) : null;
+  var targetUser    = x.target_type==="user"    ? DATA.users.find(function(u){ return u.id===x.target_id; })    : null;
+  var body =
+    row("Type", "<span class='b b-blue'>"+esc(x.target_type||"—")+"</span>")+
+    row("Target ID", "<span style='font-size:10px;color:#475569'>"+esc(x.target_id||"—")+"</span>")+
+    (targetListing ? row("Target Listing", "<b>"+esc(targetListing.title)+"</b> ("+esc(targetListing.status)+")"): "")+
+    (targetUser    ? row("Target User",    "<b>"+esc(targetUser.name||"—")+"</b> | "+esc(targetUser.phone||"—")): "")+
+    row("Reason", esc(x.reason||"—"))+
+    row("Reported By", "<span style='font-size:10px;color:#475569'>"+esc(x.reported_by||"—")+"</span>")+
+    row("Status", "<span class='b "+bc+"'>"+esc(x.status||"open")+"</span>")+
+    row("Reported On", fmtDT(x.created_at));
+
+  var extraBtns = "";
+  if(x.status==="open"){
+    if(targetListing && targetListing.status==="active"){
+      extraBtns += '<button class="btn-danger" onclick="closeModal();resolveReportAndRemoveListing(\''+id+'\',\''+x.target_id+'\')">Resolve + Remove Listing</button>';
+    }
+    if(targetUser && targetUser.status!=="banned"){
+      extraBtns += '<button class="btn-danger" onclick="closeModal();resolveReportAndBanUser(\''+id+'\',\''+x.target_id+'\')">Resolve + Ban User</button>';
+    }
+  }
+  var footer =
+    '<button class="btn-cancel" onclick="closeModal()">Close</button>'+
+    (x.status==="open" ? '<button class="btn-save" onclick="closeModal();resolveReport(\''+id+'\')">Resolve</button>' : "")+
+    extraBtns;
   openModal("Report Details", body, footer);
 }
 
 async function resolveReport(id){
-  var ok=await confirm2("Resolve Report","This report will be marked as resolved.","✅",false);
+  var ok = await confirm2("Resolve Report","This report will be marked as resolved.","&#10003;","Resolve");
   if(!ok) return;
-  var {error}=await sb.from("reports").update({status:"resolved"}).eq("id",id);
+  var {error} = await sb.from("reports").update({status:"resolved"}).eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadReports(); renderReports(); renderStats(); toast("Report resolved.","success");
+  await loadReports(); renderReports(); renderStats(); renderAlerts(); renderOverview();
+  toast("Report resolved.","success");
+}
+
+async function resolveReportAndRemoveListing(reportId, listingId){
+  var ok = await confirm2("Resolve + Remove Listing","The report will be resolved AND the listing will be removed from the marketplace.","&#128683;","Proceed");
+  if(!ok) return;
+  try {
+    await sb.from("reports").update({status:"resolved"}).eq("id",reportId);
+    await sb.from("listings").update({status:"removed", updated_at:new Date().toISOString()}).eq("id",listingId);
+    await loadReports(); await loadListings();
+    renderReports(); renderListings(); renderStats(); renderAlerts(); renderOverview();
+    toast("Report resolved and listing removed.","success");
+  } catch(e){ toast("Error: "+String(e),"error"); }
+}
+
+async function resolveReportAndBanUser(reportId, userId){
+  var reason = await confirm2("Resolve + Ban User","The report will be resolved AND the user will be banned. Enter ban reason:","&#128683;","Ban User","Ban reason (required)");
+  if(!reason || typeof reason !== "string" || reason.trim()===""){
+    toast("A ban reason is required.","error"); return;
+  }
+  try {
+    await sb.from("reports").update({status:"resolved"}).eq("id",reportId);
+    await sb.from("profiles").update({status:"banned", ban_reason:reason.trim(), updated_at:new Date().toISOString()}).eq("id",userId);
+    await loadReports(); await loadUsers();
+    renderReports(); renderUsers(); renderStats(); renderAlerts(); renderOverview();
+    toast("Report resolved and user banned.","success");
+  } catch(e){ toast("Error: "+String(e),"error"); }
 }
 
 async function deleteReport(id){
-  var ok=await confirm2("Delete Report","This report record will be permanently deleted.","🗑️",true);
+  var ok = await confirm2("Delete Report","This report record will be permanently deleted.","&#128465;&#65039;","Delete");
   if(!ok) return;
-  var {error}=await sb.from("reports").delete().eq("id",id);
+  var {error} = await sb.from("reports").delete().eq("id",id);
   if(error){ toast("Error: "+error.message,"error"); return; }
-  await loadReports(); renderReports(); renderStats(); toast("Report deleted.","");
+  await loadReports(); renderReports(); renderStats(); renderAlerts();
+  toast("Report deleted.","");
 }
 
-// ── AUTO-LOGIN ────────────────────────────────────────────
-(async function(){
-  var {data}=await sb.auth.getSession();
-  if(data&&data.session) showDash();
+// ── Error Logs Panel ──────────────────────────────────────────
+function renderErrorLogs(){
+  var logs = DATA.errorLogs;
+  var html = '<div class="log-meta">';
+  html += '<span style="color:#64748b;font-size:13px">'+logs.length+' recent error'+(logs.length!==1?"s":"")+'</span>';
+  if(logs.length>0){
+    html += '<button class="btn-clear-logs" onclick="clearOldLogs()">Clear All Logs</button>';
+  }
+  html += '</div>';
+
+  if(!logs.length){
+    html += '<div class="empty-msg"><div style="font-size:28px;margin-bottom:10px">&#128275;</div>No error logs found. The app is running cleanly!</div>';
+    document.getElementById("errorContent").innerHTML = html;
+    return;
+  }
+
+  var rows = logs.map(function(x){
+    return "<tr>"+
+      "<td><span class='b "+(x.type==="error"?"b-rejected":x.type==="warning"?"b-pending":"b-blue")+"'>"+esc(x.type||"error")+"</span></td>"+
+      "<td style='max-width:300px;word-break:break-word'>"+esc((x.message||"").substring(0,120))+"</td>"+
+      "<td style='font-size:11px;color:#64748b'>"+esc(x.source||"—")+"</td>"+
+      "<td>"+fmtDate(x.created_at)+"</td>"+
+      "<td style='font-size:11px;color:#64748b'>"+esc((x.user_id||"—").substring(0,12))+(x.user_id&&x.user_id.length>12?"…":"")+"</td>"+
+      "<td><button class='ab ab-view' onclick='viewErrorLog(\""+x.id+"\")'>View</button></td>"+
+    "</tr>";
+  }).join("");
+
+  html +=
+    "<div class='tbl-wrap'><table><thead><tr>"+
+    "<th>Type</th><th>Message</th><th>Source</th><th>Date</th><th>User</th><th></th>"+
+    "</tr></thead><tbody>"+rows+"</tbody></table></div>";
+
+  document.getElementById("errorContent").innerHTML = html;
+}
+
+function viewErrorLog(id){
+  var x = DATA.errorLogs.find(function(e){ return e.id===id; }); if(!x) return;
+  var body =
+    row("Type", "<span class='b "+(x.type==="error"?"b-rejected":x.type==="warning"?"b-pending":"b-blue")+"'>"+esc(x.type||"error")+"</span>")+
+    row("Message", esc(x.message||"—"))+
+    row("Source", esc(x.source||"—"))+
+    row("User ID", "<span style='font-size:11px;color:#475569'>"+esc(x.user_id||"—")+"</span>")+
+    row("User Agent", "<span style='font-size:11px;color:#475569'>"+esc(x.user_agent||"—")+"</span>")+
+    row("Date", fmtDT(x.created_at));
+  if(x.stack){
+    body += '<div style="margin-top:12px"><div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;margin-bottom:6px">Stack Trace</div><pre style="background:#0f172a;padding:12px;border-radius:8px;font-size:11px;color:#94a3b8;overflow-x:auto;white-space:pre-wrap;word-break:break-word">'+esc(x.stack)+'</pre></div>';
+  }
+  openModal("Error Log Details", body, '<button class="btn-cancel" onclick="closeModal()">Close</button>');
+}
+
+async function clearOldLogs(){
+  var ok = await confirm2("Clear All Error Logs","All error log records will be permanently deleted. This cannot be undone.","&#128465;&#65039;","Delete All");
+  if(!ok) return;
+  // Delete in chunks if needed
+  var {error} = await sb.from("error_logs").delete().neq("id","00000000-0000-0000-0000-000000000000");
+  if(error){ toast("Error: "+error.message,"error"); return; }
+  await loadErrorLogs(); renderErrorLogs();
+  toast("All error logs cleared.","success");
+}
+
+// ── Send Alert Panel ──────────────────────────────────────────
+function renderAlertPanel(){
+  var html =
+    '<div class="alert-section">'+
+    '<div class="section-head">Broadcast Notification</div>'+
+    '<div class="section-sub">Send a push notification to users in the app. A row is inserted into the notifications table for each targeted user.</div>'+
+    '<div class="alert-form-row">'+
+      '<div class="mfg">'+
+        '<label class="mfl">Target Audience</label>'+
+        '<select class="mfi-sel" id="alertTarget" onchange="updateAlertCount()">'+
+          '<option value="all">All Users</option>'+
+          '<option value="verified">Verified Users Only</option>'+
+          '<option value="unverified">Unverified Users Only</option>'+
+        '</select>'+
+      '</div>'+
+      '<div class="mfg">'+
+        '<label class="mfl">Notification Title</label>'+
+        '<input class="mfi" id="alertTitle" placeholder="e.g. New Feature Available" maxlength="80">'+
+      '</div>'+
+    '</div>'+
+    '<div class="mfg">'+
+      '<label class="mfl">Message Body</label>'+
+      '<textarea class="alert-textarea" id="alertBody" placeholder="Write your message here..." maxlength="300"></textarea>'+
+    '</div>'+
+    '<div class="target-count" id="alertTargetCount"></div>'+
+    '<button class="btn-send" id="alertSendBtn" onclick="sendAlert()">Send Notification</button>'+
+    '</div>'+
+    '<div id="alertHistorySection"></div>';
+  document.getElementById("alertContent").innerHTML = html;
+  updateAlertCount();
+}
+
+function updateAlertCount(){
+  var target = (document.getElementById("alertTarget")||{}).value || "all";
+  var users = DATA.users;
+  var targeted;
+  if(target==="verified")   targeted = users.filter(function(u){ return u.verified===true; });
+  else if(target==="unverified") targeted = users.filter(function(u){ return !u.verified; });
+  else                          targeted = users;
+  var el = document.getElementById("alertTargetCount");
+  if(el) el.innerHTML = 'Will notify <b>'+targeted.length+'</b> user'+(targeted.length!==1?"s":"")+'.';
+}
+
+async function sendAlert(){
+  var target = document.getElementById("alertTarget").value;
+  var title  = document.getElementById("alertTitle").value.trim();
+  var body   = document.getElementById("alertBody").value.trim();
+  if(!title){ toast("Please enter a notification title.","error"); return; }
+  if(!body){  toast("Please enter a message body.","error"); return; }
+
+  var users = DATA.users;
+  var targeted;
+  if(target==="verified")        targeted = users.filter(function(u){ return u.verified===true; });
+  else if(target==="unverified") targeted = users.filter(function(u){ return !u.verified; });
+  else                           targeted = users;
+
+  if(targeted.length===0){ toast("No users match the selected target.","error"); return; }
+
+  var ok = await confirm2(
+    "Send Notification",
+    "This will send \""+title+"\" to "+targeted.length+" user"+(targeted.length!==1?"s":"")+". Continue?",
+    "&#128276;",
+    "Send"
+  );
+  if(!ok) return;
+
+  var btn = document.getElementById("alertSendBtn");
+  if(btn){ btn.disabled=true; btn.textContent="Sending..."; }
+
+  var now = new Date().toISOString();
+  var rows = targeted.map(function(u){
+    return { user_id:u.id, title:title, body:body, read:false, created_at:now };
+  });
+
+  // Insert in batches of 100
+  var errors = [];
+  for(var i=0; i<rows.length; i+=100){
+    var batch = rows.slice(i, i+100);
+    var res = await sb.from("notifications").insert(batch);
+    if(res.error) errors.push(res.error.message);
+  }
+
+  if(btn){ btn.disabled=false; btn.textContent="Send Notification"; }
+
+  if(errors.length>0){
+    toast("Sent with errors: "+errors[0],"error");
+  } else {
+    toast("Notification sent to "+targeted.length+" user"+(targeted.length!==1?"s":" ")+".","success");
+    document.getElementById("alertTitle").value = "";
+    document.getElementById("alertBody").value = "";
+    updateAlertCount();
+  }
+}
+
+// ── Row helper ────────────────────────────────────────────────
+function row(label, val){
+  return '<div class="info-row"><span class="info-label">'+esc(label)+'</span><span class="info-val">'+val+'</span></div>';
+}
+
+// ── Session init ──────────────────────────────────────────────
+(async function init(){
+  try {
+    var res = await sb.auth.getSession();
+    if(res.data && res.data.session && res.data.session.user){
+      var uid = res.data.session.user.id;
+      var pr = await sb.from("profiles").select("role").eq("id", uid).single();
+      if(!pr.error && pr.data && pr.data.role==="admin"){
+        showDash();
+        return;
+      } else {
+        // Role check failed — sign out silently
+        await sb.auth.signOut();
+      }
+    }
+  } catch(e){}
+  // Show login if not authenticated or not admin
+  document.getElementById("loginWrap").style.display = "flex";
 })();
 </script>
-
 </body>
 </html>

@@ -29,7 +29,6 @@
       + '</div></div></div></div>';
   }
 
-  // ── JOBS LANDING ──────────────────────────────────────────
   H.pages.Jobs = function () {
     var jobs = (H.state.listings || []).filter(function (l) { return l.status === 'active' && l.cat === 'jobs'; });
     var candidates = (H.state.users || []).filter(function (u) { return u.openToWork; });
@@ -81,7 +80,6 @@
       + '</div></div>';
   };
 
-  // ── FIND JOBS ─────────────────────────────────────────────
   H.pages.FindJobs = function (params) {
     params = params || {};
     var jobs = (H.state.listings || []).filter(function (l) { return l.status === 'active' && l.cat === 'jobs'; })
@@ -148,7 +146,6 @@
     if (badge) { badge.textContent = n || ''; badge.style.display = n ? 'flex' : 'none'; }
   };
 
-  // ── HIRE TALENT ───────────────────────────────────────────
   H.pages.HireTalent = function () {
     var candidates = (H.state.users || []).filter(function (u) { return u.openToWork; });
     var sectors = ['All'].concat(JOB_CATS);
@@ -261,11 +258,10 @@
       + '<div style="font-size:48px;margin-bottom:12px">👥</div>'
       + '<div style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px">No candidates yet</div>'
       + '<div style="font-size:13px;color:var(--sub);margin-bottom:20px">Job seekers who mark themselves open to work will appear here.</div>'
-      + '<button onclick="H.toast(\'Share Hostly with job seekers!\')" style="padding:12px 24px;background:#1A3A8F;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Invite Job Seekers</button>'
+      + '<button onclick="H.toast(\'Share PaMarket with job seekers!\')" style="padding:12px 24px;background:#1A3A8F;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Invite Job Seekers</button>'
       + '</div>';
   }
 
-  // ── POST JOB ──────────────────────────────────────────────
   H.pages.PostJob = function () {
     var u = H.currentUser();
     if (!u) return '<div class="page active">' + H.innerTopbar('Post a Job') + H.emptyState('Sign in required', 'You must sign in to post a job', 'Sign In', "H.requireAuth('Post a job')") + '</div>';
@@ -359,7 +355,6 @@
     H.goBack();
   };
 
-  // ── JOB DETAIL (LinkedIn-style) ───────────────────────────
   H.pages.JobDetail = function (params) {
     var id = params && params.id;
     var l = (H.state.listings || []).find(function (x) { return x.id === id; });
@@ -401,7 +396,6 @@
       + (isMine ? '<button onclick="H.openInner(\'JobApplications\',{jobId:\'' + id + '\'})" style="background:rgba(255,255,255,.18);border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;padding:5px 10px;border-radius:8px">' + appCount + ' App' + (appCount===1?'':'s') + '</button>' : '<div style="width:40px"></div>')
       + '</div>'
 
-      // Company hero
       + '<div style="background:linear-gradient(160deg,#0a2558 0%,#1A3A8F 60%,#2952cc 100%);padding:20px 16px 24px">'
       + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">'
       + '<div style="width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.2)">' + companyInitials + '</div>'
@@ -420,7 +414,6 @@
       + H.timeAgo(l.createdAt) + '</span>'
       + '</div></div>'
 
-      // Info grid
       + '<div style="padding:0 12px">'
       + '<div style="background:var(--card);border-radius:16px;margin-top:-14px;padding:16px;border:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">'
       + _ji('Salary', salary) + _ji('Location', l.city || 'Zimbabwe')
@@ -428,12 +421,10 @@
       + _ji('Posted', H.timeAgo(l.createdAt))
       + '</div>'
 
-      // Sections
       + (description      ? _jb('About the Role',       description)      : '')
       + (responsibilities ? _jb('Key Responsibilities', responsibilities) : '')
       + (requirements     ? _jb('Requirements',         requirements)     : '')
 
-      // External apply section (if provided)
       + ((applyEmail || applyPhone) ? '<div style="background:var(--card);border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid var(--border)">'
         + '<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">How to Apply</div>'
         + (applyEmail ? '<a href="mailto:' + H.escHtml(applyEmail) + '?subject=' + encodeURIComponent('Application: ' + l.title) + '" style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:#1A3A8F15;border-radius:10px;margin-bottom:8px;text-decoration:none"><span style="font-size:16px">📧</span><span style="font-size:13px;font-weight:600;color:#1A3A8F">' + H.escHtml(applyEmail) + '</span></a>' : '')
@@ -442,7 +433,6 @@
 
       + '<div style="height:90px"></div></div>'
 
-      // Fixed apply bar
       + '<div style="position:fixed;bottom:0;left:0;right:0;background:var(--card);padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);z-index:200">'
       + (isMine
         ? '<button onclick="H.openInner(\'JobApplications\',{jobId:\'' + id + '\'})" style="width:100%;padding:14px;background:#1A3A8F;color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:800;cursor:pointer">View Applications (' + appCount + ')</button>'
@@ -453,7 +443,6 @@
       + '</div></div>';
   };
 
-  // ── APPLY TO JOB ──────────────────────────────────────────
   H._applyToJob = function (jobId) {
     if (!H.currentUser()) { H.requireAuth('Sign in to apply for jobs'); return; }
     var l = (H.state.listings || []).find(function(x){ return x.id === jobId; });
@@ -489,11 +478,9 @@
     H.state.applications.push(app);
     H.saveState();
     if (typeof H.saveApplicationToCloud === 'function') H.saveApplicationToCloud(app);
-    // Notify employer
     if (l.sellerId) H.pushNotif(l.sellerId, 'New Application', u.name + ' applied for ' + l.title, 'message');
     H.toast('Application submitted! The employer will be in touch.');
     H.renderPage('JobDetail', {id: jobId});
-    // Create conversation thread
     H.state.conversations = H.state.conversations || [];
     var ids = [u.id, l.sellerId].sort();
     var convId = 'job_' + app.id.slice(-8);
@@ -507,7 +494,6 @@
     }
   };
 
-  // ── EMPLOYER: JOB APPLICATIONS DASHBOARD ──────────────────
   H.pages.JobApplications = function (params) {
     var jobId = params && params.jobId;
     var u = H.currentUser();
@@ -574,7 +560,6 @@
     H.renderPage('JobApplications', {jobId: jobId});
   };
 
-  // ── CANDIDATE: APPLIED JOBS ───────────────────────────────
   H.pages.AppliedJobs = function () {
     var u = H.currentUser();
     if (!u) return '<div class="page active">' + H.innerTopbar('My Applications') + H.emptyState('Sign in required', '', null, null) + '</div>';
@@ -602,7 +587,6 @@
       + '</div></div>';
   };
 
-  // ── CANDIDATE PROFILE ─────────────────────────────────────
   H.pages.CandidateProfile = function () {
     var u = H.currentUser();
     if (!u) return '<div class="page active">' + H.innerTopbar('Job Seeker Profile') + H.emptyState('Sign in required', 'Sign in to set up your job seeker profile', 'Sign In', "H.requireAuth('Job seeker profile')") + '</div>';

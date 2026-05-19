@@ -157,7 +157,7 @@
 
   H.shareListing = function(id) {
     const l = H.state.listings.find(x => x.id === id); if (!l) return;
-    const text = l.title+' · '+H.fmtPrice(l.price, l.currency)+' on Hostly Zimbabwe';
+    const text = l.title+' · '+H.fmtPrice(l.price, l.currency)+' on PaMarket Zimbabwe';
     if (navigator.share) navigator.share({title:l.title, text, url:location.href}).catch(()=>{});
     else { if (navigator.clipboard) navigator.clipboard.writeText(text+' '+location.href); H.toast('Link copied'); }
   };
@@ -218,7 +218,7 @@
     const seller = getSeller(l);
     const phone  = (seller.phone||l.sellerPhone||'').replace(/[^\d+]/g,'');
     if (!phone) { H.toast('No WhatsApp number available'); return; }
-    const txt = encodeURIComponent('Hi! I saw your "'+l.title+'" listing on Hostly Zimbabwe. Is it still available?');
+    const txt = encodeURIComponent('Hi! I saw your "'+l.title+'" listing on PaMarket Zimbabwe. Is it still available?');
     window.open('https://wa.me/'+phone.replace('+','')+'?text='+txt, '_blank');
   };
 

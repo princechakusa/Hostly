@@ -171,7 +171,7 @@ a { color: var(--blue); text-decoration: none; }
 .cat-tile-label { font-size: 10px; font-weight: 600; color: var(--text-mid); text-align: center; line-height: 1.2; text-transform: uppercase; letter-spacing: .3px; }
 
 /* ── BANNER ──────────────────────────────────────────────────── */
-.hostly-banner {
+.pamarket-banner {
   margin: 16px 14px 0;
   background: var(--blue);
   border-radius: var(--r-lg); padding: 16px;
@@ -179,7 +179,7 @@ a { color: var(--blue); text-decoration: none; }
   overflow: hidden; position: relative;
   box-shadow: var(--shadow-blue);
 }
-.hostly-banner::after { content: ''; position: absolute; right: -30px; bottom: -30px; width: 100px; height: 100px; background: rgba(255,255,255,.06); border-radius: 50%; }
+.pamarket-banner::after { content: ''; position: absolute; right: -30px; bottom: -30px; width: 100px; height: 100px; background: rgba(255,255,255,.06); border-radius: 50%; }
 .banner-eyebrow { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.65); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
 .banner-title { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.3px; line-height: 1.2; }
 .banner-sub { font-size: 12px; color: rgba(255,255,255,.7); margin-top: 3px; }

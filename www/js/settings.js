@@ -346,35 +346,39 @@
 
   // --- Language Settings ------------------------------------
   pages.LanguageSettings = function () {
-    const u = H.currentUser();
-    const currentLang = u.language || 'English';
-
     return `<div class="page active">
-      ${H.innerTopbar('Language Settings')}
+      ${H.innerTopbar('Language')}
       <div class="form-wrap">
-        <div class="language-selector">
-          ${['English', 'Shona', 'Ndebele'].map(lang => `
-            <label class="lang-option ${currentLang === lang ? 'selected' : ''}">
-              <input type="radio" name="language" value="${lang}" ${currentLang === lang ? 'checked' : ''} onchange="H._languageSettings.setLang('${lang}')">
-              <span>${lang}</span>
-            </label>
-          `).join('')}
+        <div class="section-box">
+          <label class="lang-option selected" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border,#e5e0d6)">
+            <input type="radio" name="language" checked disabled>
+            <div style="flex:1">
+              <div style="font-weight:700;color:var(--text)">English</div>
+              <div style="font-size:12px;color:var(--muted)">Current language</div>
+            </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent,#1A3A8F)" stroke-width="2.5" width="20" height="20"><polyline points="20 6 9 17 4 12"/></svg>
+          </label>
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border,#e5e0d6);opacity:.5">
+            <input type="radio" name="language" disabled>
+            <div style="flex:1">
+              <div style="font-weight:700;color:var(--text)">Shona · ChiShona</div>
+              <div style="font-size:12px;color:var(--muted)">Coming soon</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 0;opacity:.5">
+            <input type="radio" name="language" disabled>
+            <div style="flex:1">
+              <div style="font-weight:700;color:var(--text)">Ndebele · IsiNdebele</div>
+              <div style="font-size:12px;color:var(--muted)">Coming soon</div>
+            </div>
+          </div>
         </div>
+        <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:8px">Shona and Ndebele translations are in progress and will be added in a future update.</p>
       </div>
     </div>`;
   };
 
-  pages.LanguageSettings_after = function () {
-    H._languageSettings = {
-      setLang: (lang) => {
-        const u = H.currentUser();
-        u.language = lang;
-        H.applyLanguage();
-        H.saveState();
-        H.toast('Language updated');
-      }
-    };
-  };
+  pages.LanguageSettings_after = function () {};
 
   // --- Blocked Users ----------------------------------------
   pages.BlockedUsers = function () {

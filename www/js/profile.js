@@ -307,7 +307,7 @@
     return `<div class="page active">
       ${H.innerTopbar('Verify Identity')}
       <div class="section-box" style="text-align:center;padding:24px 20px">
-        <div style="font-size:48px;margin-bottom:12px">🪻</div>
+        <div style="font-size:48px;margin-bottom:12px">🢻</div>
         <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Get Verified</div>
         <div style="font-size:14px;color:var(--sub)">Build trust with buyers by verifying your identity with a valid ID.</div>
       </div>

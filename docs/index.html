@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostly — Zimbabwe's Free Marketplace</title>
+  <meta name="description" content="Buy, sell, rent, and find jobs across Zimbabwe. Hostly is free, fast, and built for Zimbabweans.">
+  <meta property="og:title" content="Hostly — Zimbabwe's Free Marketplace">
+  <meta property="og:description" content="Buy, sell, rent, and find jobs across Zimbabwe. 100% free.">
+  <meta property="og:image" content="https://princechakusa.github.io/Hostly/og.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fff; color: #111; line-height: 1.6; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid #eee;
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 900; color: #1A3A8F; letter-spacing: -0.5px; }
+    .nav-logo span { color: #F5A623; }
+    .nav-cta { background: #1A3A8F; color: #fff; padding: 9px 20px; border-radius: 30px; font-size: 13px; font-weight: 700; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #0f2878 0%, #1A3A8F 40%, #2952cc 100%);
+      color: #fff;
+      padding: 80px 24px 90px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 30%, rgba(245,166,35,.15) 0%, transparent 60%);
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(245,166,35,.2); border: 1px solid rgba(245,166,35,.4);
+      color: #F5A623; font-size: 12px; font-weight: 700;
+      padding: 5px 14px; border-radius: 30px; margin-bottom: 24px;
+      letter-spacing: .4px; text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight: 900; letter-spacing: -1.5px;
+      line-height: 1.1; margin-bottom: 20px;
+      max-width: 700px; margin-left: auto; margin-right: auto;
+    }
+    .hero h1 span { color: #F5A623; }
+    .hero p {
+      font-size: clamp(15px, 2vw, 18px);
+      color: rgba(255,255,255,.8); max-width: 520px;
+      margin: 0 auto 36px; line-height: 1.65;
+    }
+    .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: #F5A623; color: #1A3A8F;
+      padding: 14px 28px; border-radius: 30px;
+      font-size: 15px; font-weight: 800;
+      box-shadow: 0 4px 20px rgba(245,166,35,.4);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(245,166,35,.5); }
+    .btn-outline {
+      background: rgba(255,255,255,.12); color: #fff;
+      border: 1.5px solid rgba(255,255,255,.35);
+      padding: 14px 28px; border-radius: 30px;
+      font-size: 15px; font-weight: 700;
+      transition: background .15s;
+    }
+    .btn-outline:hover { background: rgba(255,255,255,.2); }
+
+    .hero-trust {
+      margin-top: 48px;
+      display: flex; gap: 28px; justify-content: center; flex-wrap: wrap;
+    }
+    .trust-item { font-size: 13px; color: rgba(255,255,255,.65); display: flex; align-items: center; gap: 6px; }
+    .trust-dot { width: 6px; height: 6px; border-radius: 50%; background: #F5A623; }
+
+    /* ── STATS STRIP ── */
+    .stats-strip {
+      background: #F5A623;
+      padding: 20px 24px;
+      display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-number { font-size: 26px; font-weight: 900; color: #1A3A8F; line-height: 1; }
+    .stat-label { font-size: 11px; font-weight: 700; color: rgba(26,58,143,.7); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+
+    /* ── SECTIONS ── */
+    .section { padding: 72px 24px; max-width: 1100px; margin: 0 auto; }
+    .section-eyebrow { font-size: 12px; font-weight: 700; color: #F5A623; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
+    .section-title { font-size: clamp(26px, 4vw, 38px); font-weight: 900; color: #111; letter-spacing: -1px; margin-bottom: 14px; line-height: 1.15; }
+    .section-sub { font-size: 16px; color: #666; max-width: 520px; line-height: 1.65; }
+
+    /* ── CATEGORIES ── */
+    .cats-section { background: #f8f7f4; padding: 72px 24px; }
+    .cats-inner { max-width: 1100px; margin: 0 auto; }
+    .cats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px; margin-top: 40px;
+    }
+    .cat-card {
+      background: #fff; border-radius: 16px; padding: 22px 12px;
+      text-align: center; border: 1.5px solid #eee;
+      transition: border-color .15s, transform .15s, box-shadow .15s;
+      cursor: default;
+    }
+    .cat-card:hover { border-color: #1A3A8F; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(26,58,143,.12); }
+    .cat-icon { font-size: 32px; margin-bottom: 10px; }
+    .cat-name { font-size: 13px; font-weight: 700; color: #333; }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px; margin-top: 48px;
+    }
+    .feature-card {
+      background: #f8f7f4; border-radius: 20px; padding: 28px 24px;
+      border: 1.5px solid #eee;
+    }
+    .feat-icon { font-size: 36px; margin-bottom: 16px; }
+    .feat-title { font-size: 17px; font-weight: 800; color: #111; margin-bottom: 8px; }
+    .feat-desc { font-size: 14px; color: #666; line-height: 1.65; }
+
+    /* ── HOW IT WORKS ── */
+    .how-section { background: linear-gradient(135deg, #0f2878, #1A3A8F); padding: 80px 24px; }
+    .how-inner { max-width: 1100px; margin: 0 auto; text-align: center; }
+    .how-inner .section-title { color: #fff; }
+    .how-inner .section-sub { color: rgba(255,255,255,.7); margin: 0 auto 52px; }
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; }
+    .step { text-align: center; }
+    .step-num {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(245,166,35,.2); border: 2px solid rgba(245,166,35,.5);
+      color: #F5A623; font-size: 20px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .step-title { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .step-desc { font-size: 13px; color: rgba(255,255,255,.65); line-height: 1.65; }
+
+    /* ── JOBS CALLOUT ── */
+    .jobs-section { background: #fff8ed; padding: 72px 24px; }
+    .jobs-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    @media(max-width:700px) { .jobs-inner { grid-template-columns: 1fr; } }
+    .jobs-bullets { list-style: none; margin: 20px 0 0; }
+    .jobs-bullets li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: #444; margin-bottom: 12px; line-height: 1.5; }
+    .bullet-dot { width: 20px; height: 20px; border-radius: 50%; background: #1A3A8F; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .jobs-card { background: #fff; border-radius: 20px; padding: 28px; box-shadow: 0 8px 40px rgba(0,0,0,.1); border: 1.5px solid #eee; }
+    .jobs-card-title { font-size: 15px; font-weight: 800; color: #111; margin-bottom: 4px; }
+    .jobs-card-sub { font-size: 12px; color: #888; margin-bottom: 16px; }
+    .job-pill { display: inline-block; background: #EFF6FF; color: #1A3A8F; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 20px; margin: 4px 4px 4px 0; }
+
+    /* ── TRUST ── */
+    .trust-section { padding: 72px 24px; max-width: 1100px; margin: 0 auto; }
+    .trust-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-top: 40px; }
+    .trust-card { background: #f8f7f4; border-radius: 16px; padding: 24px; border: 1.5px solid #eee; }
+    .trust-icon { font-size: 28px; margin-bottom: 12px; }
+    .trust-title { font-size: 15px; font-weight: 800; color: #111; margin-bottom: 6px; }
+    .trust-desc { font-size: 13px; color: #666; line-height: 1.6; }
+
+    /* ── CTA ── */
+    .cta-section {
+      background: #F5A623;
+      padding: 72px 24px; text-align: center;
+    }
+    .cta-section h2 { font-size: clamp(24px, 4vw, 38px); font-weight: 900; color: #1A3A8F; letter-spacing: -1px; margin-bottom: 12px; }
+    .cta-section p { font-size: 16px; color: rgba(26,58,143,.75); margin-bottom: 32px; }
+    .cta-btn {
+      display: inline-block;
+      background: #1A3A8F; color: #fff;
+      padding: 16px 36px; border-radius: 30px;
+      font-size: 16px; font-weight: 800;
+      box-shadow: 0 4px 20px rgba(26,58,143,.3);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #111; color: rgba(255,255,255,.6);
+      padding: 48px 24px 32px;
+    }
+    .footer-inner { max-width: 1100px; margin: 0 auto; }
+    .footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; flex-wrap: wrap; margin-bottom: 36px; }
+    .footer-brand .logo { font-size: 22px; font-weight: 900; color: #fff; }
+    .footer-brand .logo span { color: #F5A623; }
+    .footer-brand p { font-size: 13px; margin-top: 8px; max-width: 240px; line-height: 1.6; }
+    .footer-links h4 { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 12px; }
+    .footer-links a { display: block; font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: 8px; }
+    .footer-links a:hover { color: #fff; }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,.1); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .footer-bottom p { font-size: 12px; }
+    .footer-zw { font-size: 12px; color: rgba(255,255,255,.4); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Host<span>ly</span></div>
+  <a class="nav-cta" href="mailto:chakusaprince@gmail.com">Get the App</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">🇿🇼 Built for Zimbabwe</div>
+  <h1>Buy, Sell &amp; Find<br>Jobs <span>For Free</span></h1>
+  <p>Zimbabwe's trusted marketplace — list anything, find deals, hire talent, or land your next job. No fees. No middlemen.</p>
+  <div class="hero-btns">
+    <a class="btn-primary" href="mailto:chakusaprince@gmail.com">Download the App</a>
+    <a class="btn-outline" href="#how">How It Works</a>
+  </div>
+  <div class="hero-trust">
+    <div class="trust-item"><div class="trust-dot"></div>100% Free to Post</div>
+    <div class="trust-item"><div class="trust-dot"></div>Verified Sellers</div>
+    <div class="trust-item"><div class="trust-dot"></div>Zimbabwe Only</div>
+    <div class="trust-item"><div class="trust-dot"></div>Instant Messaging</div>
+  </div>
+</div>
+
+<!-- STATS STRIP -->
+<div class="stats-strip">
+  <div class="stat-item">
+    <div class="stat-number">Free</div>
+    <div class="stat-label">To Post an Ad</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">30s</div>
+    <div class="stat-label">To List an Item</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">24h</div>
+    <div class="stat-label">Report Response</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number">🇿🇼</div>
+    <div class="stat-label">All Provinces</div>
+  </div>
+</div>
+
+<!-- CATEGORIES -->
+<div class="cats-section">
+  <div class="cats-inner">
+    <div class="section-eyebrow">What's on Hostly</div>
+    <div class="section-title">Browse Every Category</div>
+    <div class="section-sub">From electronics to farming equipment, jobs to rentals — everything Zimbabweans buy and sell.</div>
+    <div class="cats-grid">
+      <div class="cat-card"><div class="cat-icon">📱</div><div class="cat-name">Electronics</div></div>
+      <div class="cat-card"><div class="cat-icon">🚗</div><div class="cat-name">Vehicles</div></div>
+      <div class="cat-card"><div class="cat-icon">🏠</div><div class="cat-name">Property</div></div>
+      <div class="cat-card"><div class="cat-icon">🛋️</div><div class="cat-name">Furniture</div></div>
+      <div class="cat-card"><div class="cat-icon">👗</div><div class="cat-name">Fashion</div></div>
+      <div class="cat-card"><div class="cat-icon">💼</div><div class="cat-name">Jobs</div></div>
+      <div class="cat-card"><div class="cat-icon">🌾</div><div class="cat-name">Agriculture</div></div>
+      <div class="cat-card"><div class="cat-icon">🔧</div><div class="cat-name">Services</div></div>
+      <div class="cat-card"><div class="cat-icon">🏘️</div><div class="cat-name">Rooms</div></div>
+      <div class="cat-card"><div class="cat-icon">🐕</div><div class="cat-name">Pets</div></div>
+      <div class="cat-card"><div class="cat-icon">🧸</div><div class="cat-name">Kids</div></div>
+      <div class="cat-card"><div class="cat-icon">📦</div><div class="cat-name">Other</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section">
+  <div class="section-eyebrow">Why Hostly</div>
+  <div class="section-title">Everything You Need<br>In One App</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Post in 30 Seconds</div>
+      <div class="feat-desc">Take a photo, add a price, pick a category. Your listing goes live instantly — no approval wait.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">💬</div>
+      <div class="feat-title">Message Sellers Instantly</div>
+      <div class="feat-desc">Built-in chat, WhatsApp link, and call button on every listing. Get replies fast.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">🔒</div>
+      <div class="feat-title">Verified Sellers</div>
+      <div class="feat-desc">ID verification with a blue badge. Report scams directly from any listing. Safe by design.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">🔍</div>
+      <div class="feat-title">Smart Search</div>
+      <div class="feat-desc">Search by keyword, category, city, or price range. Save your favourite searches.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">Boost Your Listing</div>
+      <div class="feat-desc">Feature your ad at the top of search results. Pay with EcoCash or OneMoney.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">🌙</div>
+      <div class="feat-title">Dark Mode &amp; Offline</div>
+      <div class="feat-desc">Dark mode, Shona/Ndebele language support, works even when your connection drops.</div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="how-section" id="how">
+  <div class="how-inner">
+    <div class="section-eyebrow" style="color:#F5A623">Simple &amp; Fast</div>
+    <div class="section-title">How Hostly Works</div>
+    <div class="section-sub">Buying and selling has never been easier in Zimbabwe.</div>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Create a Free Account</div>
+        <div class="step-desc">Sign up with your email, Google, or Facebook in under a minute.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Post Your Ad</div>
+        <div class="step-desc">Add photos, price, description, and your location. Live in 30 seconds.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Get Contacted</div>
+        <div class="step-desc">Buyers message you on app, WhatsApp, or call directly from your listing.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-title">Close the Deal</div>
+        <div class="step-desc">Meet the buyer, exchange the item, collect your money. Simple.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JOBS CALLOUT -->
+<div class="jobs-section">
+  <div class="jobs-inner">
+    <div>
+      <div class="section-eyebrow">Jobs &amp; Hiring</div>
+      <div class="section-title" style="max-width:420px">Zimbabwe's Job Board — Free for Everyone</div>
+      <div class="section-sub">Post a job or find your next role. Real employers, real opportunities.</div>
+      <ul class="jobs-bullets">
+        <li><div class="bullet-dot">✓</div>Apply with cover letter, salary expectation, and CV link</li>
+        <li><div class="bullet-dot">✓</div>Employer dashboard with Interview stage tracking</li>
+        <li><div class="bullet-dot">✓</div>In-app messaging between employer and candidate</li>
+        <li><div class="bullet-dot">✓</div>Hire Talent board — find open-to-work candidates</li>
+        <li><div class="bullet-dot">✓</div>Export applicants to CSV, broadcast to all applicants</li>
+      </ul>
+    </div>
+    <div class="jobs-card">
+      <div class="jobs-card-title">Now Hiring on Hostly</div>
+      <div class="jobs-card-sub">New jobs added every day across Zimbabwe</div>
+      <span class="job-pill">Accounting</span>
+      <span class="job-pill">IT &amp; Tech</span>
+      <span class="job-pill">Teaching</span>
+      <span class="job-pill">Engineering</span>
+      <span class="job-pill">Healthcare</span>
+      <span class="job-pill">Sales</span>
+      <span class="job-pill">Driving</span>
+      <span class="job-pill">Security</span>
+      <span class="job-pill">Farming</span>
+      <span class="job-pill">Management</span>
+      <span class="job-pill">Administration</span>
+      <span class="job-pill">Domestic Work</span>
+      <span class="job-pill">Construction</span>
+      <span class="job-pill">Hospitality</span>
+      <span class="job-pill">Finance</span>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;font-size:13px;color:#888">Free to post · Free to apply · No hidden fees</div>
+    </div>
+  </div>
+</div>
+
+<!-- TRUST & SAFETY -->
+<div class="trust-section">
+  <div class="section-eyebrow">Safe &amp; Trusted</div>
+  <div class="section-title">Your Safety Is Our Priority</div>
+  <div class="trust-grid">
+    <div class="trust-card">
+      <div class="trust-icon">🔵</div>
+      <div class="trust-title">ID Verification</div>
+      <div class="trust-desc">Sellers can verify their identity with a government ID to earn a blue verified badge.</div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-icon">🚩</div>
+      <div class="trust-title">One-Tap Reporting</div>
+      <div class="trust-desc">Report any listing or user directly from the app. All reports reviewed within 24 hours.</div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-icon">🛡️</div>
+      <div class="trust-title">Zero Scam Tolerance</div>
+      <div class="trust-desc">Automatic fraud detection, content moderation, and immediate ban for scammers.</div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-icon">🔐</div>
+      <div class="trust-title">Secure Data</div>
+      <div class="trust-desc">HTTPS encryption, encrypted passwords, row-level database security. Your data stays yours.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>Ready to Buy, Sell or Get Hired?</h2>
+  <p>Join Hostly — Zimbabwe's fastest growing free marketplace. No fees, no catches.</p>
+  <a class="cta-btn" href="mailto:chakusaprince@gmail.com">Get the App →</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo">Host<span>ly</span></div>
+        <p>Zimbabwe's free marketplace — buy, sell, rent, and find jobs from your phone.</p>
+        <div style="margin-top:16px;font-size:13px">
+          📧 <a href="mailto:chakusaprince@gmail.com" style="color:#F5A623">chakusaprince@gmail.com</a><br>
+          <span style="margin-top:6px;display:block">💬 <a href="https://wa.me/971589772645" target="_blank" rel="noopener" style="color:#25D366">WhatsApp: +971 589 772 645</a></span>
+        </div>
+      </div>
+      <div class="footer-links">
+        <h4>Categories</h4>
+        <a href="#">Electronics</a>
+        <a href="#">Vehicles</a>
+        <a href="#">Property</a>
+        <a href="#">Jobs</a>
+        <a href="#">Agriculture</a>
+      </div>
+      <div class="footer-links">
+        <h4>Legal</h4>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="community.html">Community Guidelines</a>
+      </div>
+      <div class="footer-links">
+        <h4>Company</h4>
+        <a href="mailto:chakusaprince@gmail.com">Contact Us</a>
+        <a href="mailto:chakusaprince@gmail.com">Support</a>
+        <a href="mailto:chakusaprince@gmail.com">Report Abuse</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Hostly. All rights reserved.</p>
+      <div class="footer-zw">Made with ❤️ in Zimbabwe 🇿🇼</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

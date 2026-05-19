@@ -7,9 +7,6 @@
           saveState, fmtPrice, initials, renderListCard, navTo,
           pushNotif, CATEGORIES } = H;
 
-  // ---------------------------------------------------
-  // SAVED LISTINGS
-  // ---------------------------------------------------
   pages.Saved = function () {
     const u    = currentUser();
     const ids  = state.saves[u.id] || [];
@@ -27,14 +24,11 @@
       <div class="listing-list">
         ${list.length
           ? list.map(renderListCard).join('')
-          : emptyState('Nothing saved yet', 'Tap the ? on any listing to save it for later', 'Browse Listings', "H.navTo('Browse',document.querySelector('[data-nav=Browse]'))")}
+          : emptyState('Nothing saved yet', 'Tap the ♡ on any listing to save it for later', 'Browse Listings', "H.navTo('Browse',document.querySelector('[data-nav=Browse]'))")}
       </div>
     </div>`;
   };
 
-  // ---------------------------------------------------
-  // PROFILE (own)
-  // ---------------------------------------------------
   pages.Profile = function () {
     const u         = currentUser();
     const myListings = (state.listings || []).filter(l => l.sellerId === u.id);
@@ -79,7 +73,7 @@
           <div class="mi-icon ${u.verified ? 'blue-ic' : 'green-ic'}">
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
-          <div class="mi-label">${u.verified ? 'Verified ?' : 'Get Verified'}</div>
+          <div class="mi-label">${u.verified ? 'Verified ✓' : 'Get Verified'}</div>
           ${!u.verified ? '<span style="font-size:11px;color:var(--o);font-weight:700">Boost trust</span>' : ''}
           <div class="mi-arrow">›</div>
         </div>
@@ -109,7 +103,7 @@
         </div>
         <div class="mi" onclick="H.openInner('About')">
           <div class="mi-icon green-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-          <div class="mi-label">About Hostly</div>
+          <div class="mi-label">About PaMarket</div>
           <div class="mi-arrow">›</div>
         </div>
         ${u.role === 'admin' ? `
@@ -134,9 +128,6 @@
     </div>`;
   };
 
-  // ---------------------------------------------------
-  // MY LISTINGS
-  // ---------------------------------------------------
   pages.MyListings = function () {
     const u    = currentUser();
     const list = (state.listings || []).filter(l => l.sellerId === u.id).sort((a, b) => b.createdAt - a.createdAt);
@@ -147,7 +138,7 @@
           const statusClass = l.status === 'active' ? 'status-active' : l.status === 'banned' ? 'status-banned' : 'status-pending';
           return `<div class="my-listing-card">
             <div class="ml-thumb">
-              ${l.photos && l.photos[0] ? `<img src="${l.photos[0]}">` : (CATEGORIES.find(c => c.id === l.cat) || {}).icon || '??'}
+              ${l.photos && l.photos[0] ? `<img src="${l.photos[0]}">` : (CATEGORIES.find(c => c.id === l.cat) || {}).icon || '📦'}
             </div>
             <div class="ml-body">
               <div class="ml-title">${escHtml(l.title)}</div>
@@ -158,7 +149,7 @@
               </div>
               <div class="ml-actions">
                 <button class="ml-act-btn" onclick="H.openListing('${l.id}')">View</button>
-                <button class="ml-act-btn" onclick="H.openInner('Boost',{listingId:'${l.id}'})">? Boost</button>
+                <button class="ml-act-btn" onclick="H.openInner('Boost',{listingId:'${l.id}'})">⚡ Boost</button>
                 ${l.status === 'active'
                   ? `<button class="ml-act-btn red" onclick="H.deleteListing('${l.id}')">Delete</button>`
                   : ''}

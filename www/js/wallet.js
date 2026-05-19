@@ -176,7 +176,7 @@
 
       <!-- Balance Card -->
       <div style="background:linear-gradient(135deg,#1A3A8F 0%,#2952cc 100%);margin:16px;border-radius:22px;padding:26px 22px 22px">
-        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Hostly Wallet Balance</div>
+        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">PaMarket Wallet Balance</div>
         <div style="font-size:42px;font-weight:900;color:#fff;letter-spacing:-2px;line-height:1;margin-bottom:4px">$${bal}</div>
         <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:22px">United States Dollar (USD)</div>
         <button onclick="H.openInner('TopUp')"
@@ -292,7 +292,7 @@
         <div style="background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:12px;padding:12px 14px;margin-bottom:4px;display:flex;gap:10px;align-items:flex-start">
           <div style="color:#D97706;flex-shrink:0;margin-top:1px">${I.info}</div>
           <div style="font-size:12px;color:#92400E;line-height:1.6">
-            <strong>External Payment — Not an In-App Purchase.</strong> Advertising credits are purchased via mobile money or bank transfer directly to Hostly. This transaction is not processed by Google Play or the Apple App Store.
+            <strong>External Payment — Not an In-App Purchase.</strong> Advertising credits are purchased via mobile money or bank transfer directly to PaMarket. This transaction is not processed by Google Play or the Apple App Store.
             Need help? <a href="https://wa.me/971589772645" style="color:#D97706;font-weight:700;text-decoration:none">WhatsApp us</a> or email <a href="mailto:chakusaprince@gmail.com" style="color:#D97706;font-weight:700;text-decoration:none">chakusaprince@gmail.com</a>
           </div>
         </div>
@@ -448,6 +448,24 @@
 
         const u   = H.currentUser();
         const cfg = METHODS[this.method] || METHODS.ecocash;
+
+        // Save to Supabase so admin can see it
+        try {
+          const c = window.supabase;
+          if (c) {
+            const { error } = await c.from('topup_requests').insert({
+              user_id: u.id, user_name: u.name,
+              amount: amt, method: cfg.label,
+              reference: ref, status: 'pending'
+            });
+            if (error && error.code !== '23505') {
+              // 23505 = duplicate reference (already submitted), other errors are real
+              console.warn('topup insert:', error.message);
+            }
+          }
+        } catch(e) { console.warn('topup supabase:', e); }
+
+        // Also keep in local state as fallback
         H.state.topupRequests = H.state.topupRequests || [];
         H.state.topupRequests.push({
           id: H.uid(), userId: u.id, userName: u.name,

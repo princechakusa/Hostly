@@ -55,6 +55,7 @@
       ['listings',      `Listings (${(H.state.listings||[]).length})`],
       ['reports',       `Reports (${(H.state.reports||[]).filter(r=>r.status==='open').length})`],
       ['payments',      'Payments'],
+      ['analytics',     'Analytics'],
       ['settings',      'Settings'],
       ['notifications', 'Notify'],
       ['support',       `Support (${(H.state.supportTickets||[]).filter(t=>t.status!=='closed').length})`],
@@ -76,6 +77,7 @@
       case 'listings':      return renderListings();
       case 'reports':       return renderReports();
       case 'payments':      return renderPayments();
+      case 'analytics':     return renderAnalytics();
       case 'settings':      return renderSettings();
       case 'notifications': return renderNotifications();
       case 'support':       return renderSupport();
@@ -91,21 +93,137 @@
     const reports  = H.state.reports || [];
     const txns     = H.state.txns || [];
     const revenue  = txns.filter(t=>t.type==='boost').reduce((s,t)=>s+Math.abs(t.amt),0);
+    const today    = Date.now() - 86400000;
+    const newToday = listings.filter(l=>l.createdAt>today).length;
+    const usersToday = users.filter(u=>(u.joinedAt||u.createdAt||0)>today).length;
+    const openReports = reports.filter(r=>r.status==='open').length;
+    const pending  = listings.filter(l=>l.status==='pending').length;
+    const expiring = listings.filter(l=>l.expiresAt&&l.expiresAt-Date.now()<7*86400000&&l.expiresAt>Date.now()).length;
+    const openTickets = (H.state.supportTickets||[]).filter(t=>t.status!=='closed').length;
+    const topupQueue = (H.state.topupRequests||[]).filter(r=>r.status==='pending').length;
+
     return `
       <div class="stats" style="margin:0 0 10px">
-        <div class="stat"><div class="stat-n">${users.length}</div><div class="stat-l">Total Users</div></div>
+        <div class="stat"><div class="stat-n">${users.length}</div><div class="stat-l">Users</div></div>
+        <div class="stat"><div class="stat-n">+${usersToday}</div><div class="stat-l">New Today</div></div>
         <div class="stat"><div class="stat-n">${users.filter(u=>u.verified).length}</div><div class="stat-l">Verified</div></div>
-        <div class="stat"><div class="stat-n">${users.filter(u=>u.status!=='active').length}</div><div class="stat-l">Banned</div></div>
       </div>
-      <div class="stats" style="margin:0 0 14px">
+      <div class="stats" style="margin:0 0 10px">
         <div class="stat"><div class="stat-n">${listings.filter(l=>l.status==='active').length}</div><div class="stat-l">Active Ads</div></div>
-        <div class="stat"><div class="stat-n">${listings.filter(l=>l.status==='pending').length}</div><div class="stat-l">Pending</div></div>
+        <div class="stat"><div class="stat-n">+${newToday}</div><div class="stat-l">New Today</div></div>
         <div class="stat"><div class="stat-n">$${revenue.toFixed(0)}</div><div class="stat-l">Revenue</div></div>
       </div>
+      ${(pending||openReports||expiring||openTickets||topupQueue) ? `
+      <div style="padding:12px 0 4px;font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px">Needs Attention</div>
+      <div class="section-card" style="padding:0">
+        ${pending ? `<div class="admin-alert-row" onclick="H._admin.setTab('listings');H._admin.filterListingsByStatus('pending')">
+          <span style="color:#f59e0b;font-weight:700">${pending} pending listing${pending>1?'s':''}</span> awaiting review
+          <span style="color:#1A3A8F;font-weight:700;margin-left:auto">Review →</span>
+        </div>` : ''}
+        ${openReports ? `<div class="admin-alert-row" onclick="H._admin.setTab('reports')">
+          <span style="color:#dc2626;font-weight:700">${openReports} open report${openReports>1?'s':''}</span> need action
+          <span style="color:#1A3A8F;font-weight:700;margin-left:auto">View →</span>
+        </div>` : ''}
+        ${expiring ? `<div class="admin-alert-row" onclick="H._admin.setTab('listings');H._admin.filterListingsByStatus('active')">
+          <span style="color:#f59e0b;font-weight:700">${expiring} listing${expiring>1?'s':''}</span> expiring within 7 days
+          <span style="color:#1A3A8F;font-weight:700;margin-left:auto">View →</span>
+        </div>` : ''}
+        ${openTickets ? `<div class="admin-alert-row" onclick="H._admin.setTab('support')">
+          <span style="color:#7c3aed;font-weight:700">${openTickets} support ticket${openTickets>1?'s':''}</span> open
+          <span style="color:#1A3A8F;font-weight:700;margin-left:auto">View →</span>
+        </div>` : ''}
+        ${topupQueue ? `<div class="admin-alert-row" onclick="H._admin.setTab('payments')">
+          <span style="color:#059669;font-weight:700">${topupQueue} top-up request${topupQueue>1?'s':''}</span> pending
+          <span style="color:#1A3A8F;font-weight:700;margin-left:auto">View →</span>
+        </div>` : ''}
+      </div>` : ''}
+      <div class="stats" style="margin:10px 0 0">
+        <div class="stat"><div class="stat-n">${txns.length}</div><div class="stat-l">Transactions</div></div>
+        <div class="stat"><div class="stat-n">${users.filter(u=>u.status!=='active').length}</div><div class="stat-l">Banned</div></div>
+        <div class="stat"><div class="stat-n">${listings.filter(l=>l.status==='pending').length}</div><div class="stat-l">Pending</div></div>
+      </div>`;
+  }
+
+  // ── ANALYTICS ─────────────────────────────────────────────
+  function renderAnalytics() {
+    const listings = H.state.listings || [];
+    const users    = H.state.users || [];
+    const txns     = H.state.txns || [];
+
+    // Listings by category
+    const catCounts = {};
+    listings.forEach(l => { catCounts[l.cat] = (catCounts[l.cat]||0)+1; });
+    const catEntries = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
+    const maxCat = catEntries[0]?.[1] || 1;
+
+    // Revenue by type
+    const boostRev = txns.filter(t=>t.type==='boost').reduce((s,t)=>s+Math.abs(t.amt),0);
+    const topupRev = txns.filter(t=>t.type==='topup').reduce((s,t)=>s+Math.abs(t.amt),0);
+
+    // New users by week (last 4 weeks)
+    const now = Date.now();
+    const weeks = [0,1,2,3].map(w => {
+      const start = now - (w+1)*7*86400000;
+      const end   = now - w*7*86400000;
+      return { label: `${w===0?'This':w===1?'Last':w+'w ago'} week`, count: users.filter(u=>(u.joinedAt||u.createdAt||0)>start&&(u.joinedAt||u.createdAt||0)<=end).length };
+    }).reverse();
+    const maxWeek = Math.max(1, ...weeks.map(w=>w.count));
+
+    // Listing status breakdown
+    const active  = listings.filter(l=>l.status==='active').length;
+    const pending = listings.filter(l=>l.status==='pending').length;
+    const banned  = listings.filter(l=>l.status==='banned').length;
+    const total   = listings.length || 1;
+
+    return `
+      <div style="padding:4px 0 10px;font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px">Listings by Category</div>
       <div class="section-card" style="padding:14px">
-        <div class="menu-group-label" style="padding:0 0 10px">Open Reports: ${reports.filter(r=>r.status==='open').length}</div>
-        <div class="menu-group-label" style="padding:0 0 10px">Open Tickets: ${(H.state.supportTickets||[]).filter(t=>t.status!=='closed').length}</div>
-        <div class="menu-group-label" style="padding:0">Total Transactions: ${txns.length}</div>
+        ${catEntries.length ? catEntries.map(([cat, count]) => {
+          const pct = Math.round(count/maxCat*100);
+          const catObj = (H.CATEGORIES||[]).find(c=>c.id===cat)||{name:cat,icon:''};
+          return `<div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:4px">
+              <span>${catObj.icon||''} ${escHtml(catObj.name)}</span><span>${count}</span>
+            </div>
+            <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:#1A3A8F;border-radius:3px;transition:width .3s"></div>
+            </div>
+          </div>`;
+        }).join('') : '<div style="color:var(--text-sub);font-size:13px">No listings yet</div>'}
+      </div>
+
+      <div style="padding:14px 0 10px;font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px">Listing Status</div>
+      <div class="section-card" style="padding:14px">
+        <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;margin-bottom:10px">
+          <div style="width:${Math.round(active/total*100)}%;background:#059669" title="Active"></div>
+          <div style="width:${Math.round(pending/total*100)}%;background:#f59e0b" title="Pending"></div>
+          <div style="width:${Math.round(banned/total*100)}%;background:#dc2626" title="Banned"></div>
+        </div>
+        <div style="display:flex;gap:16px;font-size:12px">
+          <span style="color:#059669;font-weight:600">● Active: ${active}</span>
+          <span style="color:#f59e0b;font-weight:600">● Pending: ${pending}</span>
+          <span style="color:#dc2626;font-weight:600">● Removed: ${banned}</span>
+        </div>
+      </div>
+
+      <div style="padding:14px 0 10px;font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px">New Users (weekly)</div>
+      <div class="section-card" style="padding:14px">
+        <div style="display:flex;align-items:flex-end;gap:8px;height:64px">
+          ${weeks.map(w=>`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+            <div style="width:100%;background:#1A3A8F;border-radius:4px 4px 0 0;height:${Math.max(4,Math.round(w.count/maxWeek*52))}px"></div>
+            <div style="font-size:10px;color:var(--text-sub);white-space:nowrap">${w.count}</div>
+          </div>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          ${weeks.map(w=>`<div style="flex:1;font-size:10px;color:var(--text-hint);text-align:center">${w.label}</div>`).join('')}
+        </div>
+      </div>
+
+      <div style="padding:14px 0 10px;font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px">Revenue</div>
+      <div class="stats" style="margin:0">
+        <div class="stat"><div class="stat-n">$${boostRev.toFixed(0)}</div><div class="stat-l">Boost Revenue</div></div>
+        <div class="stat"><div class="stat-n">$${topupRev.toFixed(0)}</div><div class="stat-l">Top-ups</div></div>
+        <div class="stat"><div class="stat-n">$${(boostRev+topupRev).toFixed(0)}</div><div class="stat-l">Total</div></div>
       </div>`;
   }
 
@@ -181,10 +299,24 @@
   }
 
   // ── REPORTS ───────────────────────────────────────────────
-  function renderReports() {
-    const list = [...(H.state.reports||[])].sort((a,b)=>b.t-a.t);
-    if (!list.length) return emptyState('No reports','All clear!',null,null);
-    return list.map(r => {
+  let _reportFilter = 'all';
+  function renderReports(filter) {
+    if (filter !== undefined) _reportFilter = filter;
+    const all  = [...(H.state.reports||[])].sort((a,b)=>b.t-a.t);
+    const open = all.filter(r=>r.status==='open');
+    const list = _reportFilter==='open' ? open
+               : _reportFilter==='listing' ? all.filter(r=>r.targetType==='listing')
+               : _reportFilter==='user' ? all.filter(r=>r.targetType==='user')
+               : all;
+    if (!all.length) return emptyState('No reports','All clear!',null,null);
+    const filterBar = `<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="admin-tab ${_reportFilter==='all'?'on':''}" onclick="H._admin.filterReports('all')">All (${all.length})</button>
+      <button class="admin-tab ${_reportFilter==='open'?'on':''}" onclick="H._admin.filterReports('open')">Open (${open.length})</button>
+      <button class="admin-tab ${_reportFilter==='listing'?'on':''}" onclick="H._admin.filterReports('listing')">Listings</button>
+      <button class="admin-tab ${_reportFilter==='user'?'on':''}" onclick="H._admin.filterReports('user')">Users</button>
+    </div>`;
+    if (!list.length) return filterBar + emptyState('No reports','Nothing here',null,null);
+    return filterBar + list.map(r => {
       let target = '', actions = '';
       if (r.targetType==='listing') {
         const l = (H.state.listings||[]).find(x=>x.id===r.targetId);
@@ -216,15 +348,35 @@
 
   // ── PAYMENTS ──────────────────────────────────────────────
   function renderPayments() {
-    const txns = [...(H.state.txns||[])].sort((a,b)=>b.t-a.t).slice(0,50);
+    const txns    = [...(H.state.txns||[])].sort((a,b)=>b.t-a.t).slice(0,50);
     const revenue = txns.filter(t=>t.type==='boost').reduce((s,t)=>s+Math.abs(t.amt),0);
     const topups  = txns.filter(t=>t.type==='topup').reduce((s,t)=>s+Math.abs(t.amt),0);
+    const pending = (H.state.topupRequests||[]).filter(r=>r.status==='pending');
     return `
       <div class="stats" style="margin:0 0 14px">
         <div class="stat"><div class="stat-n">$${revenue.toFixed(2)}</div><div class="stat-l">Boost Revenue</div></div>
-        <div class="stat"><div class="stat-n">$${topups.toFixed(2)}</div><div class="stat-l">Total Top-ups</div></div>
+        <div class="stat"><div class="stat-n">$${topups.toFixed(2)}</div><div class="stat-l">Top-ups</div></div>
         <div class="stat"><div class="stat-n">${txns.length}</div><div class="stat-l">Transactions</div></div>
       </div>
+      ${pending.length ? `
+      <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Pending Top-up Requests</div>
+      <div class="section-card" style="margin-bottom:14px">
+        ${pending.map(r => {
+          const u = (H.state.users||[]).find(x=>x.id===r.userId)||{name:'Unknown'};
+          return `<div class="admin-row" style="padding:12px 14px">
+            <div class="admin-row-head">
+              <div class="admin-row-name">${escHtml(u.name)}</div>
+              <span class="status-pill status-pending">Pending</span>
+            </div>
+            <div class="admin-row-meta">$${r.amount} via ${escHtml(r.method||'EcoCash')} · Ref: ${escHtml(r.ref||'—')} · ${new Date(r.t||Date.now()).toLocaleDateString()}</div>
+            <div class="admin-actions">
+              <button class="ml-act-btn" onclick="H._admin.approveTopup('${r.id}')">${S.approve} Approve</button>
+              <button class="ml-act-btn red" onclick="H._admin.rejectTopup('${r.id}')">${S.reject} Reject</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+      <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Transaction History</div>
       <div class="section-card">
         ${txns.length ? txns.map(t => `
           <div class="tx-item">
@@ -235,7 +387,7 @@
             </div>
             <div class="tx-amount ${t.amt>=0?'plus':'minus'}">${t.amt>=0?'+':''}$${Math.abs(t.amt).toFixed(2)}</div>
           </div>`).join('')
-        : '<div style="padding:24px;text-align:center;color:var(--ash)">No transactions yet</div>'}
+        : '<div style="padding:24px;text-align:center;color:var(--text-sub)">No transactions yet</div>'}
       </div>`;
   }
 
@@ -247,7 +399,7 @@
           <div class="notif-toggle-title">${label}</div>
           <div class="notif-toggle-sub">${sub}</div>
         </div>
-        <button class="toggle-sw ${state[key]?'on':''}" onclick="H._admin.toggleSetting('${key}')"></button>
+        <button class="toggle-sw ${H.state[key]?'on':''}" onclick="H._admin.toggleSetting('${key}')"></button>
       </div>`;
     return `<div class="section-card" style="padding:14px">
       <div class="menu-group-label" style="padding:0 0 10px">Listing Moderation</div>
@@ -269,15 +421,26 @@
 
   // ── NOTIFICATIONS ─────────────────────────────────────────
   function renderNotifications() {
+    const users = H.state.users || [];
     return `<div class="section-card" style="padding:14px">
-      <div class="menu-group-label" style="padding:0 0 14px">Send to all users</div>
+      <div class="menu-group-label" style="padding:0 0 14px">Send Broadcast</div>
+      <div class="fg">
+        <div class="fl">Target Audience</div>
+        <select class="fi" id="bcastTarget">
+          <option value="all">All Users (${users.length})</option>
+          <option value="verified">Verified Users Only (${users.filter(u=>u.verified).length})</option>
+          <option value="unverified">Unverified Only (${users.filter(u=>!u.verified).length})</option>
+          <option value="sellers">Users with Listings</option>
+          <option value="inactive">Users with No Listings</option>
+        </select>
+      </div>
       <div class="fg">
         <div class="fl">Notification Title</div>
         <input class="fi" id="bcastTitle" placeholder="e.g. New feature available">
       </div>
       <div class="fg">
         <div class="fl">Message</div>
-        <textarea class="fi" rows="4" id="bcastMsg" placeholder="Write your message to all users..."></textarea>
+        <textarea class="fi" rows="4" id="bcastMsg" placeholder="Write your message..."></textarea>
       </div>
       <button class="btn-pri" onclick="H._admin.broadcast()">${S.broadcast} Send Broadcast</button>
     </div>`;
@@ -367,6 +530,32 @@
     filterTickets(f) {
       const body = document.getElementById('adminBody');
       if (body) body.innerHTML = renderSupport(f);
+    },
+
+    filterReports(f) {
+      const body = document.getElementById('adminBody');
+      if (body) body.innerHTML = renderReports(f);
+    },
+
+    approveTopup(rid) {
+      const r = (H.state.topupRequests||[]).find(x=>x.id===rid); if (!r) return;
+      const u = (H.state.users||[]).find(x=>x.id===r.userId); if (!u) return;
+      r.status = 'approved';
+      u.walletUSD = (u.walletUSD||0) + Number(r.amount);
+      H.state.txns = H.state.txns||[];
+      H.state.txns.unshift({id:uid(),userId:u.id,type:'topup',amt:Number(r.amount),note:`Top-up approved by admin (ref: ${r.ref||'—'})`,t:Date.now()});
+      pushNotif(u.id,'Top-up Approved',`$${r.amount} has been added to your wallet`);
+      alog(`Approved top-up $${r.amount} for ${u.name}`);
+      saveState(); toast(`$${r.amount} credited to ${u.name}`); this.setTab('payments');
+    },
+
+    rejectTopup(rid) {
+      const r = (H.state.topupRequests||[]).find(x=>x.id===rid); if (!r) return;
+      const u = (H.state.users||[]).find(x=>x.id===r.userId);
+      r.status = 'rejected';
+      if (u) pushNotif(u.id,'Top-up Rejected','Your top-up could not be verified. Contact support if this is an error.');
+      alog(`Rejected top-up ${rid}`);
+      saveState(); toast('Top-up rejected'); this.setTab('payments');
     },
 
     banUser(uid_, type, reportId) {
@@ -487,19 +676,29 @@
     },
 
     toggleSetting(k) {
-      state[k] = !state[k];
-      alog(`Toggled setting: ${k} = ${state[k]}`);
+      H.state[k] = !H.state[k];
+      alog(`Toggled setting: ${k} = ${H.state[k]}`);
       saveState(); toast('Setting updated'); this.setTab('settings');
     },
 
     broadcast() {
-      const title = document.getElementById('bcastTitle')?.value?.trim();
-      const msg   = document.getElementById('bcastMsg')?.value?.trim();
+      const title  = document.getElementById('bcastTitle')?.value?.trim();
+      const msg    = document.getElementById('bcastMsg')?.value?.trim();
+      const target = document.getElementById('bcastTarget')?.value || 'all';
       if (!title || !msg) { toast('Enter title and message'); return; }
-      (H.state.users||[]).forEach(u => pushNotif(u.id, title, msg));
-      alog(`Broadcast sent: ${msg.slice(0,50)}`);
+      const allUsers = H.state.users||[];
+      const sellerIds = new Set((H.state.listings||[]).map(l=>l.sellerId));
+      const targets = allUsers.filter(u => {
+        if (target==='verified')   return u.verified;
+        if (target==='unverified') return !u.verified;
+        if (target==='sellers')    return sellerIds.has(u.id);
+        if (target==='inactive')   return !sellerIds.has(u.id);
+        return true;
+      });
+      targets.forEach(u => pushNotif(u.id, title, msg));
+      alog(`Broadcast (${target}) to ${targets.length} users: ${msg.slice(0,50)}`);
       saveState();
-      toast(`Broadcast sent to ${(H.state.users||[]).length} users`);
+      toast(`Broadcast sent to ${targets.length} user${targets.length!==1?'s':''}`);
       document.getElementById('bcastTitle').value = '';
       document.getElementById('bcastMsg').value = '';
     },
@@ -541,12 +740,12 @@
     },
 
     exportData() {
-      const data = JSON.stringify(state, null, 2);
+      const data = JSON.stringify(H.state, null, 2);
       const blob = new Blob([data], {type:'application/json'});
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `hostly-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `pamarket-backup-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
       alog('Exported all data');
