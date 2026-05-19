@@ -224,7 +224,7 @@
     const u = H.currentUser();
     if (!u) {
       return '<div class="page active">' + H.innerTopbar('Notifications')
-        + H.emptyState('Sign in required', 'Sign in to view your notifications.', 'Sign In', "H.authPage()")
+        + H.emptyState('No notifications yet', 'Important updates and app notices will appear here. Log in to see account alerts.', 'Login to continue', "H.requireAuth('Login to continue')")
         + '</div>';
     }
     const list = (H.state.notifs[u.id] || []).slice().sort((a, b) => b.t - a.t);
@@ -272,6 +272,7 @@
   };
 
   pages.Notifications_after = function () {
+    if (!H.currentUser()) return;
     // Sync from Supabase whenever the page is opened
     if (typeof H.syncNotifications === 'function') H.syncNotifications();
     // Make sure real-time subscription is alive

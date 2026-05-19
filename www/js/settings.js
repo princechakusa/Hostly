@@ -362,18 +362,42 @@
             <input type="radio" name="language" disabled>
             <div style="flex:1">
               <div style="font-weight:700;color:var(--text)">Shona · ChiShona</div>
-              <div style="font-size:12px;color:var(--muted)">Coming soon</div>
+              <div style="font-size:12px;color:var(--muted)">Not available in this version</div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:12px;padding:14px 0;opacity:.5">
             <input type="radio" name="language" disabled>
             <div style="flex:1">
               <div style="font-weight:700;color:var(--text)">Ndebele · IsiNdebele</div>
-              <div style="font-size:12px;color:var(--muted)">Coming soon</div>
+              <div style="font-size:12px;color:var(--muted)">Not available in this version</div>
             </div>
           </div>
         </div>
-        <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:8px">Shona and Ndebele translations are in progress and will be added in a future update.</p>
+        <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:8px">PaMarket uses English for app screens and account communication.</p>
+      </div>
+    </div>`;
+  };
+
+  pages.LanguageSettings = function () {
+    const current = H.getLanguage ? H.getLanguage() : ((H.currentUser() && H.currentUser().language) || H.state.language || 'English');
+    return `<div class="page active">
+      ${H.innerTopbar('Language')}
+      <div class="form-wrap">
+        <div class="section-box" style="padding:0">
+          <button onclick="H.setLanguage('English')" style="display:flex;align-items:center;gap:12px;width:100%;padding:16px;background:var(--card);border:none;text-align:left;cursor:pointer">
+            <span style="width:22px;height:22px;border-radius:50%;border:2px solid #1A3A8F;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              ${current === 'English' ? '<span style="width:10px;height:10px;border-radius:50%;background:#1A3A8F"></span>' : ''}
+            </span>
+            <div style="flex:1">
+              <div style="font-size:15px;font-weight:700;color:var(--text-primary)">English</div>
+              <div style="font-size:12px;color:var(--text-sub);margin-top:2px">App display language</div>
+            </div>
+            ${current === 'English' ? '<svg viewBox="0 0 24 24" fill="none" stroke="#1A3A8F" stroke-width="2.5" width="20" height="20"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+          </button>
+        </div>
+        <div class="section-box" style="margin-top:12px">
+          <div style="font-size:13px;line-height:1.55;color:var(--text-sub)">PaMarket uses English for app screens and account communication.</div>
+        </div>
       </div>
     </div>`;
   };

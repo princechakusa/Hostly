@@ -2,6 +2,12 @@
 (function (H) {
   const pages = H.pages;
 
+  pages.Account = function () {
+    const u = H.currentUser();
+    if (!u) return H.guestAccountPage();
+    return pages.AccountHub();
+  };
+
   // ── Account Hub ───────────────────────────────────────────
   // A full-screen version of the account centre, reachable via
   // H.openInner('AccountHub') if needed; the bottom-nav tab still

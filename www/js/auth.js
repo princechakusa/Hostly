@@ -82,12 +82,11 @@
     var card = document.getElementById('authCard');
     if (!card) return;
     card.innerHTML = ''
-      + '<div style="text-align:center;margin-bottom:20px"><div style="font-size:22px;font-weight:700;color:var(--text)">Welcome</div><div style="font-size:14px;color:var(--sub);margin-top:4px">Sign in to buy and sell across Zimbabwe</div></div>'
+      + '<div style="text-align:center;margin-bottom:18px"><div style="font-size:22px;font-weight:800;color:var(--text-primary)">Login to continue</div><div style="font-size:14px;color:var(--text-sub);margin-top:4px">Explore freely. Sign in only for account actions.</div></div>'
       + '<button class="social-auth-btn google" onclick="H.authGoogle()"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>'
-      + '<button class="social-auth-btn apple" onclick="H.authApple()" style="background:#000;color:#fff;border-color:#000;margin-top:10px"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>Continue with Apple</button>'
       + '<div class="auth-divider"><span>or</span></div>'
-      + '<button class="social-auth-btn email" onclick="H.authShowEmailForm()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1A3A8F" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Continue with Email</button>'
-      + '<div style="text-align:center;margin-top:16px;font-size:13px;color:var(--sub)">Don\'t have an account? <span onclick="H.authShowRegister()" style="color:#F5A623;font-weight:600;cursor:pointer">Create one</span></div>';
+      + '<button class="social-auth-btn email" onclick="H.authShowEmailForm()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1A3A8F" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Login with email</button>'
+      + '<div style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-sub)">Don\'t have an account? <span onclick="H.authShowRegister()" style="color:#1A3A8F;font-weight:700;cursor:pointer">Create one</span></div>';
   };
 
   H.authShowEmailForm = function() {
@@ -103,6 +102,46 @@
   };
 
   H.authShowRegister = function() { H.authStepSignUp(); };
+
+  H.authShow2FA = function(userId) {
+    H._pendingTwoFactorUserId = userId;
+    var card = document.getElementById('authCard');
+    if (!card) {
+      H.requireAuth && H.requireAuth('Two-factor authentication');
+      card = document.getElementById('authCard');
+    }
+    if (!card) return;
+    card.innerHTML = ''
+      + '<div style="text-align:center;margin-bottom:16px"><div style="font-size:20px;font-weight:800;color:var(--text-primary)">Enter authentication code</div><div style="font-size:13px;color:var(--text-sub);margin-top:6px;line-height:1.5">Open your authenticator app and enter the 6-digit code for PaMarket.</div></div>'
+      + '<div class="fg"><div class="fl">6-digit code</div><input class="fi" id="twoFactorLoginCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456"></div>'
+      + '<button class="auth-btn" onclick="H.authVerify2FA()">Verify & Continue</button>'
+      + '<button class="auth-btn secondary" onclick="H.authCancel2FA()">Cancel</button>';
+    setTimeout(function(){ var e=document.getElementById('twoFactorLoginCode'); if(e) e.focus(); }, 100);
+  };
+
+  H.authCancel2FA = async function() {
+    H._pendingTwoFactorUserId = null;
+    state.currentUserId = null;
+    H.saveState();
+    try { if (window.supabase && window.supabase.auth) await window.supabase.auth.signOut(); } catch(e) {}
+    if (H.closeLoginModal) H.closeLoginModal();
+  };
+
+  H.authVerify2FA = async function() {
+    var userId = H._pendingTwoFactorUserId;
+    var u = (state.users || []).find(function(x){ return x.id === userId; });
+    var code = ((document.getElementById('twoFactorLoginCode') || {}).value || '').trim();
+    if (!u || !u.twoFactorEnabled || !u.twoFactorSecret) { H.toast('2FA setup not found'); return; }
+    if (!H._twoFactorVerify || !await H._twoFactorVerify(u.twoFactorSecret, code)) {
+      H.toast('Invalid authentication code');
+      return;
+    }
+    H._pendingTwoFactorUserId = null;
+    state.currentUserId = userId;
+    H.saveState();
+    if (H.closeLoginModal) H.closeLoginModal();
+    H.boot();
+  };
 
   H.authStepSignUp = function() {
     var card = document.getElementById('authCard');
@@ -151,6 +190,7 @@
     H.saveState();
     setAuthBusy(false);
     H.toast('Email verified! Welcome to PaMarket');
+    if (H.closeLoginModal) H.closeLoginModal();
     H.boot();
   };
 
@@ -213,17 +253,35 @@
       }
       state.currentUserId = res.data.user.id;
       await H.loadProfile(res.data.user.id);
+      var su = H.currentUser();
+      if (su && su.twoFactorEnabled && su.twoFactorSecret) {
+        H._pendingTwoFactorUserId = res.data.user.id;
+        state.currentUserId = null;
+        H.saveState();
+        setAuthBusy(false);
+        H.authShow2FA(res.data.user.id);
+        return;
+      }
       recordSuccess();
       H.saveState();
       setAuthBusy(false);
+      if (H.closeLoginModal) H.closeLoginModal();
       H.boot();
       return;
     }
     var user = (state.users||[]).find(function(u){ return (u.email||'').toLowerCase()===email.toLowerCase() && u._localPassword===password; });
     if (!user) { recordFailure(); H.toast('Wrong email or password'); setAuthBusy(false); return; }
     recordSuccess();
+    if (user.twoFactorEnabled && user.twoFactorSecret) {
+      H._pendingTwoFactorUserId = user.id;
+      state.currentUserId = null;
+      H.saveState();
+      setAuthBusy(false);
+      H.authShow2FA(user.id);
+      return;
+    }
     state.currentUserId = user.id;
-    H.saveState(); setAuthBusy(false); H.boot();
+    H.saveState(); setAuthBusy(false); if (H.closeLoginModal) H.closeLoginModal(); H.boot();
   };
 
   H.authSignUp = async function() {
@@ -266,6 +324,7 @@
       setAuthBusy(false);
       if (res.data.session) {
         H.toast('Account created! Welcome to PaMarket');
+        if (H.closeLoginModal) H.closeLoginModal();
         H.boot();
       } else {
         H.authShowOtp(email);
@@ -279,6 +338,7 @@
     state.currentUserId = uid2;
     H.saveState(); setAuthBusy(false);
     H.toast('Account created! Welcome to PaMarket');
+    if (H.closeLoginModal) H.closeLoginModal();
     H.boot();
   };
 
@@ -318,6 +378,7 @@
     state.adminSession = {at:Date.now(),via:'supabase'};
     H.saveState();
     H.toast('Welcome Admin!');
+    if (H.closeLoginModal) H.closeLoginModal();
     H.boot();
   };
 
@@ -356,7 +417,8 @@
     var ban = document.getElementById('banScreen');
     if (ban) ban.classList.remove('show');
     H.pageStack = [];
-    H.authPage();
+    if (H.closeLoginModal) H.closeLoginModal();
+    H.navTo ? H.navTo('Home') : H.boot();
   };
 
   H.authGoogle = async function() {

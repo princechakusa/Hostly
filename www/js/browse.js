@@ -184,7 +184,7 @@
           H.renderPage('Browse');
         }
       },
-      voiceSearch: () => { H.toast('Voice search coming soon!'); },
+      voiceSearch: () => { H.toast('Voice search is not available on this device'); },
       saveSearch: () => {
         const q = document.getElementById('searchIn')?.value?.trim() || '';
         const u = H.currentUser();

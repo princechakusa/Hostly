@@ -1,6 +1,56 @@
 'use strict';
 (function (H) {
   const pages = H.pages;
+  const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+  H._twoFactorCreateSecret = function () {
+    const bytes = new Uint8Array(10);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(bytes);
+    else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    let bits = '', out = '';
+    bytes.forEach(b => { bits += b.toString(2).padStart(8, '0'); });
+    for (let i = 0; i < bits.length; i += 5) out += B32[parseInt(bits.slice(i, i + 5).padEnd(5, '0'), 2)];
+    return out.replace(/(.{4})/g, '$1 ').trim();
+  };
+
+  function base32Bytes(secret) {
+    let bits = '';
+    String(secret || '').replace(/\s+/g, '').toUpperCase().split('').forEach(ch => {
+      const v = B32.indexOf(ch);
+      if (v >= 0) bits += v.toString(2).padStart(5, '0');
+    });
+    const bytes = [];
+    for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+    return bytes;
+  }
+
+  async function hotp(secret, counter) {
+    const keyData = new Uint8Array(base32Bytes(secret));
+    const key = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+    const buf = new ArrayBuffer(8);
+    const view = new DataView(buf);
+    const high = Math.floor(counter / 0x100000000);
+    const low = counter >>> 0;
+    view.setUint32(0, high);
+    view.setUint32(4, low);
+    const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, buf));
+    const off = sig[sig.length - 1] & 15;
+    const bin = ((sig[off] & 127) << 24) | (sig[off + 1] << 16) | (sig[off + 2] << 8) | sig[off + 3];
+    return String(bin % 1000000).padStart(6, '0');
+  }
+
+  H._twoFactorCode = function (secret, offset) {
+    return hotp(secret, Math.floor(Date.now() / 30000) + (offset || 0));
+  };
+
+  H._twoFactorVerify = async function (secret, code) {
+    const c = String(code || '').replace(/\D/g, '');
+    if (!secret || c.length !== 6) return false;
+    for (const o of [-1, 0, 1]) {
+      if (await H._twoFactorCode(secret, o) === c) return true;
+    }
+    return false;
+  };
 
   // -- CHANGE PASSWORD ---------------------------------------
   pages.ChangePassword = function () {
@@ -93,21 +143,43 @@
 
   pages.TwoFactor = function () {
     const u = H.currentUser();
-    const enabled = u.twoFactorEnabled || false;
+    const enabled = !!(u && u.twoFactorEnabled && u.twoFactorSecret);
+    const setup = u._pendingTwoFactorSecret || H._twoFactorCreateSecret();
+    if (!enabled && !u._pendingTwoFactorSecret) {
+      u._pendingTwoFactorSecret = setup;
+      H.saveState();
+    }
     return `<div class="page active">
       ${H.innerTopbar('Two-Factor Authentication')}
       <div class="form-wrap">
-        <div class="section-box">
-          <div class="verify-title">${enabled ? '2FA Enabled' : '2FA Disabled'}</div>
-          <div class="verify-sub">${enabled ? 'Your account is protected.' : 'Add an extra layer of security.'}</div>
+        <div class="section-box" style="text-align:center">
+          <div class="verify-title">${enabled ? '2FA Enabled' : 'Set Up Two-Factor Authentication'}</div>
+          <div class="verify-sub">${enabled ? 'Your account requires an authenticator code at login.' : 'Use an authenticator app to generate a secure 6-digit login code.'}</div>
         </div>
-        <div class="section-box">
-          <div class="section-title">How it works</div>
-          <div class="info-row"><span class="info-label">Step 1</span><span class="info-val">Enter your password</span></div>
-          <div class="info-row"><span class="info-label">Step 2</span><span class="info-val">Get a code via SMS</span></div>
-          <div class="info-row"><span class="info-label">Step 3</span><span class="info-val">Enter code to log in</span></div>
-        </div>
-        <button class="btn-pri" onclick="H._twoFactor.toggle()">${enabled ? 'Disable 2FA' : 'Enable 2FA'}</button>
+        ${enabled ? `
+          <div class="section-box">
+            <div class="section-title">Disable 2FA</div>
+            <div class="fg">
+              <div class="fl">Authenticator code</div>
+              <input class="fi" id="twoFactorCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" onkeydown="if(event.key==='Enter')H._twoFactor.disable()">
+            </div>
+            <button class="btn-pri" style="background:var(--red)" onclick="H._twoFactor.disable()">Disable 2FA</button>
+          </div>
+        ` : `
+          <div class="section-box">
+            <div class="section-title">Manual setup key</div>
+            <div style="font-size:12px;color:var(--text-sub);line-height:1.55;margin-bottom:10px">Add a new account in Google Authenticator, Microsoft Authenticator, 1Password, or any TOTP app, then enter the 6-digit code below.</div>
+            <div style="font-family:monospace;font-size:16px;font-weight:800;letter-spacing:1px;color:var(--blue);background:var(--blue-light);border:1.5px solid rgba(26,58,143,.18);border-radius:12px;padding:14px;text-align:center;word-break:break-all">${H.escHtml(setup)}</div>
+          </div>
+          <div class="section-box">
+            <div class="section-title">Verify setup</div>
+            <div class="fg">
+              <div class="fl">Authenticator code</div>
+              <input class="fi" id="twoFactorCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" onkeydown="if(event.key==='Enter')H._twoFactor.enable()">
+            </div>
+            <button class="btn-pri" onclick="H._twoFactor.enable()">Enable 2FA</button>
+          </div>
+        `}
         <button class="btn-sec" onclick="H.goBack()">Back</button>
       </div>
     </div>`;
@@ -115,11 +187,32 @@
 
   pages.TwoFactor_after = function () {
     H._twoFactor = {
-      toggle: () => {
+      enable: async () => {
         const u = H.currentUser();
-        u.twoFactorEnabled = !u.twoFactorEnabled;
+        const code = (document.getElementById('twoFactorCode')?.value || '').trim();
+        if (!await H._twoFactorVerify(u._pendingTwoFactorSecret, code)) {
+          H.toast('Invalid authenticator code');
+          return;
+        }
+        u.twoFactorSecret = u._pendingTwoFactorSecret;
+        u.twoFactorEnabled = true;
+        delete u._pendingTwoFactorSecret;
         H.saveState();
-        H.toast(u.twoFactorEnabled ? '2FA enabled' : '2FA disabled');
+        H.toast('2FA enabled');
+        H.renderPage('TwoFactor');
+      },
+      disable: async () => {
+        const u = H.currentUser();
+        const code = (document.getElementById('twoFactorCode')?.value || '').trim();
+        if (!await H._twoFactorVerify(u.twoFactorSecret, code)) {
+          H.toast('Invalid authenticator code');
+          return;
+        }
+        u.twoFactorEnabled = false;
+        u.twoFactorSecret = null;
+        delete u._pendingTwoFactorSecret;
+        H.saveState();
+        H.toast('2FA disabled');
         H.renderPage('TwoFactor');
       }
     };

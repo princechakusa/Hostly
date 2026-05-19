@@ -173,6 +173,13 @@ window.H = {
     setTimeout(()=>document.getElementById('mConfirm')?.focus(), 50);
   },
   closeModal() { document.getElementById('modalBg').classList.remove('open'); },
+  closeLoginModal() {
+    const bg = document.getElementById('modalBg');
+    if (!bg) return;
+    bg.classList.remove('open');
+    const box = document.getElementById('modalBox');
+    if (box) box.classList.remove('login-modal');
+  },
   closeSheet() {
     document.getElementById('actionSheet').classList.remove('open');
     document.getElementById('sheetBg').classList.remove('open');
@@ -368,6 +375,10 @@ window.H = {
   },
 
   authPage() {
+    this.requireAuth('Login to continue');
+  },
+
+  authPageFull() {
     document.getElementById('bottomNav').style.display='none';
     document.getElementById('mainArea').innerHTML=`
       <div class="auth-wrap">
@@ -389,7 +400,6 @@ window.H = {
   async navTo(name, btn) {
     const H=window.H;
     if(['Post'].includes(name)&&!H.currentUser()){H.requireAuth('Log in to post an ad');return;}
-    if(name==='Account'&&!H.currentUser()){H.requireAuth('Sign in to your account');return;}
     if(H.isAdminPage(name)&&(!H.isAdmin()||!H.state.adminSession)){H.toast('Admin login required');return;}
     H.pageStack=[];
     document.getElementById('bottomNav').style.display='flex';
@@ -401,7 +411,7 @@ window.H = {
 
   async openInner(name, params) {
     const H=window.H;
-    const gated=['Messages','Chat','MyListings','Favorites','Profile','Settings','Wallet','Boost','Notifications','Security'];
+    const gated=['Messages','Chat','MyListings','Favorites','Profile','EditProfile','Settings','Wallet','Boost','Security','SecuritySettings','DeleteAccount','TopUp','JobSeekerProfile','CandidateProfile','AppliedJobs','JobApplications','PostJob'];
     if(gated.includes(name)&&!H.currentUser()){H.requireAuth('Sign in to continue');return;}
     if(H.isAdminPage(name)&&(!H.isAdmin()||!H.state.adminSession)){H.toast('Admin login required');return;}
     try {
@@ -426,7 +436,7 @@ window.H = {
     this.stopCam();
     if(this.pageStack.length){
       const p=this.pageStack.pop();
-      const isRoot=['Home','Browse','Messages','Post'].includes(p.name);
+      const isRoot=['Home','Browse','Messages','Post','Account'].includes(p.name);
       if(isRoot){
         document.getElementById('bottomNav').style.display='flex';
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -541,7 +551,22 @@ window.H = {
   },
   applyLanguage() {
     const u=this.currentUser();
-    if(u&&u.language) document.querySelectorAll('.current-lang').forEach(el=>el.textContent=u.language);
+    const lang=(u&&u.language)||this.state.language||'English';
+    document.querySelectorAll('.current-lang').forEach(el=>el.textContent=lang);
+  },
+  getLanguage() {
+    const u=this.currentUser();
+    return (u&&u.language)||this.state.language||'English';
+  },
+  setLanguage(lang) {
+    const clean=lang||'English';
+    const u=this.currentUser();
+    if(u) u.language=clean;
+    this.state.language=clean;
+    this.saveState();
+    this.applyLanguage();
+    this.toast('Language saved');
+    this.renderPage(this.currentPageName, this.currentPageParams);
   },
 
   logoTap() {
@@ -969,12 +994,44 @@ window.H = {
   },
 
   showAccountMenu(btn) {
-    const u=this.currentUser(); if(!u) return;
+    const u=this.currentUser();
     const sheet=document.getElementById('actionSheet');
     const bg=document.getElementById('sheetBg');
     const I=this.ICONS;
     const nav=(page)=>`H.closeSheet();H.state._backToAccount=true;setTimeout(()=>H.openInner('${page}'),50)`;
-    const item=(label,icon,page,badge)=>`<button class="sheet-item" onclick="${nav(page)}"><span class="sheet-icon">${icon}</span><span class="sheet-label">${label}</span>${badge?`<span style="margin-left:auto;background:#F5A623;color:#1A3A8F;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:800">${badge}</span>`:''}</button>`;
+    const item=(label,icon,page,badge,extra)=>`<button class="sheet-item" onclick="${extra||nav(page)}"><span class="sheet-icon">${icon}</span><span class="sheet-label">${label}</span>${badge?`<span style="margin-left:auto;background:#F5A623;color:#1A3A8F;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:800">${badge}</span>`:''}<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-primary)" stroke-width="2" style="margin-left:auto;opacity:.7"><polyline points="9 18 15 12 9 6"/></svg></button>`;
+
+    if(!u){
+      const publicNav=(page)=>`H.closeSheet();setTimeout(()=>H.openInner('${page}'),50)`;
+      const gated=msg=>`H.closeSheet();setTimeout(()=>H.requireAuth('${msg}'),50)`;
+      sheet.innerHTML=`
+        <div class="guest-account-head">
+          <img src="img/icon-192.png" alt="PaMarket">
+          <div class="guest-account-card">
+            <div>Login to continue</div>
+            <button onclick="H.closeSheet();setTimeout(()=>H.requireAuth('Login to continue'),50)">SIGN IN / SIGN UP</button>
+          </div>
+        </div>
+        <div class="guest-account-activity" onclick="${gated('Login to continue')}">
+          <span class="sheet-icon">${I.search}</span>
+          <div><strong>My Activity</strong><small>View your recent searches and activities</small></div>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="guest-menu-title">More on PaMarket</div>
+        ${item('Wallet & Payments',I.wallet,'', '', gated('Login to continue'))}
+        ${item('Sell My Property','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>','', '', gated('Login to continue'))}
+        ${item('Find Jobs','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>','Jobs','',publicNav('Jobs'))}
+        ${item('Favourites',I.heart,'', '', gated('Login to continue'))}
+        ${item('Saved Searches',I.search,'', '', gated('Login to continue'))}
+        ${item('Language','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20"/><path d="M12 2a15.3 15.3 0 0 0 0 20"/></svg>','LanguageSettings',this.getLanguage(),publicNav('LanguageSettings'))}
+        ${item('Notification Center','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>','Notifications','',publicNav('Notifications'))}
+        ${item('Help & Support',I.help,'Help','',publicNav('Help'))}
+        ${item('About Us','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>','About','',publicNav('About'))}
+        ${item('Privacy Policy','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>','HelpPrivacy','',publicNav('HelpPrivacy'))}
+        <button class="sheet-close" onclick="H.closeSheet()">${I.close} Close</button>`;
+      sheet.classList.add('open'); bg.classList.add('open');
+      return;
+    }
 
     const activeAds=(this.state.listings||[]).filter(l=>l.sellerId===u.id&&l.status==='active').length;
     const savedAds=((this.state.saves||{})[u.id]||[]).length;
@@ -1019,16 +1076,69 @@ window.H = {
   },
 
   requireAuth(msg) {
-    const sheet=document.getElementById('actionSheet');
-    const bg=document.getElementById('sheetBg');
-    sheet.innerHTML='<div style="text-align:center;padding:8px 0 16px">'
-      +'<div style="width:56px;height:56px;background:#1A3A8F;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>'
-      +'<div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px">'+(msg||'Sign in to continue')+'</div>'
-      +'<div style="font-size:13px;color:var(--sub);margin-bottom:24px">Join Zimbabwe&#39;s free marketplace</div>'
-      +'<button onclick="H.closeSheet();setTimeout(()=>H.authPage(),50)" style="display:block;width:100%;padding:14px;background:#1A3A8F;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Sign In</button>'
-      +'<button onclick="H.closeSheet()" style="display:block;width:100%;padding:12px;background:transparent;color:var(--sub);border:none;font-size:14px;cursor:pointer">Browse as Guest</button>'
-      +'</div>';
-    sheet.classList.add('open'); bg.classList.add('open');
+    this.closeSheet();
+    const bg=document.getElementById('modalBg');
+    const box=document.getElementById('modalBox');
+    if(!bg||!box) return;
+    box.classList.add('login-modal');
+    box.innerHTML=`
+      <button class="login-modal-close" onclick="H.closeLoginModal()" aria-label="Close">&times;</button>
+      <div class="login-modal-brand">
+        <img src="img/icon-192.png" alt="PaMarket">
+        <div>Pa<em>Market</em></div>
+      </div>
+      <div class="login-modal-illustration">
+        <svg viewBox="0 0 120 90" fill="none" aria-hidden="true">
+          <path d="M24 76V38l36-26 36 26v38" fill="#EEF2FF"/>
+          <path d="M32 76V42l28-20 28 20v34" stroke="#1A3A8F" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M53 76V56h16v20M43 49h12M65 49h12" stroke="#F5A623" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="87" cy="27" r="14" fill="#fff" stroke="#1A3A8F" stroke-width="5"/>
+          <path d="M98 38l13 13" stroke="#1A3A8F" stroke-width="6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3>${this.escHtml(msg||'Login to continue')}</h3>
+      <div class="auth-card" id="authCard"></div>
+      <div class="login-modal-foot">Closing this popup keeps you right where you are.</div>`;
+    bg.classList.add('open');
+    if(typeof H.authStepEmail==='function') H.authStepEmail();
+  },
+
+  guestAccountPage() {
+    const I=this.ICONS;
+    const item=(label,icon,page,badge,restricted)=>`<button class="account-menu-row" onclick="${restricted?`H.requireAuth('Login to continue')`:`H.openInner('${page}')`}">
+      <span class="sheet-icon">${icon}</span>
+      <span class="sheet-label">${label}</span>
+      ${badge?`<span class="account-row-badge">${badge}</span>`:''}
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>`;
+    return `<div class="page active account-page">
+      <div class="guest-account-head">
+        <div class="guest-account-mark">Pa<em>Market</em></div>
+        <div class="guest-account-card">
+          <div>Login to continue</div>
+          <button onclick="H.requireAuth('Login to continue')">SIGN IN / SIGN UP</button>
+        </div>
+      </div>
+      <div class="guest-account-body">
+        <div class="guest-account-activity" onclick="H.requireAuth('Login to continue')">
+          <span class="sheet-icon">${I.search}</span>
+          <div><strong>My Activity</strong><small>View your recent searches and activities</small></div>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="guest-menu-title">More on PaMarket</div>
+        <div class="account-menu-list">
+          ${item('Wallet & Payments',I.wallet,'Wallet','',true)}
+          ${item('Favourites',I.heart,'Favorites','',true)}
+          ${item('Saved Searches',I.search,'SavedSearches','',true)}
+          ${item('Find Jobs','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>','Jobs')}
+          ${item('Notification Center','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>','Notifications')}
+          ${item('Language','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 0 20"/><path d="M12 2a15.3 15.3 0 0 0 0 20"/></svg>','LanguageSettings',this.getLanguage())}
+          ${item('Help & Support',I.help,'Help')}
+          ${item('About Us','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>','About')}
+          ${item('Privacy Policy','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>','HelpPrivacy')}
+        </div>
+      </div>
+    </div>`;
   },
 
   _showOnboarding() {
@@ -1101,7 +1211,7 @@ window.H = {
           const btn=e.target.closest('[data-nav]'); if(!btn) return;
           const name=btn.dataset.nav;
           if(name==='Post')    {if(!H.currentUser()){H.requireAuth('Log in to post an ad');return;}H.navTo('Post',btn);}
-          else if(name==='Account'){if(!H.currentUser()){H.requireAuth('Sign in to your account');return;}H.showAccountMenu(btn);}
+          else if(name==='Account'){H.navTo('Account',btn);}
           else if(name==='Messages'){if(!H.currentUser()){H.requireAuth('Sign in to view messages');return;}H.navTo(name,btn);}
           else H.navTo(name,btn);
         });
