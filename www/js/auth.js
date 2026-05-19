@@ -411,8 +411,8 @@
     } catch(e) {}
     var c = sb();
     if (c) { try { await c.auth.signOut(); } catch(e) {} }
-    state.currentUserId = null;
-    state.adminSession = null;
+    H.state.currentUserId = null;
+    H.state.adminSession = null;
     H.saveState();
     var ban = document.getElementById('banScreen');
     if (ban) ban.classList.remove('show');
