@@ -1,4 +1,4 @@
-// supabase.js "" safe Supabase client initialisation
+// supabase.js "” safe Supabase client initialisation
 (function () {
   // Make sure the CDN loaded
   if (!window.supabase) {
