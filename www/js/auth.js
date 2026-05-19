@@ -413,15 +413,20 @@
         H.state.currentUserId = null;
         H.state.adminSession = null;
         H.saveState();
+        var reload = function() { window.location.reload(); };
         try {
           var sc = window.supabase;
           if (sc) {
             if (window._msgChannel) { sc.removeChannel(window._msgChannel); window._msgChannel = null; }
             if (H._notifChannel)    { sc.removeChannel(H._notifChannel);    H._notifChannel    = null; }
-            if (sc.auth) sc.auth.signOut().catch(function(){});
+            if (sc.auth) {
+              // Wait for signOut to clear Supabase session from localStorage before reloading
+              sc.auth.signOut().then(reload).catch(reload);
+              return;
+            }
           }
         } catch(e) {}
-        window.location.reload();
+        reload();
       }
     });
   };

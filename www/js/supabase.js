@@ -35,8 +35,11 @@
 
   window.supabase = window.supabase.createClient(supabaseUrl || '', supabaseAnonKey || '');
 
-  // Handle OAuth callbacks (Google, Apple, etc.) — fires when page loads after redirect
+  // Only handle OAuth callbacks — NOT regular page loads with stored sessions.
+  // The app restores login state from H.loadState() (localStorage), not from here.
+  var _isOAuthCallback = window.location.search.includes('code=') || window.location.hash.includes('access_token=');
   var _oauthHandled = false;
+
   async function handleOAuthSession(session) {
     if (_oauthHandled) return;
     _oauthHandled = true;
@@ -84,17 +87,18 @@
   }
 
   window.supabase.auth.onAuthStateChange(async function(event, session) {
-    if ((event !== 'SIGNED_IN' && event !== 'INITIAL_SESSION') || !session || !session.user) return;
+    if (event !== 'SIGNED_IN' || !session || !session.user) return;
+    if (!_isOAuthCallback) return;
     handleOAuthSession(session);
   });
 
-  // Fallback: explicitly check for an active session on page load.
-  // Catches cases where onAuthStateChange fires before the listener is registered
-  // or where the PKCE code exchange completes asynchronously.
-  window.supabase.auth.getSession().then(function(result) {
-    var session = result && result.data && result.data.session;
-    if (session && session.user) handleOAuthSession(session);
-  });
+  // Fallback getSession() only on actual OAuth callback pages
+  if (_isOAuthCallback) {
+    window.supabase.auth.getSession().then(function(result) {
+      var session = result && result.data && result.data.session;
+      if (session && session.user) handleOAuthSession(session);
+    });
+  }
 
   // Real-time sync — subscribes to live database changes
   window.H = window.H || {};
