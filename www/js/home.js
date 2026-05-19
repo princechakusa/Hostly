@@ -15,6 +15,24 @@
     agriculture:'#558B2F',pets:'#FB8C00',kids:'#E91E63',
   };
 
+  function renderHCard(l) {
+    const photo = (l.photos && l.photos[0]) || ('https://picsum.photos/seed/' + l.id + '/300/200');
+    const price = l.price ? ('$' + Number(l.price).toLocaleString()) : 'Free';
+    const title = escHtml((l.title || '').slice(0, 38));
+    const loc   = escHtml(l.suburb || l.city || l.prov || '');
+    return `<div onclick="openListing('${l.id}')" style="width:155px;flex-shrink:0;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.07)">
+      <div style="height:108px;overflow:hidden;background:#f0f0f0;position:relative">
+        <img src="${photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.src='https://picsum.photos/seed/${l.id}/300/200'">
+        ${l.negotiable ? '<span style="position:absolute;top:6px;right:6px;background:#F5A623;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px">NEG</span>' : ''}
+      </div>
+      <div style="padding:9px 10px 11px">
+        <div style="font-size:15px;font-weight:800;color:#1A3A8F;margin-bottom:2px">${price}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">${title}</div>
+        <div style="font-size:11px;color:var(--sub)">${loc}</div>
+      </div>
+    </div>`;
+  }
+
   H.pages.Home = function () {
     const u = H.currentUser();
     const unreadNotifs = u ? (H.state.notifs[u.id] || []).filter(n => !n.read).length : 0;
@@ -69,18 +87,100 @@
         </div>
       </div>
 
+      <!-- CITY PICKER -->
+      <div class="city-picker" id="cityPicker" role="dialog">
+        <div class="city-picker-title">Select your city</div>
+        <div class="city-grid">
+          <div class="city-opt ${H.state.cityFilter === 'All Zimbabwe' ? 'sel' : ''}" onclick="H.pickCity('All Zimbabwe')">All Zimbabwe</div>
+          ${['Harare','Bulawayo','Mutare','Gweru','Masvingo','Chinhoyi','Kwekwe','Kadoma'].map(c =>
+            `<div class="city-opt ${H.state.cityFilter === c ? 'sel' : ''}" onclick="H.pickCity('${c}')">${c}</div>`
+          ).join('')}
+        </div>
+      </div>
+
       <div style="padding-bottom:88px">
-        ${catSections.length ? catSections.map(s => `
-          <div style="padding:20px 0 0">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:12px">
-              <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-size:20px">${s.icon}</span>
-                <span style="font-size:16px;font-weight:800;color:var(--text)">Latest in ${s.name}</span>
-              </div>
-              <span onclick="H.filterByCat('${s.id}')" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer">See all</span>
-            </div>
+
+        <!-- CATEGORIES GRID -->
+        <div style="background:var(--card);padding:18px 16px 20px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <span style="font-size:15px;font-weight:800;color:var(--text)">Browse Categories</span>
+            <span onclick="H.navTo('Browse',null)" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer">See all</span>
           </div>
-        `).join('') : ''}
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            ${CATEGORIES.map(c => {
+              const color = CAT_COLORS[c.id] || '#546E7A';
+              return `<div onclick="H.filterByCat('${c.id}')" style="display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer">
+                <div style="width:56px;height:56px;border-radius:16px;background:${color}18;display:flex;align-items:center;justify-content:center;font-size:26px;border:1.5px solid ${color}22;transition:transform 0.15s"
+                  onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(0.9)'" ontouchend="this.style.transform=''">${c.icon}</div>
+                <span style="font-size:11px;font-weight:600;color:var(--text);text-align:center;line-height:1.2">${c.name}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- BANNER -->
+        <div style="margin:0 12px 8px;background:linear-gradient(135deg,#1A3A8F 0%,#2952cc 100%);border-radius:18px;padding:20px;display:flex;align-items:center;justify-content:space-between;overflow:hidden;position:relative">
+          <div style="position:absolute;right:-24px;top:-24px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,0.07)"></div>
+          <div style="position:absolute;right:50px;bottom:-35px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05)"></div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Zimbabwe's Free Marketplace</div>
+            <div style="font-size:21px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:4px">Buy. Sell. Hire.</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7)">Real people. Real deals.</div>
+          </div>
+          <div style="text-align:center;flex-shrink:0;margin-left:16px">
+            <div style="font-size:30px;font-weight:900;color:#F5A623;line-height:1">${activeListings.length}</div>
+            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.75);text-transform:uppercase;margin-top:3px">Active Ads</div>
+          </div>
+        </div>
+
+        <!-- POST AD BUTTON -->
+        <div style="padding:8px 12px 0">
+          <button onclick="H.navTo('Post',null)"
+            style="width:100%;padding:14px;background:#F5A623;color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(245,166,35,0.35)">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Post a Free Ad
+          </button>
+        </div>
+
+        <!-- FEATURED -->
+        ${featured.length ? `
+        <div style="padding:20px 0 0">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:12px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="#F5A623" stroke="#F5A623" stroke-width="1"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span style="font-size:16px;font-weight:800;color:var(--text)">Featured Ads</span>
+            </div>
+            <span onclick="H.navTo('Browse',null)" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer">See all</span>
+          </div>
+          <div style="display:flex;gap:12px;padding:0 16px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+            ${featured.map(l => `<div style="flex-shrink:0">${renderFeatCard(l)}</div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- SEARCH RESULTS (shown when typing) -->
+        <div id="searchResults" style="display:none;padding:16px 12px 0">
+          <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:12px;padding:0 4px">Search Results</div>
+          <div id="searchResultsList" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+
+        <!-- CATEGORY SECTIONS (Dubizzle style, shown by default) -->
+        <div id="catSections">
+          ${catSections.length ? catSections.map(s => `
+            <div style="padding:20px 0 0">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:20px">${s.icon}</span>
+                  <span style="font-size:16px;font-weight:800;color:var(--text)">Latest in ${s.name}</span>
+                </div>
+                <span onclick="H.filterByCat('${s.id}')" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer">See all</span>
+              </div>
+              <div style="display:flex;gap:12px;padding:0 16px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+                ${s.items.map(l => renderHCard(l)).join('')}
+              </div>
+            </div>
+          `).join('') : `<div style="padding:32px 16px">${H.emptyState('No listings yet', 'Be the first to post in your area!', 'Post your first ad', "H.navTo('Post',null)")}</div>`}
+        </div>
+
       </div>
     </div>`;
   };
@@ -92,18 +192,29 @@
       const srDiv  = document.getElementById('searchResults');
       const srList = document.getElementById('searchResultsList');
       if (!catDiv || !srDiv || !srList) return;
-      if (!q.trim()) { catDiv.style.display = ''; srDiv.style.display = 'none'; return; }
-      catDiv.style.display = 'none'; srDiv.style.display = '';
-      const results = filterListings((H.state.listings || []).filter(l => l.status === 'active'), q);
+      if (!q.trim()) {
+        catDiv.style.display = '';
+        srDiv.style.display  = 'none';
+        return;
+      }
+      catDiv.style.display = 'none';
+      srDiv.style.display  = '';
+      const active   = (H.state.listings || []).filter(l => l.status === 'active');
+      const results  = filterListings(active, q);
       srList.innerHTML = results.length
         ? results.map(l => `<div>${renderListCard(l)}</div>`).join('')
-        : H.emptyState('No matches', 'Try different keywords', null, null);
+        : H.emptyState('No matches', 'Try different keywords or browse a category', null, null);
     }, 300);
   };
 
   H.pages.Home_after = function () {
     if (typeof H.fetchListingsFromSupabase !== 'function') return;
-    H.fetchListingsFromSupabase().catch(() => {});
+    const countBefore = (H.state.listings || []).filter(l => l.status === 'active').length;
+    H.fetchListingsFromSupabase().then(() => {
+      if (H.currentPageName !== 'Home') return;
+      const countAfter = (H.state.listings || []).filter(l => l.status === 'active').length;
+      if (countAfter > countBefore) H.toast('New listings loaded — pull down to refresh');
+    }).catch(() => {});
   };
 
   H.toggleCityPicker = function () {
@@ -118,5 +229,7 @@
     if (picker) picker.classList.remove('open');
     H.renderPage('Home');
   };
+
+  
 
 })(window.H);
