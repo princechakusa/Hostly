@@ -1,6 +1,6 @@
 'use strict';
 window.H = {
-  KEY:          'hostly.v2',
+  KEY:          'pamarket.v2',
   ADMIN_PHONES: ['+263770000000', '+971589772645'],
 
   PROVINCES: ['Harare','Bulawayo','Manicaland','Mashonaland West','Mashonaland East','Mashonaland Central','Midlands','Masvingo','Matabeleland North','Matabeleland South'],
@@ -371,7 +371,7 @@ window.H = {
     document.getElementById('mainArea').innerHTML=`
       <div class="auth-wrap">
         <div class="auth-logo">
-          <img src="img/icon-192.png" alt="Hostly" onclick="H.logoTap()" style="width:90px;height:90px;border-radius:22px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer">
+          <img src="img/icon-192.png" alt="PaMarket" onclick="H.logoTap()" style="width:90px;height:90px;border-radius:22px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer">
           <div>Host<em>ly</em></div>
         </div>
         <div class="auth-tag">Zimbabwe&#39;s Free Marketplace</div>
@@ -465,9 +465,9 @@ window.H = {
   openListing(id) {
     const l=this.state.listings.find(x=>x.id===id); if(!l) return;
     l.views=(l.views||0)+1;
-    const rv=JSON.parse(localStorage.getItem('hostly_rv')||'[]');
+    const rv=JSON.parse(localStorage.getItem('pamarket_rv')||'[]');
     const filtered=[...new Set([id,...rv.filter(x=>x!==id)])].slice(0,10);
-    localStorage.setItem('hostly_rv',JSON.stringify(filtered));
+    localStorage.setItem('pamarket_rv',JSON.stringify(filtered));
     this.saveState();
     this.openInner('Detail',{id});
   },
@@ -831,26 +831,26 @@ window.H = {
 
   _registerExtraPages() {
     H.pages.About=function(){
-      return '<div class="page active">'+H.innerTopbar('About Hostly')
+      return '<div class="page active">'+H.innerTopbar('About PaMarket')
         +'<div class="about-wrap">'
         +'<div class="about-hero"><div class="about-brand">Host<em>ly</em></div><div class="about-tag">Free Zimbabwean Online Marketplace</div></div>'
-        +'<div class="about-card"><div class="about-sec-title">What is Hostly?</div><div class="about-body">Hostly is a free Zimbabwean online marketplace connecting buyers and sellers. Whether you are looking for goods, services, vehicles, property, or jobs, Hostly makes it easy to post, browse, and connect with people in your province and across Zimbabwe.</div></div>'
-        +'<div class="about-card"><div class="about-sec-title">Who is it for?</div><div class="about-body">Hostly is for anyone in Zimbabwe — individuals selling personal items, small businesses promoting services, employers posting vacancies, and buyers searching for the best local deals. The app is free to download and free to use.</div></div>'
+        +'<div class="about-card"><div class="about-sec-title">What is PaMarket?</div><div class="about-body">PaMarket is a free Zimbabwean online marketplace connecting buyers and sellers. Whether you are looking for goods, services, vehicles, property, or jobs, PaMarket makes it easy to post, browse, and connect with people in your province and across Zimbabwe.</div></div>'
+        +'<div class="about-card"><div class="about-sec-title">Who is it for?</div><div class="about-body">PaMarket is for anyone in Zimbabwe — individuals selling personal items, small businesses promoting services, employers posting vacancies, and buyers searching for the best local deals. The app is free to download and free to use.</div></div>'
         +'<div class="about-card"><div class="about-sec-title">Key Features</div><div class="about-grid">'
         +['Free Listings','Secure Messaging','WhatsApp Connect','All Categories','Province Filters','Boost Your Ads','Job Board','Photo Uploads'].map(f=>'<div class="about-feat">'+f+'</div>').join('')
         +'</div></div>'
-        +'<div class="about-card"><div class="about-sec-title">Legal &amp; Compliance</div><div class="about-body">Hostly operates as a platform for user-generated listings. We do not own, sell, or warrant any items listed. Users are responsible for ensuring their listings comply with applicable Zimbabwean law. Prohibited content (counterfeit goods, illegal services, misleading listings) will be removed and accounts suspended. By using Hostly you agree to our Terms of Service and Privacy Policy.</div></div>'
+        +'<div class="about-card"><div class="about-sec-title">Legal &amp; Compliance</div><div class="about-body">PaMarket operates as a platform for user-generated listings. We do not own, sell, or warrant any items listed. Users are responsible for ensuring their listings comply with applicable Zimbabwean law. Prohibited content (counterfeit goods, illegal services, misleading listings) will be removed and accounts suspended. By using PaMarket you agree to our Terms of Service and Privacy Policy.</div></div>'
         +'<div class="about-card"><div class="about-sec-title">Contact Us</div>'
         +'<div class="about-contact-row" onclick="window.location.href=\'mailto:chakusaprince@gmail.com\'"><div class="about-contact-ic email-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div><div class="about-contact-label">Support Email</div><div class="about-contact-val">chakusaprince@gmail.com</div></div></div>'
         +'<div class="about-contact-row" onclick="window.open(\'https://wa.me/971589772645\')"><div class="about-contact-ic wa-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg></div><div><div class="about-contact-label">WhatsApp Support</div><div class="about-contact-val">+971 589 772 645</div></div></div>'
         +'</div>'
-        +'<div class="about-ads-banner"><div class="about-ads-title">Advertise with Hostly</div><div class="about-ads-sub">Reach active buyers across all provinces of Zimbabwe</div><button class="about-ads-btn" onclick="H.openInner(\'Ads\')">Get in Touch</button></div>'
-        +'<div style="text-align:center;font-size:12px;color:var(--text-muted,#999);padding:16px 0 4px">Hostly © 2026 · Made in Zimbabwe</div>'
+        +'<div class="about-ads-banner"><div class="about-ads-title">Advertise with PaMarket</div><div class="about-ads-sub">Reach active buyers across all provinces of Zimbabwe</div><button class="about-ads-btn" onclick="H.openInner(\'Ads\')">Get in Touch</button></div>'
+        +'<div style="text-align:center;font-size:12px;color:var(--text-muted,#999);padding:16px 0 4px">PaMarket © 2026 · Made in Zimbabwe</div>'
         +'</div></div>';
     };
 
     H.pages.Ads=function(){
-      return '<div class="page active">'+H.innerTopbar('Advertise with Hostly')
+      return '<div class="page active">'+H.innerTopbar('Advertise with PaMarket')
         +'<div class="about-wrap">'
         +'<div class="ads-hero"><div class="ads-hero-title">Grow Your Business</div><div class="ads-hero-sub">Connect with active buyers across all provinces of Zimbabwe. Tell us about your goals and we\'ll find the right fit for you.</div></div>'
         +'<div class="about-card"><div class="about-sec-title">What We Offer</div>'
@@ -870,7 +870,7 @@ window.H = {
         +'<div class="about-card" style="text-align:center">'
         +'<div class="about-sec-title">Prefer WhatsApp?</div>'
         +'<div class="about-body" style="margin-bottom:12px">Chat with us directly on WhatsApp and we\'ll get back to you quickly.</div>'
-        +'<button onclick="window.open(\'https://wa.me/971589772645?text=Hi%2C%20I\'m%20interested%20in%20advertising%20on%20Hostly\')" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer"><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>Chat on WhatsApp</button>'
+        +'<button onclick="window.open(\'https://wa.me/971589772645?text=Hi%2C%20I\'m%20interested%20in%20advertising%20on%20PaMarket\')" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer"><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>Chat on WhatsApp</button>'
         +'</div>'
         +'</div></div>';
     };
@@ -882,7 +882,7 @@ window.H = {
       if(!biz){H.toast('Please enter your business name');return;}
       if(!email){H.toast('Please enter your contact email');return;}
       if(!msg){H.toast('Please add a message');return;}
-      const subject=encodeURIComponent('Hostly Advertising Enquiry – '+type);
+      const subject=encodeURIComponent('PaMarket Advertising Enquiry – '+type);
       const body=encodeURIComponent('Business: '+biz+'\nContact Email: '+email+'\nAd Type: '+type+'\n\nMessage:\n'+msg);
       window.location.href='mailto:chakusaprince@gmail.com?subject='+subject+'&body='+body;
     };
@@ -1007,7 +1007,7 @@ window.H = {
       ${item('Settings',I.settings,'Settings','')}
       ${item('Security & Password','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>','SecuritySettings','')}
       ${item('Help & Support',I.help,'Help','')}
-      ${item('About Hostly','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>','About','')}
+      ${item('About PaMarket','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>','About','')}
       ${item('Advertise with Us','<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>','Ads','')}
       <button class="sheet-item danger" onclick="H.closeSheet();setTimeout(()=>H.logout(),50)">
         <span class="sheet-icon">${I.logout}</span>
@@ -1031,7 +1031,7 @@ window.H = {
   },
 
   _showOnboarding() {
-    if(localStorage.getItem('hostly_onboarded')) return;
+    if(localStorage.getItem('pamarket_onboarded')) return;
     const slides=[
       {icon:'🏪',title:'Zimbabwe\'s Free Marketplace',sub:'Buy and sell anything across all provinces'},
       {icon:'📱',title:'Browse Without Signing Up',sub:'Explore listings freely. Sign in only when ready'},
@@ -1058,7 +1058,7 @@ window.H = {
         }`;
     };
     window._onboardNext=()=>{cur++;render();};
-    window._onboardSkip=()=>{localStorage.setItem('hostly_onboarded','1');ov.remove();};
+    window._onboardSkip=()=>{localStorage.setItem('pamarket_onboarded','1');ov.remove();};
     document.body.appendChild(ov);
     render();
   },

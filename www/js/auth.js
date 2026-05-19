@@ -149,7 +149,7 @@
     await H.loadProfile(res.data.user.id);
     H.saveState();
     setAuthBusy(false);
-    H.toast('Email verified! Welcome to Hostly');
+    H.toast('Email verified! Welcome to PaMarket');
     H.boot();
   };
 
@@ -264,7 +264,7 @@
       H.saveState();
       setAuthBusy(false);
       if (res.data.session) {
-        H.toast('Account created! Welcome to Hostly');
+        H.toast('Account created! Welcome to PaMarket');
         H.boot();
       } else {
         H.authShowOtp(email);
@@ -277,7 +277,7 @@
     (state.users = state.users||[]).push({id:uid2,email:email,name:name,phone:phone||'',avatar:null,verified:false,walletUSD:0,language:'English',joinedAt:Date.now(),role:'user',status:'active',banReason:null,banUntil:null,blocked:[],_localPassword:password});
     state.currentUserId = uid2;
     H.saveState(); setAuthBusy(false);
-    H.toast('Account created! Welcome to Hostly');
+    H.toast('Account created! Welcome to PaMarket');
     H.boot();
   };
 
@@ -377,27 +377,27 @@
     return '<div class="doc-content">'
       + '<h2>Terms &amp; Conditions</h2>'
       + '<p><strong>Effective Date: 1 May 2026</strong></p>'
-      + '<p>Welcome to Hostly Zimbabwe. By downloading or using the Hostly app you agree to be bound by these Terms and Conditions. Please read them carefully.</p>'
+      + '<p>Welcome to PaMarket Zimbabwe. By downloading or using the PaMarket app you agree to be bound by these Terms and Conditions. Please read them carefully.</p>'
       + '<h3>1. Eligibility</h3>'
-      + '<p>You must be at least 18 years old to create an account and use Hostly. By registering you confirm that you meet this requirement. Hostly reserves the right to terminate accounts of users found to be under 18.</p>'
+      + '<p>You must be at least 18 years old to create an account and use PaMarket. By registering you confirm that you meet this requirement. PaMarket reserves the right to terminate accounts of users found to be under 18.</p>'
       + '<h3>2. Account Responsibility</h3>'
       + '<p>You are responsible for keeping your login credentials secure. You are liable for all activity that occurs under your account. Notify us immediately at chakusaprince@gmail.com if you suspect unauthorised access.</p>'
       + '<h3>3. Listings</h3>'
-      + '<p>You may only list items you own or have legal authority to sell. All listing information — including title, description, photos, and price — must be accurate and not misleading. Hostly reserves the right to remove any listing without notice.</p>'
+      + '<p>You may only list items you own or have legal authority to sell. All listing information — including title, description, photos, and price — must be accurate and not misleading. PaMarket reserves the right to remove any listing without notice.</p>'
       + '<h3>4. Prohibited Content</h3>'
-      + '<p>The following are strictly prohibited on Hostly: stolen or counterfeit goods; illegal drugs, weapons, or firearms; adult or explicit content; hate speech or content that promotes discrimination; spam, pyramid schemes, or fraudulent offers; impersonation of any person or business.</p>'
+      + '<p>The following are strictly prohibited on PaMarket: stolen or counterfeit goods; illegal drugs, weapons, or firearms; adult or explicit content; hate speech or content that promotes discrimination; spam, pyramid schemes, or fraudulent offers; impersonation of any person or business.</p>'
       + '<h3>5. Transactions</h3>'
-      + '<p>Hostly is a listing and communication platform only. We do not process payments, hold funds, or guarantee the quality of any item. All transactions are solely between buyer and seller. Hostly accepts no liability for disputes, losses, or damages arising from transactions.</p>'
+      + '<p>PaMarket is a listing and communication platform only. We do not process payments, hold funds, or guarantee the quality of any item. All transactions are solely between buyer and seller. PaMarket accepts no liability for disputes, losses, or damages arising from transactions.</p>'
       + '<h3>6. Wallet &amp; Top-Ups</h3>'
-      + '<p>The in-app wallet is used exclusively for boosting listings. Top-up amounts are non-refundable except at Hostly\'s sole discretion. Wallet balances have no cash value and cannot be transferred.</p>'
+      + '<p>The in-app wallet is used exclusively for boosting listings. Top-up amounts are non-refundable except at PaMarket\'s sole discretion. Wallet balances have no cash value and cannot be transferred.</p>'
       + '<h3>7. Intellectual Property</h3>'
-      + '<p>All content you post on Hostly (photos, descriptions, etc.) remains yours. By posting, you grant Hostly a non-exclusive, royalty-free licence to display your content within the app. The Hostly name, logo, and app design are our intellectual property and may not be copied or reused.</p>'
+      + '<p>All content you post on PaMarket (photos, descriptions, etc.) remains yours. By posting, you grant PaMarket a non-exclusive, royalty-free licence to display your content within the app. The PaMarket name, logo, and app design are our intellectual property and may not be copied or reused.</p>'
       + '<h3>8. Privacy</h3>'
       + '<p>Your use of the app is also governed by our Privacy Policy, which is incorporated into these Terms by reference.</p>'
       + '<h3>9. Termination</h3>'
       + '<p>We may suspend or permanently ban any account that violates these Terms, with or without notice. You may delete your account at any time via Settings → Security → Delete Account.</p>'
       + '<h3>10. Limitation of Liability</h3>'
-      + '<p>Hostly is provided "as is" without warranties of any kind. To the maximum extent permitted by law, Hostly shall not be liable for any indirect, incidental, or consequential damages arising from your use of the app.</p>'
+      + '<p>PaMarket is provided "as is" without warranties of any kind. To the maximum extent permitted by law, PaMarket shall not be liable for any indirect, incidental, or consequential damages arising from your use of the app.</p>'
       + '<h3>11. Changes to Terms</h3>'
       + '<p>We may update these Terms from time to time. Continued use of the app after changes are posted constitutes acceptance of the revised Terms.</p>'
       + '<h3>12. Governing Law</h3>'
@@ -411,14 +411,14 @@
     return '<div class="doc-content">'
       + '<h2>Privacy Policy</h2>'
       + '<p><strong>Effective Date: 1 May 2026</strong></p>'
-      + '<p>Hostly Zimbabwe ("we", "us", or "our") is committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and your rights.</p>'
+      + '<p>PaMarket Zimbabwe ("we", "us", or "our") is committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and your rights.</p>'
       + '<h3>1. Information We Collect</h3>'
       + '<p><strong>Account data:</strong> name, email address, phone number, and profile photo when you register.</p>'
       + '<p><strong>Listing data:</strong> photos, descriptions, prices, and location you provide when posting an ad.</p>'
       + '<p><strong>Usage data:</strong> pages viewed, searches performed, listings saved, and messages sent within the app.</p>'
       + '<p><strong>Device data:</strong> device type, operating system, and app version for crash reporting and performance monitoring.</p>'
       + '<h3>2. How We Use Your Information</h3>'
-      + '<p>To operate and improve the Hostly platform; to authenticate your account and keep it secure; to display your listings to other users; to send you notifications about messages, offers, and account activity; to investigate reports of abuse or policy violations.</p>'
+      + '<p>To operate and improve the PaMarket platform; to authenticate your account and keep it secure; to display your listings to other users; to send you notifications about messages, offers, and account activity; to investigate reports of abuse or policy violations.</p>'
       + '<h3>3. Data Sharing</h3>'
       + '<p>We do not sell your personal data. We share data only with: <strong>Supabase</strong> (our database and authentication provider, data stored in EU data centres with encryption at rest and in transit); <strong>Google</strong> (if you choose Sign in with Google); and law enforcement when required by law.</p>'
       + '<h3>4. Photos &amp; Camera</h3>'
@@ -430,7 +430,7 @@
       + '<h3>7. Your Rights</h3>'
       + '<p>You may access, correct, or delete your personal data at any time via Settings → Edit Profile or Settings → Security → Delete Account. You may also contact us directly to request a copy of your data.</p>'
       + '<h3>8. Children\'s Privacy</h3>'
-      + '<p>Hostly is not intended for users under 18. We do not knowingly collect data from children. If we become aware that a child has registered, we will delete the account immediately.</p>'
+      + '<p>PaMarket is not intended for users under 18. We do not knowingly collect data from children. If we become aware that a child has registered, we will delete the account immediately.</p>'
       + '<h3>9. Changes to This Policy</h3>'
       + '<p>We may update this Privacy Policy from time to time. We will notify you of significant changes via in-app notification. Continued use of the app constitutes acceptance of the updated policy.</p>'
       + '<h3>10. Contact</h3>'

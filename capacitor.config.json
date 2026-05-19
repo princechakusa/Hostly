@@ -1,6 +1,6 @@
 {
-  "appId": "com.hostly.app",
-  "appName": "Hostly",
+  "appId": "com.pamarket.app",
+  "appName": "PaMarket",
   "webDir": "www",
   "server": {
     "androidScheme": "https"

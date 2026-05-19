@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#1A3A8F">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Hostly">
+  <meta name="apple-mobile-web-app-title" content="PaMarket">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="description" content="Hostly — Zimbabwe's free marketplace. Buy, sell and find jobs across all provinces.">
+  <meta name="description" content="PaMarket — Zimbabwe's free marketplace. Buy, sell and find jobs across all provinces.">
   <meta name="keywords" content="Zimbabwe marketplace, buy sell Zimbabwe, jobs Zimbabwe, Harare classifieds">
-  <meta property="og:title" content="Hostly — Zimbabwe's Free Marketplace">
+  <meta property="og:title" content="PaMarket — Zimbabwe's Free Marketplace">
   <meta property="og:description" content="Buy, sell and find jobs across all provinces of Zimbabwe.">
   <meta property="og:image" content="img/icon-512.png">
   <meta property="og:type" content="website">
-  <title>Hostly — Zimbabwe's Free Marketplace</title>
+  <title>PaMarket — Zimbabwe's Free Marketplace</title>
 
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://gxgytumhknmnwspxjzxw.supabase.co; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://gxgytumhknmnwspxjzxw.supabase.co wss://gxgytumhknmnwspxjzxw.supabase.co https://accounts.google.com https://graph.facebook.com; frame-src 'none'; object-src 'none';">
 
@@ -32,7 +32,7 @@
 
   <style>
     /* ── Splash Screen ─────────────────────────────────── */
-    #hostlySplash {
+    #pamarketSplash {
       position: fixed; inset: 0;
       background: linear-gradient(160deg, #1A3A8F 0%, #0f2460 100%);
       display: flex; flex-direction: column;
@@ -41,7 +41,7 @@
       transition: opacity .4s ease, transform .4s ease;
       font-family: 'Inter', sans-serif;
     }
-    #hostlySplash.hiding {
+    #pamarketSplash.hiding {
       opacity: 0;
       transform: scale(1.04);
       pointer-events: none;
@@ -188,8 +188,8 @@
 <body>
 
   <!-- Splash -->
-  <div id="hostlySplash">
-    <img src="img/icon-192.png" alt="Hostly" class="splash-logo">
+  <div id="pamarketSplash">
+    <img src="img/icon-192.png" alt="PaMarket" class="splash-logo">
     <div class="splash-wordmark">Host<em>ly</em></div>
     <div class="splash-tag">Zimbabwe's Free Marketplace</div>
     <div class="splash-dots">
@@ -322,7 +322,7 @@
     // ── Splash hide ──────────────────────────────────────
     window.addEventListener('load', () => {
       setTimeout(() => {
-        const splash = document.getElementById('hostlySplash');
+        const splash = document.getElementById('pamarketSplash');
         if (splash) {
           splash.classList.add('hiding');
           setTimeout(() => splash.remove(), 450);

@@ -344,7 +344,7 @@
             Privacy Note
           </div>
           <div style="font-size:12px;color:var(--sub);line-height:1.6">
-            Hostly never sells your notification preferences or contact details to third parties.
+            PaMarket never sells your notification preferences or contact details to third parties.
             You can turn off all notifications at any time from your device settings.
           </div>
         </div>

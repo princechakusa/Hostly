@@ -1,6 +1,6 @@
 ﻿self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open('hostly-v1').then(cache => {
+    caches.open('pamarket-v1').then(cache => {
       cache.addAll([
         './',
         './index.html',
@@ -29,7 +29,7 @@ self.addEventListener('fetch', event => {
           return response;
         }
         const responseClone = response.clone();
-        caches.open('hostly-v1').then(cache => {
+        caches.open('pamarket-v1').then(cache => {
           cache.put(event.request, responseClone);
         });
         return response;

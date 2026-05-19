@@ -304,16 +304,16 @@
           <p style="color:var(--ash);font-size:12px">Last updated: May 2026 · Effective immediately</p>
 
           <h2>1. Agreement to Terms</h2>
-          <p>By downloading, installing, or using the Hostly application ("App"), you agree to be legally bound by these Terms of Service. If you do not agree to these terms, you must not use the App. These terms govern all users: buyers, sellers, job seekers, employers, and visitors.</p>
+          <p>By downloading, installing, or using the PaMarket application ("App"), you agree to be legally bound by these Terms of Service. If you do not agree to these terms, you must not use the App. These terms govern all users: buyers, sellers, job seekers, employers, and visitors.</p>
 
-          <h2>2. Who Can Use Hostly</h2>
-          <p>You must be at least 18 years old to create an account or use Hostly. By registering, you confirm that you meet this age requirement and are legally competent to enter into contracts under Zimbabwean law. We reserve the right to terminate accounts where the minimum age requirement is not met.</p>
+          <h2>2. Who Can Use PaMarket</h2>
+          <p>You must be at least 18 years old to create an account or use PaMarket. By registering, you confirm that you meet this age requirement and are legally competent to enter into contracts under Zimbabwean law. We reserve the right to terminate accounts where the minimum age requirement is not met.</p>
 
           <h2>3. Account Responsibility</h2>
           <p>You are responsible for keeping your account credentials confidential. All activity that occurs under your account is your responsibility. You must provide accurate and truthful information when registering. If you suspect unauthorized access to your account, contact us immediately at chakusaprince@gmail.com or WhatsApp +971 589 772 645.</p>
 
-          <h2>4. What Hostly Is</h2>
-          <p>Hostly is an online classifieds marketplace that connects buyers and sellers in Zimbabwe. We provide the platform — we are not a party to any transaction between users. We do not hold payments, guarantee delivery, or verify the condition of items unless stated. All transactions are conducted directly between users at their own risk.</p>
+          <h2>4. What PaMarket Is</h2>
+          <p>PaMarket is an online classifieds marketplace that connects buyers and sellers in Zimbabwe. We provide the platform — we are not a party to any transaction between users. We do not hold payments, guarantee delivery, or verify the condition of items unless stated. All transactions are conducted directly between users at their own risk.</p>
 
           <h2>5. Listing Rules</h2>
           <p>All listings must be honest, legal, and comply with Zimbabwean law. You must own or have explicit authority to sell any item listed. The following content is strictly prohibited and will result in immediate removal and account termination:</p>
@@ -330,7 +330,7 @@
           </ul>
 
           <h2>6. Advertising Credits (Boost Feature)</h2>
-          <p>Hostly offers optional paid advertising credits ("Boost") to increase the visibility of your listings. These credits are purchased as a business service via external payment methods (EcoCash, OneMoney, or bank transfer). Advertising credits are not processed by Google Play or the Apple App Store. Credits are non-refundable once applied to a listing. Unused credits may be refunded at our discretion within 7 days of purchase — contact us to request a refund.</p>
+          <p>PaMarket offers optional paid advertising credits ("Boost") to increase the visibility of your listings. These credits are purchased as a business service via external payment methods (EcoCash, OneMoney, or bank transfer). Advertising credits are not processed by Google Play or the Apple App Store. Credits are non-refundable once applied to a listing. Unused credits may be refunded at our discretion within 7 days of purchase — contact us to request a refund.</p>
 
           <h2>7. User Conduct</h2>
           <p>You agree not to:</p>
@@ -345,19 +345,19 @@
           </ul>
 
           <h2>8. User Content License</h2>
-          <p>By posting photos, text, or any content on Hostly, you grant us a non-exclusive, worldwide, royalty-free license to display, reproduce, and distribute that content within the App and for promotional purposes. You confirm that you own or have the rights to all content you post and that it does not infringe any third-party rights.</p>
+          <p>By posting photos, text, or any content on PaMarket, you grant us a non-exclusive, worldwide, royalty-free license to display, reproduce, and distribute that content within the App and for promotional purposes. You confirm that you own or have the rights to all content you post and that it does not infringe any third-party rights.</p>
 
           <h2>9. Intellectual Property</h2>
-          <p>All design, branding, logos, code, and content created by Hostly are protected by copyright and intellectual property law. You may not copy, reproduce, reverse-engineer, or redistribute any part of the App without our written consent.</p>
+          <p>All design, branding, logos, code, and content created by PaMarket are protected by copyright and intellectual property law. You may not copy, reproduce, reverse-engineer, or redistribute any part of the App without our written consent.</p>
 
           <h2>10. Moderation and Enforcement</h2>
           <p>We reserve the right to remove any listing, suspend, or permanently ban any account that violates these Terms at any time, with or without notice. Serious violations including fraud, scams, or illegal activity may be reported to relevant Zimbabwean authorities. Banned users may appeal by contacting chakusaprince@gmail.com within 14 days of the ban.</p>
 
           <h2>11. Disclaimer of Warranties</h2>
-          <p>Hostly is provided "as is" and "as available" without any warranties, express or implied. We do not guarantee that the App will be uninterrupted, error-free, or that listings are accurate. We are not responsible for the quality, safety, legality, or availability of listed items.</p>
+          <p>PaMarket is provided "as is" and "as available" without any warranties, express or implied. We do not guarantee that the App will be uninterrupted, error-free, or that listings are accurate. We are not responsible for the quality, safety, legality, or availability of listed items.</p>
 
           <h2>12. Limitation of Liability</h2>
-          <p>To the maximum extent permitted by law, Hostly and its operators shall not be liable for any indirect, incidental, punitive, or consequential damages arising from your use of the App, including loss of money, data, or business opportunity resulting from transactions between users.</p>
+          <p>To the maximum extent permitted by law, PaMarket and its operators shall not be liable for any indirect, incidental, punitive, or consequential damages arising from your use of the App, including loss of money, data, or business opportunity resulting from transactions between users.</p>
 
           <h2>13. Governing Law</h2>
           <p>These Terms are governed exclusively by the laws of the Republic of Zimbabwe. Any legal disputes shall be subject to the jurisdiction of the courts of Zimbabwe.</p>
@@ -384,7 +384,7 @@ pages.HelpPrivacy = function () {
           <p style="color:var(--ash);font-size:12px">Last updated: May 2026</p>
 
           <h2>1. Who We Are</h2>
-          <p>Hostly is a Zimbabwean marketplace application. We are committed to protecting your privacy and handling your data responsibly. This policy explains what data we collect, why we collect it, and how we protect it.</p>
+          <p>PaMarket is a Zimbabwean marketplace application. We are committed to protecting your privacy and handling your data responsibly. This policy explains what data we collect, why we collect it, and how we protect it.</p>
 
           <h2>2. Data We Collect</h2>
           <ul>
@@ -446,7 +446,7 @@ pages.HelpPrivacy = function () {
           </ul>
 
           <h2>11. Children's Privacy</h2>
-          <p>Hostly is strictly for users aged 18 and over. We do not knowingly collect personal data from anyone under 18. If we discover that a minor has created an account, we will immediately delete their account and all associated data. If you believe a minor is using the App, please contact us.</p>
+          <p>PaMarket is strictly for users aged 18 and over. We do not knowingly collect personal data from anyone under 18. If we discover that a minor has created an account, we will immediately delete their account and all associated data. If you believe a minor is using the App, please contact us.</p>
 
           <h2>12. Third-Party Links</h2>
           <p>Listings may include links to WhatsApp or external websites. We are not responsible for the privacy practices or content of any third-party services. We encourage you to review their privacy policies before sharing personal information.</p>
@@ -471,7 +471,7 @@ pages.HelpCommunity = function () {
         <div class="doc-section">
           <h2>Community Guidelines</h2>
           <p style="color:var(--ash);font-size:12px">Last updated: May 2026</p>
-          <p>Hostly is built on trust. These guidelines exist to keep our marketplace safe, fair, and beneficial for every Zimbabwean. Violations result in warnings, listing removal, suspension, or permanent bans.</p>
+          <p>PaMarket is built on trust. These guidelines exist to keep our marketplace safe, fair, and beneficial for every Zimbabwean. Violations result in warnings, listing removal, suspension, or permanent bans.</p>
 
           <h2>1. Be Honest</h2>
           <p>Accuracy is everything in a marketplace. You must:</p>
@@ -513,7 +513,7 @@ pages.HelpCommunity = function () {
           </ul>
 
           <h2>5. Prohibited Items</h2>
-          <p>The following may never be listed on Hostly:</p>
+          <p>The following may never be listed on PaMarket:</p>
           <ul>
             <li>Stolen goods of any kind</li>
             <li>Counterfeit or fake branded products</li>
@@ -556,7 +556,7 @@ pages.HelpCommunity = function () {
           <p>Banned users may appeal by emailing chakusaprince@gmail.com with evidence. We review all appeals within 7 days.</p>
 
           <h2>9. Our Commitment</h2>
-          <p>We are committed to making Hostly Zimbabwe's most trusted marketplace. We review all reports, take action on violations, and continuously improve our safety systems. Together we can build a marketplace that works for everyone.</p>
+          <p>We are committed to making PaMarket Zimbabwe's most trusted marketplace. We review all reports, take action on violations, and continuously improve our safety systems. Together we can build a marketplace that works for everyone.</p>
 
           <h2>Contact Safety Team</h2>
           <p>chakusaprince@gmail.com</p>
@@ -565,21 +565,21 @@ pages.HelpCommunity = function () {
     </div>`;
   };
 
-  // --- About Hostly -----------------------------------------
+  // --- About PaMarket -----------------------------------------
   pages.About = function () {
     const year = new Date().getFullYear();
     return `<div class="page active">
-      ${H.innerTopbar('About Hostly')}
+      ${H.innerTopbar('About PaMarket')}
       <div style="background:linear-gradient(135deg,#1A3A8F 0%,#2952cc 100%);padding:36px 20px 32px;text-align:center">
         <div style="width:72px;height:72px;background:rgba(255,255,255,.15);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:36px;font-weight:900;color:#fff;letter-spacing:-2px">H</div>
-        <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px">Hostly</div>
+        <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px">PaMarket</div>
         <div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:6px">Zimbabwe's Free Marketplace</div>
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:10px;font-weight:600">Version 1.0.0</div>
       </div>
 
       <div class="doc-content" style="padding-top:20px">
         <p style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px">Our Mission</p>
-        <p>Hostly connects Zimbabweans to buy, sell, rent, and find jobs — for free. We believe commerce should be accessible to everyone, not just those who can afford platform fees.</p>
+        <p>PaMarket connects Zimbabweans to buy, sell, rent, and find jobs — for free. We believe commerce should be accessible to everyone, not just those who can afford platform fees.</p>
 
         <p style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;margin-top:20px">What We Offer</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
@@ -620,7 +620,7 @@ pages.HelpCommunity = function () {
         </div>
 
         <div style="text-align:center;padding:28px 0 0;font-size:12px;color:var(--sub)">
-          © ${year} Hostly · Made in Zimbabwe 🇿🇼
+          © ${year} PaMarket · Made in Zimbabwe 🇿🇼
         </div>
       </div>
     </div>`;
@@ -637,7 +637,7 @@ H.pages.LegalHub = function() {
   var emailLink = 'mailto:chakusaprince@gmail.com';
   var waLink = 'https://wa.me/971589772645';
   var html = '<div class="page active">' + H.innerTopbar('Legal Hub');
-  html += '<div class="legal-hero"><div class="legal-hero-title">Welcome to<br><strong>Hostly Legal Hub</strong></div><div class="legal-hero-sub">Legal information for Hostly products and services</div></div>';
+  html += '<div class="legal-hero"><div class="legal-hero-title">Welcome to<br><strong>PaMarket Legal Hub</strong></div><div class="legal-hero-sub">Legal information for PaMarket products and services</div></div>';
   sections.forEach(function(sec) {
     html += '<div class="legal-section-title">' + sec.title + '</div><div class="legal-list">';
     sec.items.forEach(function(item) { html += '<div class="legal-item"><div class="legal-item-title">' + item + '</div><div class="legal-item-arrow">&rsaquo;</div></div>'; });
@@ -649,7 +649,7 @@ H.pages.LegalHub = function() {
   html += '</div>';
   html += '<div class="legal-footer"><div class="legal-footer-links">';
   ['About Us','Advertise','Terms of Use','Privacy Policy'].forEach(function(l) { html += '<span class="legal-footer-link" onclick="H.openInner(\x27About\x27)">' + l + '</span>'; });
-  html += '</div><div class="legal-footer-copy">Hostly &copy; 2026 &middot; Zimbabwe\'s #1 Free Marketplace</div></div>';
+  html += '</div><div class="legal-footer-copy">PaMarket &copy; 2026 &middot; Zimbabwe\'s #1 Free Marketplace</div></div>';
   html += '</div></div>';
   return html;
 };

@@ -103,7 +103,7 @@
         </div>
         <div class="mi" onclick="H.openInner('About')">
           <div class="mi-icon green-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-          <div class="mi-label">About Hostly</div>
+          <div class="mi-label">About PaMarket</div>
           <div class="mi-arrow">›</div>
         </div>
         ${u.role === 'admin' ? `

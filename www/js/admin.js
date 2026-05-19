@@ -745,7 +745,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `hostly-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `pamarket-backup-${new Date().toISOString().split('T')[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
       alog('Exported all data');
