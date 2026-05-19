@@ -56,6 +56,7 @@
       ['reports',       `Reports (${(H.state.reports||[]).filter(r=>r.status==='open').length})`],
       ['payments',      'Payments'],
       ['analytics',     'Analytics'],
+      ['verifications',  `Verify (${(H.state.users||[]).filter(u=>u.verificationPending&&!u.verified).length})`],
       ['settings',      'Settings'],
       ['notifications', 'Notify'],
       ['support',       `Support (${(H.state.supportTickets||[]).filter(t=>t.status!=='closed').length})`],
@@ -72,18 +73,67 @@
 
   function renderBody() {
     switch (_adminTab) {
-      case 'overview':      return renderOverview();
-      case 'users':         return renderUsers();
-      case 'listings':      return renderListings();
-      case 'reports':       return renderReports();
-      case 'payments':      return renderPayments();
-      case 'analytics':     return renderAnalytics();
-      case 'settings':      return renderSettings();
-      case 'notifications': return renderNotifications();
-      case 'support':       return renderSupport();
-      case 'logs':          return renderLogs();
+      case 'overview':       return renderOverview();
+      case 'users':          return renderUsers();
+      case 'listings':       return renderListings();
+      case 'reports':        return renderReports();
+      case 'payments':       return renderPayments();
+      case 'analytics':      return renderAnalytics();
+      case 'verifications':  return renderVerifications();
+      case 'settings':       return renderSettings();
+      case 'notifications':  return renderNotifications();
+      case 'support':        return renderSupport();
+      case 'logs':           return renderLogs();
       default: return '';
     }
+  }
+
+  function renderVerifications() {
+    const pending = (H.state.users||[]).filter(u=>u.verificationPending && !u.verified);
+    const verified = (H.state.users||[]).filter(u=>u.verified);
+    return `
+      <div class="stats" style="margin:0 0 14px">
+        <div class="stat"><div class="stat-n">${pending.length}</div><div class="stat-l">Pending</div></div>
+        <div class="stat"><div class="stat-n">${verified.length}</div><div class="stat-l">Verified</div></div>
+        <div class="stat"><div class="stat-n">${(H.state.users||[]).length}</div><div class="stat-l">Total Users</div></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Pending Verification Requests</div>
+      ${pending.length ? `
+      <div class="section-card" style="margin-bottom:16px">
+        ${pending.map(u => `
+          <div class="admin-row" style="padding:14px">
+            <div class="admin-row-head">
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:40px;height:40px;border-radius:50%;background:#1A3A8F20;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#1A3A8F;flex-shrink:0">${H.initials(u.name||'U')}</div>
+                <div>
+                  <div class="admin-row-name" style="font-size:14px;font-weight:700">${escHtml(u.name||'Unknown')}</div>
+                  <div class="admin-row-meta">${escHtml(u.email||'')} · ${escHtml(u.phone||'No phone')}</div>
+                  ${u.cv && u.cv.headline ? `<div style="font-size:12px;color:#1A3A8F;font-weight:600;margin-top:2px">${escHtml(u.cv.headline)}</div>` : ''}
+                </div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:var(--sub);margin:8px 0">${u.verificationIdType ? `ID Type: ${escHtml(u.verificationIdType)}` : 'Standard verification request'}</div>
+            <div class="admin-actions">
+              <button class="ml-act-btn" onclick="H._admin.approveVerification('${u.id}')">${S.verify} Approve &amp; Verify</button>
+              <button class="ml-act-btn red" onclick="H._admin.rejectVerification('${u.id}')">${S.reject} Reject</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>` : `<div style="text-align:center;padding:32px 20px;color:var(--sub);font-size:14px">No pending verification requests</div>`}
+      <div style="font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Verified Users</div>
+      <div class="section-card">
+        ${verified.length ? verified.slice(0,20).map(u => `
+          <div class="admin-row">
+            <div class="admin-row-head">
+              <div class="admin-row-name">${escHtml(u.name||'Unknown')} <span style="color:#059669;font-size:11px">✓ Verified</span></div>
+              <span style="font-size:11px;color:var(--sub)">${new Date(u.verifiedAt||u.joinedAt||Date.now()).toLocaleDateString()}</span>
+            </div>
+            <div class="admin-row-meta">${escHtml(u.email||u.phone||'')}</div>
+            <div class="admin-actions">
+              <button class="ml-act-btn red" onclick="H._admin.revokeVerification('${u.id}')">Revoke</button>
+            </div>
+          </div>`).join('') : '<div style="padding:16px;text-align:center;color:var(--sub)">No verified users yet</div>'}
+      </div>`;
   }
 
   // ── OVERVIEW ──────────────────────────────────────────────
@@ -247,6 +297,7 @@
           <button class="ml-act-btn red" onclick="H._admin.banUser('${u.id}','perm')">${S.ban} Ban</button>
         ` : `<button class="ml-act-btn" onclick="H._admin.unban('${u.id}')">${S.unban} Unban</button>`}
         ${!u.verified?`<button class="ml-act-btn" onclick="H._admin.verifyUser('${u.id}')">${S.verify} Verify</button>`:''}
+        ${!u.companyVerified?`<button class="ml-act-btn" onclick="H._admin.verifyCompany('${u.id}')">🏢 Company ✓</button>`:`<button class="ml-act-btn" onclick="H._admin.revokeCompany('${u.id}')">🏢 Revoke Co.</button>`}
         ${u.role!=='admin'?`<button class="ml-act-btn" onclick="H._admin.makeAdmin('${u.id}')">${S.admin} Make Admin</button>`:''}
         ${u.id!==currentUser().id?`<button class="ml-act-btn red" onclick="H._admin.deleteUser('${u.id}')">${S.delete} Delete</button>`:''}
       </div>
@@ -541,12 +592,19 @@
       const r = (H.state.topupRequests||[]).find(x=>x.id===rid); if (!r) return;
       const u = (H.state.users||[]).find(x=>x.id===r.userId); if (!u) return;
       r.status = 'approved';
-      u.walletUSD = (u.walletUSD||0) + Number(r.amount);
+      const amount = Number(r.amount);
+      u.walletUSD = parseFloat(((u.walletUSD||0) + amount).toFixed(2));
       H.state.txns = H.state.txns||[];
-      H.state.txns.unshift({id:uid(),userId:u.id,type:'topup',amt:Number(r.amount),note:`Top-up approved by admin (ref: ${r.ref||'—'})`,t:Date.now()});
-      pushNotif(u.id,'Top-up Approved',`$${r.amount} has been added to your wallet`);
-      alog(`Approved top-up $${r.amount} for ${u.name}`);
-      saveState(); toast(`$${r.amount} credited to ${u.name}`); this.setTab('payments');
+      H.state.txns.unshift({id:uid(),userId:u.id,type:'topup',amt:amount,note:`Top-up via ${r.method||'EcoCash'} (ref: ${r.reference||r.ref||'—'})`,t:Date.now()});
+      pushNotif(u.id,'Wallet Credited ✓',`$${amount.toFixed(2)} has been added to your PaMarket wallet`,'wallet');
+      alog(`Approved top-up $${amount} for ${u.name}`);
+      // Sync to Supabase
+      const sb = window.supabase;
+      if (sb && typeof sb.from === 'function') {
+        sb.from('topup_requests').update({ status: 'approved' }).eq('id', rid);
+        sb.from('profiles').update({ wallet_usd: u.walletUSD }).eq('id', u.id);
+      }
+      saveState(); toast(`$${amount.toFixed(2)} credited to ${u.name}`); this.setTab('payments');
     },
 
     rejectTopup(rid) {
@@ -619,6 +677,52 @@
       u.verified=true; u.verifiedAt=Date.now();
       alog(`Verified: ${u.name}`);
       saveState(); toast(`${u.name} verified`); this.setTab('users');
+    },
+
+    approveVerification(uid_) {
+      const u = (H.state.users||[]).find(x=>x.id===uid_); if (!u) return;
+      u.verified=true; u.verifiedAt=Date.now(); u.verificationPending=false;
+      alog(`Verification approved: ${u.name}`);
+      pushNotif(uid_,'Identity Verified ✓','Congratulations! Your identity has been verified on PaMarket.','verify');
+      const sb = window.supabase;
+      if (sb && typeof sb.from === 'function') {
+        sb.from('profiles').update({ verified: true, updated_at: new Date().toISOString() }).eq('id', uid_);
+      }
+      saveState(); toast(`${u.name} verified ✓`); this.setTab('verifications');
+    },
+
+    rejectVerification(uid_) {
+      const u = (H.state.users||[]).find(x=>x.id===uid_); if (!u) return;
+      u.verificationPending=false;
+      alog(`Verification rejected: ${u.name}`);
+      pushNotif(uid_,'Verification Unsuccessful','Your ID verification could not be approved. Contact support for help.','warn');
+      saveState(); toast(`Verification rejected for ${u.name}`); this.setTab('verifications');
+    },
+
+    revokeVerification(uid_) {
+      const u = (H.state.users||[]).find(x=>x.id===uid_); if (!u) return;
+      u.verified=false; u.verifiedAt=null;
+      alog(`Verification revoked: ${u.name}`);
+      const sb = window.supabase;
+      if (sb && typeof sb.from === 'function') {
+        sb.from('profiles').update({ verified: false }).eq('id', uid_);
+      }
+      saveState(); toast(`Verification revoked for ${u.name}`); this.setTab('verifications');
+    },
+
+    verifyCompany(uid_) {
+      const u = (H.state.users||[]).find(x=>x.id===uid_); if (!u) return;
+      u.companyVerified = true; u.companyVerifiedAt = Date.now();
+      alog(`Company verified: ${u.name}`);
+      pushNotif(uid_,'Company Verified ✓','Your company account has been verified on PaMarket.','verify');
+      saveState(); toast(`${u.name} company verified`); this.setTab('users');
+    },
+
+    revokeCompany(uid_) {
+      const u = (H.state.users||[]).find(x=>x.id===uid_); if (!u) return;
+      u.companyVerified = false;
+      alog(`Company verification revoked: ${u.name}`);
+      saveState(); toast(`Company verification revoked`); this.setTab('users');
     },
 
     approveListing(lid) {
@@ -808,5 +912,4 @@
   };
 
 })(window.H = window.H || {});
-
 
