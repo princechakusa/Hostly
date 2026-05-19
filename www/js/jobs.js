@@ -181,27 +181,33 @@
     H._currentTalentSector = 'All';
     var _sb = window.supabase;
     if (!_sb || typeof _sb.from !== 'function') return;
-    _sb.from('profiles').select('id,name,phone,avatar,verified,job_title,skills,sector,exp,city,open_to_work')
-      .eq('open_to_work', true).limit(100)
+    // Load profiles that are open to work OR have a CV set to visible
+    _sb.from('profiles')
+      .select('id,name,phone,email,avatar,verified,job_title,skills,sector,exp,city,open_to_work,cv')
+      .or('open_to_work.eq.true,cv->visible.eq.true')
+      .limit(200)
       .then(function (res) {
         if (res.error || !res.data || !res.data.length) return;
         res.data.forEach(function (p) {
           var ex = (H.state.users || []).find(function (u) { return u.id === p.id; });
+          var cvData = typeof p.cv === 'string' ? JSON.parse(p.cv || '{}') : (p.cv || null);
           if (!ex) {
             (H.state.users = H.state.users || []).push({
               id: p.id, name: p.name || 'User', phone: p.phone || '',
-              avatar: p.avatar || null, verified: p.verified || false,
-              openToWork: true, jobTitle: p.job_title || '',
-              skills: p.skills || '', sector: p.sector || '',
-              exp: p.exp || '', city: p.city || ''
+              email: p.email || '', avatar: p.avatar || null,
+              verified: p.verified || false, openToWork: p.open_to_work || false,
+              jobTitle: p.job_title || '', skills: p.skills || '',
+              sector: p.sector || '', exp: p.exp || '', city: p.city || '',
+              cv: cvData || null
             });
           } else {
-            ex.openToWork = true;
-            ex.jobTitle  = p.job_title  || ex.jobTitle  || '';
-            ex.skills    = p.skills     || ex.skills    || '';
-            ex.sector    = p.sector     || ex.sector    || '';
-            ex.exp       = p.exp        || ex.exp       || '';
-            ex.city      = p.city       || ex.city      || '';
+            ex.openToWork = p.open_to_work || ex.openToWork;
+            ex.jobTitle   = p.job_title   || ex.jobTitle   || '';
+            ex.skills     = p.skills      || ex.skills     || '';
+            ex.sector     = p.sector      || ex.sector     || '';
+            ex.exp        = p.exp         || ex.exp        || '';
+            ex.city       = p.city        || ex.city       || '';
+            if (cvData) ex.cv = cvData;
           }
         });
         H.saveState();
