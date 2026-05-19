@@ -158,20 +158,26 @@ window.H = {
   modal({ title, body, confirmText='OK', cancelText='Cancel', danger=false, onConfirm }) {
     const bg  = document.getElementById('modalBg');
     const box = document.getElementById('modalBox');
+    box.classList.remove('login-modal');
     box.innerHTML = `
-      <h3>${this.escHtml(title)}</h3>
-      <div style="font-size:14px;color:var(--sub);line-height:1.6;margin-bottom:4px">${body||''}</div>
-      <div class="modal-btns">
-        ${cancelText?`<button class="modal-btn cancel" onclick="H.closeModal()">${cancelText}</button>`:''}
-        <button class="modal-btn ${danger?'danger':'confirm'}" id="mConfirm">${confirmText}</button>
+      <div class="modal-header">
+        <h3>${this.escHtml(title)}</h3>
+      </div>
+      <div class="modal-body-scroll">
+        <div style="font-size:14px;color:var(--sub);line-height:1.6;padding-top:8px">${body||''}</div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-btns">
+          ${cancelText?`<button class="modal-btn cancel" onclick="H.closeModal()">${cancelText}</button>`:''}
+          <button class="modal-btn ${danger?'danger':'confirm'}" id="mConfirm">${confirmText}</button>
+        </div>
       </div>`;
     bg.classList.add('open');
-    bg.scrollTop = 0;
     document.getElementById('mConfirm').onclick = () => {
       if (onConfirm && onConfirm()===false) return;
       H.closeModal();
     };
-    setTimeout(()=>{ document.getElementById('mConfirm')?.focus({preventScroll:true}); bg.scrollTop=0; }, 50);
+    setTimeout(()=>document.getElementById('mConfirm')?.focus({preventScroll:true}), 50);
   },
   closeModal() { document.getElementById('modalBg').classList.remove('open'); },
   closeLoginModal() {
