@@ -399,24 +399,28 @@
     H.saveState();
   };
 
-  H.logout = async function() {
-    try {
-      var sc = window.supabase;
-      if (sc) {
-        if (window._msgChannel)   { sc.removeChannel(window._msgChannel);   window._msgChannel   = null; }
-        if (H._notifChannel)      { sc.removeChannel(H._notifChannel);      H._notifChannel      = null; }
+  H.logout = function() {
+    H.modal({
+      title: 'Sign Out',
+      body: 'Are you sure you want to sign out?',
+      confirmText: 'Sign Out',
+      cancelText: 'Cancel',
+      danger: true,
+      onConfirm: function() {
+        H.state.currentUserId = null;
+        H.state.adminSession = null;
+        H.saveState();
+        try {
+          var sc = window.supabase;
+          if (sc) {
+            if (window._msgChannel) { sc.removeChannel(window._msgChannel); window._msgChannel = null; }
+            if (H._notifChannel)    { sc.removeChannel(H._notifChannel);    H._notifChannel    = null; }
+            if (sc.auth) sc.auth.signOut().catch(function(){});
+          }
+        } catch(e) {}
+        window.location.reload();
       }
-    } catch(e) {}
-    var c = sb();
-    if (c) { try { await c.auth.signOut(); } catch(e) {} }
-    H.state.currentUserId = null;
-    H.state.adminSession = null;
-    H.saveState();
-    var ban = document.getElementById('banScreen');
-    if (ban) ban.classList.remove('show');
-    H.pageStack = [];
-    if (H.closeLoginModal) H.closeLoginModal();
-    H.navTo ? H.navTo('Home') : H.boot();
+    });
   };
 
   H.authGoogle = async function() {
