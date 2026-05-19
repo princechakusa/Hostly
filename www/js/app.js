@@ -1096,7 +1096,12 @@ window.H = {
         </svg>
       </div>
       <div class="auth-card" id="authCard"></div>
-      <div class="login-modal-foot">Closing this popup keeps you right where you are.</div>`;
+      <div class="login-modal-foot">
+        By continuing you agree to our
+        <span onclick="H.authShowDoc('terms')" style="color:var(--blue);cursor:pointer;text-decoration:underline">Terms &amp; Conditions</span>
+        and
+        <span onclick="H.authShowDoc('privacy')" style="color:var(--blue);cursor:pointer;text-decoration:underline">Privacy Policy</span>
+      </div>`;
     bg.classList.add('open');
     if(typeof H.authStepEmail==='function') H.authStepEmail();
   },

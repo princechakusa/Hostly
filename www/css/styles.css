@@ -737,6 +737,8 @@ select.fi {
   max-width: 390px;
   padding: 24px 22px 20px;
   border-radius: 24px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 .login-modal-close {
   position: absolute;
