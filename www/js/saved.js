@@ -162,23 +162,7 @@
   };
 
   H.logOut = function () {
-    modal({
-      title: 'Sign out?', body: 'You will be returned to the login screen.',
-      confirmText: 'Sign Out',
-      onConfirm: async () => {
-        try {
-          var sc = window.supabase;
-          if (sc && sc.auth && typeof sc.auth.signOut === 'function') {
-            await sc.auth.signOut();
-          }
-        } catch (e) {}
-        state.currentUserId = null;
-        state.adminSession = null;
-        saveState();
-        try { sessionStorage.clear(); } catch (e) {}
-        location.reload();
-      }
-    });
+    H.logout();
   };
 
 })(window.H);
