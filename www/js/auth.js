@@ -84,6 +84,7 @@
     card.innerHTML = ''
       + '<div style="text-align:center;margin-bottom:20px"><div style="font-size:22px;font-weight:700;color:var(--text)">Welcome</div><div style="font-size:14px;color:var(--sub);margin-top:4px">Sign in to buy and sell across Zimbabwe</div></div>'
       + '<button class="social-auth-btn google" onclick="H.authGoogle()"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button>'
+      + '<button class="social-auth-btn apple" onclick="H.authApple()" style="background:#000;color:#fff;border-color:#000;margin-top:10px"><svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>Continue with Apple</button>'
       + '<div class="auth-divider"><span>or</span></div>'
       + '<button class="social-auth-btn email" onclick="H.authShowEmailForm()"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1A3A8F" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Continue with Email</button>'
       + '<div style="text-align:center;margin-top:16px;font-size:13px;color:var(--sub)">Don\'t have an account? <span onclick="H.authShowRegister()" style="color:#F5A623;font-weight:600;cursor:pointer">Create one</span></div>';
@@ -95,7 +96,7 @@
     card.innerHTML = ''
       + '<div style="text-align:center;margin-bottom:16px"><div style="font-size:20px;font-weight:700;color:var(--text)">Sign In</div></div>'
       + '<div class="fg"><div class="fl">Email</div><input class="fi" id="emailIn" type="email" placeholder="you@example.com" autocomplete="email"></div>'
-      + '<div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="fl" style="margin-bottom:0">Password</span><span onclick="H.authForgotPassword()" style="font-size:12px;color:#F5A623;cursor:pointer;font-weight:500">Forgot password?</span></div><input class="fi" id="passIn" type="password" placeholder="Password" onkeydown="if(event.key===\'Enter\')H.authSignIn()" autocomplete="current-password"></div>'
+      + '<div class="fg"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="fl" style="margin-bottom:0">Password</span><span onclick="H.authForgotPassword()" style="font-size:12px;color:#F5A623;cursor:pointer;font-weight:500">Forgot password?</span></div><div style="position:relative"><input class="fi" id="passIn" type="password" placeholder="Password" onkeydown="if(event.key===\'Enter\')H.authSignIn()" autocomplete="current-password" style="padding-right:44px"><button type="button" onclick="H._togglePw(\'passIn\')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);padding:4px;line-height:1"><svg id="passIn_eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>'
       + '<button class="auth-btn" onclick="H.authSignIn()">Sign In</button>'
       + '<button class="auth-btn secondary" onclick="H.authStepEmail()">&larr; Back</button>';
     setTimeout(function(){ var e=document.getElementById('emailIn'); if(e) e.focus(); }, 100);
@@ -111,8 +112,8 @@
       + '<div class="fg"><div class="fl">Full Name</div><input class="fi" id="newName" placeholder="e.g. Tendai Moyo" autocomplete="name"></div>'
       + '<div class="fg"><div class="fl">Email</div><input class="fi" id="newEmail" type="email" placeholder="you@example.com" autocomplete="email"></div>'
       + '<div class="fg"><div class="fl">Phone (optional)</div><input class="fi" id="newPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel"></div>'
-      + '<div class="fg"><div class="fl">Password</div><input class="fi" id="newPass" type="password" placeholder="8+ chars, uppercase &amp; number" oninput="H._updatePassStrength()" autocomplete="new-password"><div style="height:4px;background:rgba(255,255,255,.12);border-radius:2px;margin-top:6px"><div id="passStrengthBar" style="height:100%;border-radius:2px;transition:all .3s;width:0"></div></div><div id="passStrengthLabel" style="font-size:11px;margin-top:3px;text-align:right;height:14px"></div></div>'
-      + '<div class="fg"><div class="fl">Confirm Password</div><input class="fi" id="newPass2" type="password" placeholder="re-enter password" autocomplete="new-password"></div>'
+      + '<div class="fg"><div class="fl">Password</div><div style="position:relative"><input class="fi" id="newPass" type="password" placeholder="8+ chars, uppercase &amp; number" oninput="H._updatePassStrength()" autocomplete="new-password" style="padding-right:44px"><button type="button" onclick="H._togglePw(\'newPass\')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);padding:4px;line-height:1"><svg id="newPass_eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div><div style="height:4px;background:rgba(255,255,255,.12);border-radius:2px;margin-top:6px"><div id="passStrengthBar" style="height:100%;border-radius:2px;transition:all .3s;width:0"></div></div><div id="passStrengthLabel" style="font-size:11px;margin-top:3px;text-align:right;height:14px"></div></div>'
+      + '<div class="fg"><div class="fl">Confirm Password</div><div style="position:relative"><input class="fi" id="newPass2" type="password" placeholder="re-enter password" autocomplete="new-password" style="padding-right:44px"><button type="button" onclick="H._togglePw(\'newPass2\')" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,.5);padding:4px;line-height:1"><svg id="newPass2_eye" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>'
       + '<label style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:rgba(255,255,255,.75);margin-bottom:10px;cursor:pointer"><input id="ageConsent" type="checkbox" style="margin-top:2px"><span>I am 18+ and agree to <span onclick="event.stopPropagation();H.authShowDoc(\'terms\')" style="color:#F5A623;text-decoration:underline;cursor:pointer">Terms</span> &amp; <span onclick="event.stopPropagation();H.authShowDoc(\'privacy\')" style="color:#F5A623;text-decoration:underline;cursor:pointer">Privacy Policy</span></span></label>'
       + '<button class="auth-btn" onclick="H.authSignUp()">Create Account</button>'
       + '<button class="auth-btn secondary" onclick="H.authStepEmail()">&larr; Back to Sign In</button>';
@@ -361,8 +362,36 @@
   H.authGoogle = async function() {
     const c = sb();
     if (!c) { H.toast('Sign-in service unavailable'); return; }
-    const { error } = await c.auth.signInWithOAuth({ provider: 'google' });
+    const redirectTo = window.location.origin + window.location.pathname;
+    const { error } = await c.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo }
+    });
     if (error) H.toast(error.message || 'Google sign-in failed');
+  };
+
+  H.authApple = async function() {
+    const c = sb();
+    if (!c) { H.toast('Sign-in service unavailable'); return; }
+    const redirectTo = window.location.origin + window.location.pathname;
+    const { error } = await c.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo }
+    });
+    if (error) H.toast(error.message || 'Apple sign-in failed');
+  };
+
+  H._togglePw = function(id) {
+    var inp = document.getElementById(id);
+    var eye = document.getElementById(id + '_eye');
+    if (!inp) return;
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    if (eye) {
+      eye.innerHTML = show
+        ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+        : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
   };
 
   H.authShowDoc = function(which) {
@@ -389,7 +418,7 @@
       + '<h3>5. Transactions</h3>'
       + '<p>PaMarket is a listing and communication platform only. We do not process payments, hold funds, or guarantee the quality of any item. All transactions are solely between buyer and seller. PaMarket accepts no liability for disputes, losses, or damages arising from transactions.</p>'
       + '<h3>6. Wallet &amp; Top-Ups</h3>'
-      + '<p>The in-app wallet is used exclusively for boosting listings. Top-up amounts are non-refundable except at PaMarket\'s sole discretion. Wallet balances have no cash value and cannot be transferred.</p>'
+      + '<p>The in-app wallet is used exclusively for boosting listings. Top-up amounts that have not yet been used may be refunded upon written request to chakusaprince@gmail.com within 30 days of payment. Used credits are non-refundable. Wallet balances have no cash value and cannot be transferred.</p>'
       + '<h3>7. Intellectual Property</h3>'
       + '<p>All content you post on PaMarket (photos, descriptions, etc.) remains yours. By posting, you grant PaMarket a non-exclusive, royalty-free licence to display your content within the app. The PaMarket name, logo, and app design are our intellectual property and may not be copied or reused.</p>'
       + '<h3>8. Privacy</h3>'
