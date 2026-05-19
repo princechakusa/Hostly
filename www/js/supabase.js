@@ -1,4 +1,4 @@
-// supabase.js "” safe Supabase client initialisation
+// supabase.js "" safe Supabase client initialisation
 (function () {
   // Make sure the CDN loaded
   if (!window.supabase) {
@@ -35,7 +35,7 @@
 
   window.supabase = window.supabase.createClient(supabaseUrl || '', supabaseAnonKey || '');
 
-  // Handle OAuth callbacks (Google, Facebook) — fires when page loads after redirect
+  // Handle OAuth callbacks (Google, Apple, etc.) — fires when page loads after redirect
   window.supabase.auth.onAuthStateChange(async function(event, session) {
     if (event !== 'SIGNED_IN' || !session || !session.user) return;
     var user   = session.user;
@@ -61,7 +61,8 @@
           return;
         }
         var users = window.H.state.users = window.H.state.users || [];
-        if (!users.find(function(u){ return u.id === userId; })) {
+        var existing = users.find(function(u){ return u.id === userId; });
+        if (!existing) {
           users.push({
             id: userId, email: email,
             name: profile.name || name,
@@ -75,6 +76,12 @@
             status: profile.status || 'active',
             banReason: null, banUntil: null, blocked: []
           });
+        } else {
+          existing.name   = profile.name   || existing.name;
+          existing.avatar = profile.avatar || existing.avatar;
+          existing.role   = profile.role   || existing.role;
+          existing.verified = !!profile.verified;
+          existing.walletUSD = parseFloat(profile.wallet_usd) || existing.walletUSD || 0;
         }
         window.H.state.currentUserId = userId;
         if (typeof window.H.saveState === 'function') window.H.saveState();
@@ -82,8 +89,97 @@
         if (nav) nav.style.display = 'flex';
         window.H.navTo('Home');
         window.H.toast('Welcome, ' + (profile.name || name) + '!');
+        // Start real-time after login
+        if (typeof window.H.startRealtime === 'function') window.H.startRealtime();
       };
       trySetup();
     } catch(e) { console.warn('OAuth login handler:', e); }
   });
+
+  // Real-time sync — subscribes to live database changes
+  window.H = window.H || {};
+  window.H.startRealtime = function() {
+    var sb = window.supabase;
+    if (!sb || !sb.channel) return;
+    if (window._realtimeStarted) return;
+    window._realtimeStarted = true;
+
+    // Listings channel
+    sb.channel('rt-listings')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'listings' }, function(payload) {
+        var row = payload.new;
+        if (!row || !window.H || !window.H.state) return;
+        var existing = (window.H.state.listings || []).find(function(l){ return l.id === row.id; });
+        if (!existing) {
+          window.H.state.listings = window.H.state.listings || [];
+          window.H.state.listings.unshift({
+            id: row.id, title: row.title || '', desc: row.description || '',
+            price: row.price || 0, currency: row.currency || 'USD',
+            cat: row.category || '', photos: row.photos || [],
+            sellerId: row.seller_id || '', sellerName: row.seller_name || '',
+            province: row.province || '', status: row.status || 'active',
+            createdAt: new Date(row.created_at || Date.now()).getTime(),
+            views: 0, company: row.company || null
+          });
+          if (typeof window.H.saveState === 'function') window.H.saveState();
+        }
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'listings' }, function(payload) {
+        var id = payload.old && payload.old.id;
+        if (!id || !window.H || !window.H.state) return;
+        window.H.state.listings = (window.H.state.listings || []).filter(function(l){ return l.id !== id; });
+        if (typeof window.H.saveState === 'function') window.H.saveState();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'listings' }, function(payload) {
+        var row = payload.new;
+        if (!row || !window.H || !window.H.state) return;
+        var l = (window.H.state.listings || []).find(function(x){ return x.id === row.id; });
+        if (l) {
+          l.status = row.status || l.status;
+          l.title  = row.title  || l.title;
+          l.price  = row.price  != null ? row.price : l.price;
+          if (typeof window.H.saveState === 'function') window.H.saveState();
+        }
+      })
+      .subscribe();
+
+    // Wallet top-up approvals channel
+    sb.channel('rt-topup')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'topup_requests' }, function(payload) {
+        var row = payload.new;
+        if (!row || !window.H || !window.H.state) return;
+        var req = (window.H.state.topupRequests || []).find(function(r){ return r.reference === row.reference; });
+        if (req && row.status === 'approved') {
+          req.status = 'approved';
+          var u = window.H.currentUser && window.H.currentUser();
+          if (u && u.id === req.userId) {
+            u.walletUSD = (u.walletUSD || 0) + (req.amount || 0);
+            window.H.state.txns = window.H.state.txns || [];
+            window.H.state.txns.unshift({ id: window.H.uid(), userId: u.id, type: 'topup', amt: req.amount, t: Date.now(), note: 'Wallet Top Up · ' + req.method });
+            if (typeof window.H.saveState === 'function') window.H.saveState();
+            if (typeof window.H.toast === 'function') window.H.toast('Wallet credited $' + req.amount.toFixed(2) + '!');
+          }
+        }
+      })
+      .subscribe();
+
+    // Profile verification approvals
+    sb.channel('rt-profiles')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, function(payload) {
+        var row = payload.new;
+        if (!row || !window.H || !window.H.state) return;
+        var u = (window.H.state.users || []).find(function(x){ return x.id === row.id; });
+        if (u) {
+          var wasUnverified = !u.verified;
+          u.verified = !!row.verified;
+          u.role     = row.role || u.role;
+          u.walletUSD = row.wallet_usd != null ? parseFloat(row.wallet_usd) : u.walletUSD;
+          if (typeof window.H.saveState === 'function') window.H.saveState();
+          if (wasUnverified && u.verified && u.id === (window.H.state.currentUserId)) {
+            if (typeof window.H.toast === 'function') window.H.toast('Your identity has been verified!');
+          }
+        }
+      })
+      .subscribe();
+  };
 })();
