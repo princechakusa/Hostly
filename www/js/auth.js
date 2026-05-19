@@ -389,7 +389,7 @@
       + '<h3>5. Transactions</h3>'
       + '<p>PaMarket is a listing and communication platform only. We do not process payments, hold funds, or guarantee the quality of any item. All transactions are solely between buyer and seller. PaMarket accepts no liability for disputes, losses, or damages arising from transactions.</p>'
       + '<h3>6. Wallet &amp; Top-Ups</h3>'
-      + '<p>The in-app wallet is used exclusively for boosting listings. Top-up amounts are non-refundable except at PaMarket\'s sole discretion. Wallet balances have no cash value and cannot be transferred.</p>'
+      + '<p>The in-app wallet is used exclusively for boosting listings. Top-up amounts that have not yet been used may be refunded upon written request to chakusaprince@gmail.com within 30 days of payment. Used credits are non-refundable. Wallet balances have no cash value and cannot be transferred.</p>'
       + '<h3>7. Intellectual Property</h3>'
       + '<p>All content you post on PaMarket (photos, descriptions, etc.) remains yours. By posting, you grant PaMarket a non-exclusive, royalty-free licence to display your content within the app. The PaMarket name, logo, and app design are our intellectual property and may not be copied or reused.</p>'
       + '<h3>8. Privacy</h3>'

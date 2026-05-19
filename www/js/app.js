@@ -372,7 +372,7 @@ window.H = {
       <div class="auth-wrap">
         <div class="auth-logo">
           <img src="img/icon-192.png" alt="PaMarket" onclick="H.logoTap()" style="width:90px;height:90px;border-radius:22px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer">
-          <div>Host<em>ly</em></div>
+          <div>Pa<em>Market</em></div>
         </div>
         <div class="auth-tag">Zimbabwe&#39;s Free Marketplace</div>
         <div class="auth-card" id="authCard"></div>
@@ -833,7 +833,7 @@ window.H = {
     H.pages.About=function(){
       return '<div class="page active">'+H.innerTopbar('About PaMarket')
         +'<div class="about-wrap">'
-        +'<div class="about-hero"><div class="about-brand">Host<em>ly</em></div><div class="about-tag">Free Zimbabwean Online Marketplace</div></div>'
+        +'<div class="about-hero"><div class="about-brand">Pa<em>Market</em></div><div class="about-tag">Free Zimbabwean Online Marketplace</div></div>'
         +'<div class="about-card"><div class="about-sec-title">What is PaMarket?</div><div class="about-body">PaMarket is a free Zimbabwean online marketplace connecting buyers and sellers. Whether you are looking for goods, services, vehicles, property, or jobs, PaMarket makes it easy to post, browse, and connect with people in your province and across Zimbabwe.</div></div>'
         +'<div class="about-card"><div class="about-sec-title">Who is it for?</div><div class="about-body">PaMarket is for anyone in Zimbabwe — individuals selling personal items, small businesses promoting services, employers posting vacancies, and buyers searching for the best local deals. The app is free to download and free to use.</div></div>'
         +'<div class="about-card"><div class="about-sec-title">Key Features</div><div class="about-grid">'
