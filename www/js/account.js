@@ -2,6 +2,10 @@
 (function (H) {
   const pages = H.pages;
 
+  // ── Account Hub ───────────────────────────────────────────
+  // A full-screen version of the account centre, reachable via
+  // H.openInner('AccountHub') if needed; the bottom-nav tab still
+  // opens the compact sheet via H.showAccountMenu().
   pages.AccountHub = function () {
     const u = H.currentUser();
     if (!u) {
