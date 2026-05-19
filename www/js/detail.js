@@ -191,9 +191,13 @@
         var sc = window.supabase;
         if (sc && typeof sc.from === 'function') {
           try {
-            var res = await sc.from('listings').delete().eq('id', id);
+            var res = await sc.from('listings').delete().eq('id', id).select();
             if (res && res.error) {
               H.toast('Could not delete: ' + (res.error.message || 'permission denied'));
+              return;
+            }
+            if (!res.data || res.data.length === 0) {
+              H.toast('Could not delete — please try again');
               return;
             }
           } catch (e) {
@@ -300,7 +304,7 @@
     }
     return '<div style="position:absolute;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top,0px)+14px) 16px 14px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(rgba(0,0,0,.65),transparent);z-index:2">'
       + '<span id="pvCounter" style="color:#fff;font-size:14px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.6)">'+(idx+1)+' / '+photos.length+'</span>'
-      + '<button onclick="H.closePhotoViewer()" style="background:rgba(0,0,0,.45);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent">'
+      + '<button ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation();H.closePhotoViewer()" onclick="H.closePhotoViewer()" style="background:rgba(0,0,0,.45);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent">'
       + '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
       + '</button></div>'
       + '<img id="pvImg" src="'+photos[idx]+'" style="position:absolute;top:50%;left:50%;max-width:100%;max-height:100%;object-fit:contain;will-change:transform;pointer-events:none;-webkit-user-drag:none;user-select:none" draggable="false">'
