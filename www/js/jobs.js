@@ -57,9 +57,9 @@
       + '<div style="font-size:16px;font-weight:800;color:#1A3A8F;margin-bottom:4px">Hire Talent</div>'
       + '<div style="font-size:12px;color:var(--sub)">' + candidates.length + ' candidate' + (candidates.length !== 1 ? 's' : '') + '</div></div>'
       + '</div>'
-      + '<div onclick="H.openInner(\'CandidateProfile\')" style="margin:0 14px 12px;background:linear-gradient(135deg,#22c55e,#15803d);border-radius:16px;padding:16px 20px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">'
-      + '<div><div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:2px">Looking for Work?</div><div style="font-size:12px;color:rgba(255,255,255,.8)">Set up your profile to appear in Hire Talent</div></div>'
-      + '<div style="font-size:28px">👤</div></div>'
+      + '<div onclick="H.openInner(\'JobSeekerProfile\')" style="margin:0 14px 12px;background:linear-gradient(135deg,#22c55e,#15803d);border-radius:16px;padding:16px 20px;cursor:pointer;display:flex;align-items:center;justify-content:space-between">'
+      + '<div><div style="font-size:15px;font-weight:800;color:#fff;margin-bottom:2px">Looking for Work?</div><div style="font-size:12px;color:rgba(255,255,255,.8)">Build your CV profile and let employers find you</div></div>'
+      + '<div style="font-size:28px">📋</div></div>'
       + '<div style="padding:0 14px 12px">'
       + '<div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:10px">Browse by Category</div>'
       + '<div style="display:flex;flex-wrap:wrap;gap:8px">'
@@ -227,30 +227,66 @@
     var q = ((document.getElementById('talentQ') || {}).value || '').toLowerCase();
     var sector = H._currentTalentSector || 'All';
     var f = H._filters['talent'] || {};
-    var list = (H.state.users || []).filter(function (u) { return u.openToWork; });
-    if (q) list = list.filter(function (u) { return ((u.name || '') + (u.jobTitle || '') + (u.skills || '') + (u.city || '')).toLowerCase().includes(q); });
-    if (sector && sector !== 'All') list = list.filter(function (u) { return ((u.sector || '') + (u.jobTitle || '')).toLowerCase().includes(sector.split(' ')[0].toLowerCase()); });
-    if (f.city && f.city !== 'all') list = list.filter(function (u) { return (u.city || '').toLowerCase().includes(f.city.toLowerCase()); });
+    var list = (H.state.users || []).filter(function (u) {
+      return u.openToWork || (u.cv && u.cv.visible !== false && (u.cv.headline || (u.cv.experience && u.cv.experience.length)));
+    });
+    if (q) list = list.filter(function (u) {
+      var cv = u.cv || {};
+      var searchText = [u.name||'', u.jobTitle||'', cv.headline||'', cv.summary||'',
+        (cv.skills||[]).join(' '), (cv.experience||[]).map(function(e){return (e.title||'')+(e.company||'');}).join(' '),
+        u.city||'', cv.location||''].join(' ').toLowerCase();
+      return searchText.includes(q);
+    });
+    if (sector && sector !== 'All') list = list.filter(function (u) {
+      var cv = u.cv || {};
+      var text = [(u.sector||''), (u.jobTitle||''), (cv.headline||''), (cv.skills||[]).join(' ')].join(' ').toLowerCase();
+      return text.includes(sector.split(' ')[0].toLowerCase());
+    });
+    if (f.city && f.city !== 'all') list = list.filter(function (u) {
+      return ((u.cv && u.cv.location || u.city) || '').toLowerCase().includes(f.city.toLowerCase());
+    });
     if (cnt) cnt.textContent = list.length + ' candidate' + (list.length !== 1 ? 's' : '');
     el.innerHTML = list.length ? list.map(_candidateCard).join('') : _emptyTalent();
   };
 
   function _candidateCard(u) {
     var ini = H.initials(u.name || 'U');
-    var verified = u.verified ? '<span style="background:#1A3A8F;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:6px">✓ Verified</span>' : '';
-    var skills = (u.skills || '').split(',').slice(0, 3).filter(Boolean);
-    return '<div style="background:var(--card);border-radius:14px;padding:16px;margin-bottom:10px;border:1px solid var(--border);display:flex;gap:12px;align-items:flex-start">'
-      + '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#1A3A8F,#3a6fd8);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">' + ini + '</div>'
+    var cv  = u.cv || {};
+    var verBadge = u.verified
+      ? '<span style="background:#059669;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;margin-left:6px">✓ Verified</span>'
+      : '';
+    var headline = cv.headline || u.jobTitle || 'Open to Work';
+    var location = cv.location || u.city || '';
+    var expCount = (cv.experience || []).length;
+    var rawSkills = cv.skills && cv.skills.length ? cv.skills : (u.skills || '').split(',').filter(Boolean);
+    var skills = rawSkills.slice(0, 4).map(function(s){ return s.trim(); }).filter(Boolean);
+    var latestExp = cv.experience && cv.experience[0];
+    var expectedSal = cv.expectedSalary ? '$' + cv.expectedSalary + '/mo' : '';
+
+    return '<div style="background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.05)">'
+      + '<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">'
+      + '<div style="width:50px;height:50px;border-radius:50%;overflow:hidden;flex-shrink:0">'
+      + (u.avatar ? '<img src="' + u.avatar + '" style="width:100%;height:100%;object-fit:cover">' : '<div style="width:100%;height:100%;background:linear-gradient(135deg,#1A3A8F,#3a6fd8);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">' + ini + '</div>')
+      + '</div>'
       + '<div style="flex:1;min-width:0">'
-      + '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px"><div style="font-size:15px;font-weight:700;color:var(--text)">' + H.escHtml(u.name || 'Anonymous') + '</div>' + verified + '</div>'
-      + '<div style="font-size:13px;color:#1A3A8F;font-weight:600;margin-bottom:4px">' + H.escHtml(u.jobTitle || 'Open to Work') + '</div>'
-      + (u.city ? '<div style="font-size:12px;color:var(--sub);margin-bottom:8px">' + H.escHtml(u.city) + '</div>' : '')
-      + (skills.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">' + skills.map(function (s) { return '<span style="background:var(--bg);border:1px solid var(--border);font-size:11px;padding:2px 8px;border-radius:6px;color:var(--text)">' + H.escHtml(s.trim()) + '</span>'; }).join('') + '</div>' : '')
+      + '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:2px"><div style="font-size:15px;font-weight:700;color:var(--text)">' + H.escHtml(u.name || 'Anonymous') + '</div>' + verBadge + '</div>'
+      + '<div style="font-size:13px;color:#1A3A8F;font-weight:600;margin-bottom:2px">' + H.escHtml(headline) + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--sub)">'
+      + (location ? '<span>📍 ' + H.escHtml(location) + '</span>' : '')
+      + (expCount ? '<span>💼 ' + expCount + ' position' + (expCount!==1?'s':'') + '</span>' : '')
+      + (expectedSal ? '<span>💰 ' + H.escHtml(expectedSal) + '</span>' : '')
+      + '</div></div></div>'
+      + (latestExp ? '<div style="background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:8px;border-left:3px solid #1A3A8F">'
+          + '<div style="font-size:12px;font-weight:700;color:var(--text)">' + H.escHtml(latestExp.title) + '</div>'
+          + '<div style="font-size:11px;color:var(--sub);margin-top:1px">' + H.escHtml(latestExp.company) + (latestExp.duration ? ' · ' + H.escHtml(latestExp.duration) : '') + '</div>'
+          + '</div>' : '')
+      + (skills.length ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">' + skills.map(function (s) { return '<span style="background:#1A3A8F12;border:1px solid #1A3A8F22;font-size:11px;padding:2px 8px;border-radius:6px;color:#1A3A8F;font-weight:600">' + H.escHtml(s) + '</span>'; }).join('') + '</div>' : '')
+      + (cv.summary ? '<div style="font-size:12px;color:var(--sub);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + H.escHtml(cv.summary) + '</div>' : '')
       + '<div style="display:flex;gap:8px">'
-      + (u.phone ? '<button onclick="window.open(\'https://wa.me/' + H.escHtml(u.phone.replace(/[^\d+]/g, '')) + '\',\'_blank\')" style="flex:1;padding:8px;background:#25D366;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">WhatsApp</button>' : '')
-      + (u.email ? '<button onclick="window.location.href=\'mailto:' + H.escHtml(u.email) + '\'" style="flex:1;padding:8px;background:#1A3A8F;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">Email</button>' : '')
-      + (!u.phone && !u.email ? '<button onclick="H.toast(\'Contact details not available\')" style="flex:1;padding:8px;background:var(--border);color:var(--sub);border:none;border-radius:9px;font-size:12px;cursor:pointer">No Contact Info</button>' : '')
-      + '</div></div></div>';
+      + (u.phone ? '<button onclick="window.open(\'https://wa.me/' + H.escHtml(u.phone.replace(/[^\d+]/g, '')) + '\',\'_blank\')" style="flex:1;padding:9px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">WhatsApp</button>' : '')
+      + (u.email ? '<button onclick="window.location.href=\'mailto:' + H.escHtml(u.email) + '\'" style="flex:1;padding:9px;background:#1A3A8F;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">Email</button>' : '')
+      + '<button onclick="H.openInner(\'Profile\',{id:\'' + u.id + '\'})" style="flex:1;padding:9px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">View Profile</button>'
+      + '</div></div>';
   }
 
   function _emptyTalent() {

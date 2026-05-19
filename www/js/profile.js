@@ -326,12 +326,22 @@
   pages.ProfileVerify_after = function () {
     H._profileVerify = {
       submit: () => {
-        const idNum = document.getElementById('idNum')?.value.trim();
+        const idType = document.getElementById('idType')?.value || 'National ID';
+        const idNum  = document.getElementById('idNum')?.value.trim();
         if (!idNum) { H.toast('Please enter your ID number'); return; }
         const u = H.currentUser();
         u.verificationPending = true;
+        u.verificationIdType  = idType;
+        u.verificationIdNum   = idNum;
         H.saveState();
-        H.toast('Verification submitted. We will review within 24h.');
+        const sb = window.supabase;
+        if (sb && typeof sb.from === 'function') {
+          sb.from('profiles').upsert({
+            id: u.id, verification_pending: true,
+            id_type: idType, updated_at: new Date().toISOString()
+          });
+        }
+        H.toast('Verification submitted. We will review within 24 hours.');
         H.goBack();
       }
     };
@@ -432,5 +442,246 @@
   };
 
   H._openAppliedJobs = function () { H.openInner('AppliedJobs'); };
+
+  // ── JOB SEEKER CV PROFILE ─────────────────────────────────
+  pages.JobSeekerProfile = function () {
+    const u = H.currentUser();
+    if (!u) return H.emptyState('Not logged in', 'Please sign in');
+    const cv = u.cv || {};
+    const exp  = cv.experience || [];
+    const edu  = cv.education  || [];
+    const skills = cv.skills   || [];
+    const certs  = cv.certs    || [];
+
+    const expHtml = exp.map((e, i) => `
+      <div style="background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);position:relative">
+        <div style="font-size:14px;font-weight:700;color:var(--text)">${H.escHtml(e.title||'')}</div>
+        <div style="font-size:12px;color:#1A3A8F;font-weight:600;margin-top:2px">${H.escHtml(e.company||'')}</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:2px">${H.escHtml(e.duration||'')}${e.current?' · Current':''}</div>
+        ${e.desc?`<div style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.5">${H.escHtml(e.desc)}</div>`:''}
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="H._cvProfile.editExp(${i})" style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;background:#EFF6FF;color:#1A3A8F;border:1px solid #BFDBFE;cursor:pointer">Edit</button>
+          <button onclick="H._cvProfile.delExp(${i})" style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;background:#FEF2F2;color:#EF4444;border:1px solid #FECACA;cursor:pointer">Remove</button>
+        </div>
+      </div>`).join('') || '<div style="color:var(--sub);font-size:13px;padding:8px 0">No experience added yet</div>';
+
+    const eduHtml = edu.map((e, i) => `
+      <div style="background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border)">
+        <div style="font-size:14px;font-weight:700;color:var(--text)">${H.escHtml(e.degree||'')}</div>
+        <div style="font-size:12px;color:#1A3A8F;font-weight:600;margin-top:2px">${H.escHtml(e.school||'')}</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:2px">${H.escHtml(e.year||'')}</div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="H._cvProfile.editEdu(${i})" style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;background:#EFF6FF;color:#1A3A8F;border:1px solid #BFDBFE;cursor:pointer">Edit</button>
+          <button onclick="H._cvProfile.delEdu(${i})" style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:7px;background:#FEF2F2;color:#EF4444;border:1px solid #FECACA;cursor:pointer">Remove</button>
+        </div>
+      </div>`).join('') || '<div style="color:var(--sub);font-size:13px;padding:8px 0">No education added yet</div>';
+
+    const verBadge = u.verified
+      ? `<div style="display:flex;align-items:center;gap:6px;background:#ECFDF5;border:1.5px solid #6EE7B7;border-radius:10px;padding:8px 12px;margin-bottom:12px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#059669" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span style="font-size:13px;font-weight:700;color:#059669">Identity Verified</span></div>`
+      : u.verificationPending
+        ? `<div style="display:flex;align-items:center;gap:6px;background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;padding:8px 12px;margin-bottom:12px"><span style="font-size:13px;font-weight:600;color:#92400E">⏳ Verification pending — under review</span></div>`
+        : `<button onclick="H.openInner('ProfileVerify')" style="width:100%;padding:10px;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;color:#1A3A8F;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px;font-family:inherit">🛡 Request Identity Verification</button>`;
+
+    return `<div class="page active">
+      ${H.innerTopbar('My Job Profile')}
+      <div class="form-wrap" style="padding-bottom:80px">
+        ${verBadge}
+
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Profile Headline</div>
+        <div class="fg" style="margin-top:0">
+          <input class="fi" id="cvHeadline" placeholder="e.g. Senior Software Engineer" value="${H.escHtml(cv.headline||'')}">
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin:12px 0 8px">Summary</div>
+        <div class="fg" style="margin-top:0">
+          <textarea class="fi" id="cvSummary" rows="3" placeholder="Brief professional summary...">${H.escHtml(cv.summary||'')}</textarea>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+          <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px">Work Experience</div>
+          <button onclick="H._cvProfile.addExp()" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;background:#1A3A8F;color:#fff;border:none;cursor:pointer">+ Add</button>
+        </div>
+        <div id="cvExpList">${expHtml}</div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+          <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px">Education</div>
+          <button onclick="H._cvProfile.addEdu()" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;background:#1A3A8F;color:#fff;border:none;cursor:pointer">+ Add</button>
+        </div>
+        <div id="cvEduList">${eduHtml}</div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px">Skills</div>
+        <div class="fg" style="margin-top:0">
+          <input class="fi" id="cvSkills" placeholder="e.g. JavaScript, React, Node.js, Python" value="${H.escHtml(skills.join(', '))}">
+          <div style="font-size:11px;color:var(--sub);margin-top:4px">Separate skills with commas</div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin:12px 0 8px">Certifications</div>
+        <div class="fg" style="margin-top:0">
+          <textarea class="fi" id="cvCerts" rows="2" placeholder="e.g. AWS Certified, Google Analytics, PMP">${H.escHtml(certs.join('\n'))}</textarea>
+          <div style="font-size:11px;color:var(--sub);margin-top:4px">One per line</div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin:12px 0 8px">Expected Salary (USD/month)</div>
+        <div class="fg" style="margin-top:0">
+          <input class="fi" id="cvSalary" type="number" min="0" placeholder="e.g. 800" value="${H.escHtml(String(cv.expectedSalary||''))}">
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;margin:12px 0 8px">Preferred Location</div>
+        <div class="fg" style="margin-top:0">
+          <input class="fi" id="cvLocation" placeholder="e.g. Harare, Bulawayo, Remote" value="${H.escHtml(cv.location||'')}">
+        </div>
+
+        <label style="display:flex;gap:10px;align-items:center;font-size:13px;color:var(--text);margin-bottom:14px;cursor:pointer">
+          <input type="checkbox" id="cvVisible" ${cv.visible !== false ? 'checked' : ''} style="width:18px;height:18px;cursor:pointer">
+          <span>Show my profile to employers in <strong>Hire Candidates</strong></span>
+        </label>
+
+        <button id="cvSaveBtn" class="btn-pri" onclick="H._cvProfile.save()">Save Job Profile</button>
+        <button class="btn-sec" onclick="H.goBack()">Cancel</button>
+      </div>
+    </div>`;
+  };
+
+  pages.JobSeekerProfile_after = function () {
+    H._cvProfile = {
+      save() {
+        const u = H.currentUser();
+        if (!u) return;
+        u.cv = u.cv || {};
+        u.cv.headline = (document.getElementById('cvHeadline')?.value || '').trim();
+        u.cv.summary  = (document.getElementById('cvSummary')?.value || '').trim();
+        u.cv.skills   = (document.getElementById('cvSkills')?.value || '').split(',').map(s => s.trim()).filter(Boolean);
+        u.cv.certs    = (document.getElementById('cvCerts')?.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+        u.cv.expectedSalary = parseFloat(document.getElementById('cvSalary')?.value) || null;
+        u.cv.location = (document.getElementById('cvLocation')?.value || '').trim();
+        u.cv.visible  = document.getElementById('cvVisible')?.checked !== false;
+        H.saveState();
+        const sb = window.supabase;
+        if (sb && typeof sb.from === 'function') {
+          sb.from('profiles').upsert({ id: u.id, cv: u.cv, updated_at: new Date().toISOString() })
+            .then(r => { if (r && r.error) console.warn('CV sync:', r.error.message); });
+        }
+        H.toast('Job profile saved!');
+        H.goBack();
+      },
+      addExp() {
+        H.modal({
+          title: 'Add Work Experience',
+          body: `<div style="display:flex;flex-direction:column;gap:8px">
+            <input id="expTitle" class="fi" placeholder="Job Title *">
+            <input id="expCompany" class="fi" placeholder="Company Name *">
+            <input id="expDuration" class="fi" placeholder="Duration e.g. Jan 2020 – Dec 2022">
+            <label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer"><input type="checkbox" id="expCurrent">Still working here</label>
+            <textarea id="expDesc" class="fi" rows="3" placeholder="Role description / responsibilities..."></textarea>
+          </div>`,
+          confirmText: 'Add',
+          onConfirm: () => {
+            const title   = (document.getElementById('expTitle')?.value || '').trim();
+            const company = (document.getElementById('expCompany')?.value || '').trim();
+            if (!title || !company) { H.toast('Title and company are required'); return false; }
+            const u = H.currentUser();
+            u.cv = u.cv || {};
+            u.cv.experience = u.cv.experience || [];
+            u.cv.experience.push({
+              title, company,
+              duration: (document.getElementById('expDuration')?.value || '').trim(),
+              current:  document.getElementById('expCurrent')?.checked || false,
+              desc:     (document.getElementById('expDesc')?.value || '').trim()
+            });
+            H.saveState();
+            H.renderPage('JobSeekerProfile');
+          }
+        });
+      },
+      addEdu() {
+        H.modal({
+          title: 'Add Education',
+          body: `<div style="display:flex;flex-direction:column;gap:8px">
+            <input id="eduDegree" class="fi" placeholder="Degree / Certificate *">
+            <input id="eduSchool" class="fi" placeholder="School / University *">
+            <input id="eduYear" class="fi" placeholder="Year e.g. 2018">
+          </div>`,
+          confirmText: 'Add',
+          onConfirm: () => {
+            const degree = (document.getElementById('eduDegree')?.value || '').trim();
+            const school = (document.getElementById('eduSchool')?.value || '').trim();
+            if (!degree || !school) { H.toast('Degree and school are required'); return false; }
+            const u = H.currentUser();
+            u.cv = u.cv || {};
+            u.cv.education = u.cv.education || [];
+            u.cv.education.push({
+              degree, school,
+              year: (document.getElementById('eduYear')?.value || '').trim()
+            });
+            H.saveState();
+            H.renderPage('JobSeekerProfile');
+          }
+        });
+      },
+      editExp(i) {
+        const u = H.currentUser();
+        const e = (u.cv && u.cv.experience && u.cv.experience[i]) || {};
+        H.modal({
+          title: 'Edit Work Experience',
+          body: `<div style="display:flex;flex-direction:column;gap:8px">
+            <input id="expTitle" class="fi" value="${H.escHtml(e.title||'')}" placeholder="Job Title *">
+            <input id="expCompany" class="fi" value="${H.escHtml(e.company||'')}" placeholder="Company Name *">
+            <input id="expDuration" class="fi" value="${H.escHtml(e.duration||'')}" placeholder="Duration">
+            <label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer"><input type="checkbox" id="expCurrent" ${e.current?'checked':''}>Still working here</label>
+            <textarea id="expDesc" class="fi" rows="3" placeholder="Description...">${H.escHtml(e.desc||'')}</textarea>
+          </div>`,
+          confirmText: 'Save',
+          onConfirm: () => {
+            const title   = (document.getElementById('expTitle')?.value || '').trim();
+            const company = (document.getElementById('expCompany')?.value || '').trim();
+            if (!title || !company) { H.toast('Title and company are required'); return false; }
+            u.cv.experience[i] = {
+              title, company,
+              duration: (document.getElementById('expDuration')?.value || '').trim(),
+              current:  document.getElementById('expCurrent')?.checked || false,
+              desc:     (document.getElementById('expDesc')?.value || '').trim()
+            };
+            H.saveState();
+            H.renderPage('JobSeekerProfile');
+          }
+        });
+      },
+      editEdu(i) {
+        const u = H.currentUser();
+        const e = (u.cv && u.cv.education && u.cv.education[i]) || {};
+        H.modal({
+          title: 'Edit Education',
+          body: `<div style="display:flex;flex-direction:column;gap:8px">
+            <input id="eduDegree" class="fi" value="${H.escHtml(e.degree||'')}" placeholder="Degree *">
+            <input id="eduSchool" class="fi" value="${H.escHtml(e.school||'')}" placeholder="School *">
+            <input id="eduYear" class="fi" value="${H.escHtml(e.year||'')}" placeholder="Year">
+          </div>`,
+          confirmText: 'Save',
+          onConfirm: () => {
+            const degree = (document.getElementById('eduDegree')?.value || '').trim();
+            const school = (document.getElementById('eduSchool')?.value || '').trim();
+            if (!degree || !school) { H.toast('Required fields missing'); return false; }
+            u.cv.education[i] = { degree, school, year: (document.getElementById('eduYear')?.value || '').trim() };
+            H.saveState();
+            H.renderPage('JobSeekerProfile');
+          }
+        });
+      },
+      delExp(i) {
+        const u = H.currentUser();
+        if (!u.cv || !u.cv.experience) return;
+        u.cv.experience.splice(i, 1);
+        H.saveState();
+        H.renderPage('JobSeekerProfile');
+      },
+      delEdu(i) {
+        const u = H.currentUser();
+        if (!u.cv || !u.cv.education) return;
+        u.cv.education.splice(i, 1);
+        H.saveState();
+        H.renderPage('JobSeekerProfile');
+      }
+    };
+  };
 
 })(window.H = window.H || {});
