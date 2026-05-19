@@ -401,6 +401,14 @@
       if (e.target.closest('#mainArea, .action-sheet, #docSheetBody, .modal-body-scroll, .login-modal, .modal')) return;
       e.preventDefault();
     }, { passive: false });
+
+    // ── Allow scroll inside doc sheet and modals ─────────
+    document.getElementById('docSheetBody').addEventListener('touchmove', function(e) {
+      e.stopPropagation();
+    }, { passive: true });
+    document.getElementById('modalBox').addEventListener('touchmove', function(e) {
+      e.stopPropagation();
+    }, { passive: true });
   </script>
 </body>
 </html>

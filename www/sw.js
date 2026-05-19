@@ -1,4 +1,4 @@
-const CACHE = 'pamarket-v7';
+const CACHE = 'pamarket-v8';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
