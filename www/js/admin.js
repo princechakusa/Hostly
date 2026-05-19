@@ -297,6 +297,7 @@
           <button class="ml-act-btn red" onclick="H._admin.banUser('${u.id}','perm')">${S.ban} Ban</button>
         ` : `<button class="ml-act-btn" onclick="H._admin.unban('${u.id}')">${S.unban} Unban</button>`}
         ${!u.verified?`<button class="ml-act-btn" onclick="H._admin.verifyUser('${u.id}')">${S.verify} Verify</button>`:''}
+        ${!u.companyVerified?`<button class="ml-act-btn" onclick="H._admin.verifyCompany('${u.id}')">🏢 Company ✓</button>`:`<button class="ml-act-btn" onclick="H._admin.revokeCompany('${u.id}')">🏢 Revoke Co.</button>`}
         ${u.role!=='admin'?`<button class="ml-act-btn" onclick="H._admin.makeAdmin('${u.id}')">${S.admin} Make Admin</button>`:''}
         ${u.id!==currentUser().id?`<button class="ml-act-btn red" onclick="H._admin.deleteUser('${u.id}')">${S.delete} Delete</button>`:''}
       </div>
@@ -707,6 +708,21 @@
         sb.from('profiles').update({ verified: false }).eq('id', uid_);
       }
       saveState(); toast(`Verification revoked for ${u.name}`); this.setTab('verifications');
+    },
+
+    verifyCompany(uid_) {
+      const u = (H.state.users||[]).find(x=>x.id===uid_); if (!u) return;
+      u.companyVerified = true; u.companyVerifiedAt = Date.now();
+      alog(`Company verified: ${u.name}`);
+      pushNotif(uid_,'Company Verified ✓','Your company account has been verified on PaMarket.','verify');
+      saveState(); toast(`${u.name} company verified`); this.setTab('users');
+    },
+
+    revokeCompany(uid_) {
+      const u = (H.state.users||[]).find(x=>x.id===uid_); if (!u) return;
+      u.companyVerified = false;
+      alog(`Company verification revoked: ${u.name}`);
+      saveState(); toast(`Company verification revoked`); this.setTab('users');
     },
 
     approveListing(lid) {

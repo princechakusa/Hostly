@@ -10,21 +10,24 @@
 
   function jobCard(l) {
     var lines = (l.desc || '').split('\n');
-    var company = l.company || l.sellerName || parseLine(lines, 'COMPANY') || 'Company';
-    var jobType = parseLine(lines, 'JOB TYPE') || '';
-    var salary = parseLine(lines, 'SALARY') || '';
+    var company  = l.company || l.sellerName || parseLine(lines, 'COMPANY') || 'Company';
+    var jobType  = parseLine(lines, 'JOB TYPE') || '';
+    var salary   = parseLine(lines, 'SALARY') || '';
     var industry = parseLine(lines, 'INDUSTRY') || '';
-    return '<div onclick="H.openInner(\'JobDetail\',{id:\'' + l.id + '\'})" style="background:var(--card);border-radius:14px;padding:16px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.06)">'
+    var seller   = (H.state.users || []).find(function(u){ return u.id === l.sellerId; });
+    var coVerified = seller && (seller.companyVerified || seller.verified);
+    var verBadge = coVerified ? '<span style="background:#059669;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;margin-left:4px">✓</span>' : '';
+    return '<div onclick="H.openInner(\'JobDetail\',{id:\'' + l.id + '\'})" style="background:var(--card);border-radius:16px;padding:16px;margin-bottom:10px;border:1px solid var(--border);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.05)">'
       + '<div style="display:flex;align-items:flex-start;gap:12px">'
-      + '<div style="width:44px;height:44px;border-radius:12px;background:#F5A62320;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
-      + '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#c07800" stroke-width="2"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>'
+      + '<div style="width:46px;height:46px;border-radius:12px;background:#1A3A8F14;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:17px;font-weight:800;color:#1A3A8F">'
+      + (company.slice(0,2).toUpperCase()) + '</div>'
       + '<div style="flex:1;min-width:0">'
       + '<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + H.escHtml(l.title) + '</div>'
-      + '<div style="font-size:13px;color:var(--sub);margin-bottom:8px">' + H.escHtml(company) + (industry ? ' · ' + H.escHtml(industry) : '') + '</div>'
+      + '<div style="font-size:13px;font-weight:600;color:#1A3A8F;margin-bottom:6px;display:flex;align-items:center">' + H.escHtml(company) + verBadge + (industry ? '<span style="color:var(--sub);font-weight:400;margin-left:4px">· ' + H.escHtml(industry) + '</span>' : '') + '</div>'
       + '<div style="display:flex;flex-wrap:wrap;gap:5px">'
-      + (jobType ? '<span style="background:#1A3A8F18;color:#1A3A8F;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">' + H.escHtml(jobType) + '</span>' : '')
-      + (salary ? '<span style="background:#F5A62318;color:#c07800;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">' + H.escHtml(salary) + '</span>' : '')
-      + '<span style="background:var(--bg);color:var(--sub);font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">' + H.escHtml(l.city || 'Zimbabwe') + '</span>'
+      + (jobType ? '<span style="background:#1A3A8F14;color:#1A3A8F;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">' + H.escHtml(jobType) + '</span>' : '')
+      + (salary ? '<span style="background:#F5A62314;color:#c07800;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">💰 ' + H.escHtml(salary) + '</span>' : '')
+      + (l.city ? '<span style="background:var(--bg);color:var(--sub);font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px">📍 ' + H.escHtml(l.city) + '</span>' : '')
       + '<span style="color:var(--sub);font-size:11px;padding:3px 0">' + H.timeAgo(l.createdAt) + '</span>'
       + '</div></div></div></div>';
   }
