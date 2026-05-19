@@ -36,15 +36,16 @@
   window.supabase = window.supabase.createClient(supabaseUrl || '', supabaseAnonKey || '');
 
   // Handle OAuth callbacks (Google, Apple, etc.) — fires when page loads after redirect
-  window.supabase.auth.onAuthStateChange(async function(event, session) {
-    if (event !== 'SIGNED_IN' || !session || !session.user) return;
+  var _oauthHandled = false;
+  async function handleOAuthSession(session) {
+    if (_oauthHandled) return;
+    _oauthHandled = true;
     var user   = session.user;
     var userId = user.id;
     var meta   = user.user_metadata || {};
     var name   = meta.full_name || meta.name || user.email || 'User';
     var avatar = meta.avatar_url || meta.picture || null;
     var email  = user.email || '';
-
     try {
       var pr = await window.supabase.from('profiles').select('*').eq('id', userId).single();
       var profile = pr.data;
@@ -52,48 +53,47 @@
         await window.supabase.from('profiles').upsert({ id: userId, name: name, avatar: avatar });
         profile = { id: userId, name: name, avatar: avatar, role: 'user', status: 'active', wallet_usd: 0, verified: false };
       }
-
-      // Wait for H to be ready (OAuth redirect loads fresh page, H boots async)
       var attempts = 0;
       var trySetup = function() {
         if (!window.H || !window.H.state || typeof window.H.navTo !== 'function') {
-          if (++attempts < 30) { setTimeout(trySetup, 200); return; }
+          if (++attempts < 40) { setTimeout(trySetup, 200); return; }
           return;
         }
         var users = window.H.state.users = window.H.state.users || [];
         var existing = users.find(function(u){ return u.id === userId; });
         if (!existing) {
-          users.push({
-            id: userId, email: email,
-            name: profile.name || name,
-            phone: profile.phone || '',
-            avatar: profile.avatar || avatar,
-            verified: !!profile.verified,
-            walletUSD: parseFloat(profile.wallet_usd) || 0,
-            language: 'English',
-            joinedAt: new Date(profile.created_at || Date.now()).getTime(),
-            role: profile.role || 'user',
-            status: profile.status || 'active',
-            banReason: null, banUntil: null, blocked: []
-          });
+          users.push({ id: userId, email: email, name: profile.name || name, phone: profile.phone || '', avatar: profile.avatar || avatar, verified: !!profile.verified, walletUSD: parseFloat(profile.wallet_usd) || 0, language: 'English', joinedAt: new Date(profile.created_at || Date.now()).getTime(), role: profile.role || 'user', status: profile.status || 'active', banReason: null, banUntil: null, blocked: [] });
         } else {
-          existing.name   = profile.name   || existing.name;
+          existing.name = profile.name || existing.name;
           existing.avatar = profile.avatar || existing.avatar;
-          existing.role   = profile.role   || existing.role;
+          existing.role = profile.role || existing.role;
           existing.verified = !!profile.verified;
           existing.walletUSD = parseFloat(profile.wallet_usd) || existing.walletUSD || 0;
         }
         window.H.state.currentUserId = userId;
         if (typeof window.H.saveState === 'function') window.H.saveState();
+        if (typeof window.H.closeLoginModal === 'function') window.H.closeLoginModal();
         var nav = document.getElementById('bottomNav');
         if (nav) nav.style.display = 'flex';
         window.H.navTo('Home');
         window.H.toast('Welcome, ' + (profile.name || name) + '!');
-        // Start real-time after login
         if (typeof window.H.startRealtime === 'function') window.H.startRealtime();
       };
       trySetup();
     } catch(e) { console.warn('OAuth login handler:', e); }
+  }
+
+  window.supabase.auth.onAuthStateChange(async function(event, session) {
+    if ((event !== 'SIGNED_IN' && event !== 'INITIAL_SESSION') || !session || !session.user) return;
+    handleOAuthSession(session);
+  });
+
+  // Fallback: explicitly check for an active session on page load.
+  // Catches cases where onAuthStateChange fires before the listener is registered
+  // or where the PKCE code exchange completes asynchronously.
+  window.supabase.auth.getSession().then(function(result) {
+    var session = result && result.data && result.data.session;
+    if (session && session.user) handleOAuthSession(session);
   });
 
   // Real-time sync — subscribes to live database changes
