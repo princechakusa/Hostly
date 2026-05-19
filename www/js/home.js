@@ -51,9 +51,8 @@
       <!-- HEADER -->
       <div style="background:#1A3A8F;padding-bottom:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(26,58,143,0.3)">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0">
-          <div onclick="H.logoTap()" style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <img src="img/icon-192.png" alt="" style="width:32px;height:32px;border-radius:8px">
-            <span style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;font-family:Inter,sans-serif">Pa<em style="font-style:normal;color:#F5A623">Market</em></span>
+          <div onclick="H.logoTap()" style="cursor:pointer">
+            <span style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-1px;font-family:Inter,sans-serif">Pa<em style="font-style:normal;color:#F5A623">Market</em></span>
           </div>
           <div style="display:flex;gap:6px">
             <div onclick="H.openInner('Notifications')"
