@@ -429,7 +429,8 @@
   H.authGoogle = async function() {
     const c = sb();
     if (!c) { H.toast('Sign-in service unavailable'); return; }
-    const redirectTo = window.location.origin + window.location.pathname;
+    // Always redirect to the actual app page so OAuth ?code= isn't lost at the root redirect
+    const redirectTo = window.location.origin + '/www/index.html';
     const { error } = await c.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo }

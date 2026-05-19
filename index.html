@@ -2,10 +2,12 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=www/index.html">
-  <title>Hostly</title>
+  <title>PaMarket</title>
 </head>
 <body>
-  <script>window.location.replace('www/index.html');</script>
+  <script>
+    // Preserve OAuth ?code= and #hash when redirecting to the app
+    window.location.replace('www/index.html' + window.location.search + window.location.hash);
+  </script>
 </body>
 </html>
