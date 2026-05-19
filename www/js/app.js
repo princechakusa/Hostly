@@ -1084,7 +1084,6 @@ window.H = {
     box.innerHTML=`
       <button class="login-modal-close" onclick="H.closeLoginModal()" aria-label="Close">&times;</button>
       <div class="login-modal-brand">
-        <img src="img/icon-192.png" alt="PaMarket">
         <div>Pa<em>Market</em></div>
       </div>
       <div class="login-modal-illustration">
@@ -1096,7 +1095,6 @@ window.H = {
           <path d="M98 38l13 13" stroke="#1A3A8F" stroke-width="6" stroke-linecap="round"/>
         </svg>
       </div>
-      <h3>${this.escHtml(msg||'Login to continue')}</h3>
       <div class="auth-card" id="authCard"></div>
       <div class="login-modal-foot">Closing this popup keeps you right where you are.</div>`;
     bg.classList.add('open');
