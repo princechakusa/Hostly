@@ -166,11 +166,12 @@ window.H = {
         <button class="modal-btn ${danger?'danger':'confirm'}" id="mConfirm">${confirmText}</button>
       </div>`;
     bg.classList.add('open');
+    bg.scrollTop = 0;
     document.getElementById('mConfirm').onclick = () => {
       if (onConfirm && onConfirm()===false) return;
       H.closeModal();
     };
-    setTimeout(()=>document.getElementById('mConfirm')?.focus(), 50);
+    setTimeout(()=>{ document.getElementById('mConfirm')?.focus({preventScroll:true}); bg.scrollTop=0; }, 50);
   },
   closeModal() { document.getElementById('modalBg').classList.remove('open'); },
   closeLoginModal() {
@@ -1103,6 +1104,7 @@ window.H = {
         <span onclick="H.authShowDoc('privacy')" style="color:var(--blue);cursor:pointer;text-decoration:underline">Privacy Policy</span>
       </div>`;
     bg.classList.add('open');
+    bg.scrollTop = 0;
     if(typeof H.authStepEmail==='function') H.authStepEmail();
   },
 
