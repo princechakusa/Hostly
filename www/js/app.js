@@ -811,17 +811,21 @@ window.H = {
           if (!Array.isArray(H.state.conversations)) H.state.conversations = [];
           const conv=H.state.conversations.find(c=>c.id===msg.conversation_id);
           if(conv){
+            if (!Array.isArray(conv.messages)) conv.messages = [];
             const ex=conv.messages.find(m=>m.id===msg.id);
             if(!ex){
-              conv.messages.push({id:msg.id,from:msg.sender_id,senderName:msg.sender_name||'',text:msg.text,t:new Date(msg.created_at).getTime(),read:false});
+              const localMsg = {id:msg.id,from:msg.sender_id,senderName:msg.sender_name||'',text:msg.text,t:new Date(msg.created_at).getTime(),read:false};
+              conv.messages.push(localMsg);
               H.saveState();
-              if(H.currentPageName==='Chat'&&H.currentPageParams&&H.currentPageParams.id===msg.conversation_id)
-                H.renderPage('Chat',{id:msg.conversation_id});
+              if(H.currentPageName==='Chat'&&H.currentPageParams&&H.currentPageParams.id===msg.conversation_id&&typeof H._appendChatMessages==='function')
+                H._appendChatMessages(msg.conversation_id,[localMsg]);
+              else if(H.currentPageName==='Messages'&&typeof H._refreshMessagesPage==='function')
+                H._refreshMessagesPage({ skipSync:true });
               H.pushNotif&&H.pushNotif(H.state.currentUserId,'New message',msg.text||'');
             }
           } else if (typeof H.syncConversations === 'function') {
             H.syncConversations().then(function(){
-              if (H.currentPageName === 'Messages') H.renderPage('Messages');
+              if (H.currentPageName === 'Messages' && typeof H._refreshMessagesPage === 'function') H._refreshMessagesPage({ skipSync:true });
             });
           }
         }).subscribe();
@@ -928,15 +932,16 @@ window.H = {
   async syncConversations() {
     try {
       const sb = window.supabase;
-      if (!sb || typeof sb.from !== 'function') return;
-      const u = H.currentUser(); if (!u) return;
+      if (!sb || typeof sb.from !== 'function') return false;
+      const u = H.currentUser(); if (!u) return false;
       if (!Array.isArray(H.state.conversations)) H.state.conversations = [];
+      let changed = false;
       const { data: convs, error } = await sb.from('conversations')
         .select('id, members, listing_id, created_at, updated_at')
         .contains('members', [u.id])
         .order('updated_at', { ascending: false })
         .limit(100);
-      if (error || !convs) return;
+      if (error || !convs) { if (error) console.warn('syncConversations:', error.message); return false; }
       const memberIds = new Set();
       convs.forEach(c => (c.members || []).forEach(id => memberIds.add(id)));
       const missingIds = Array.from(memberIds).filter(id => !(H.state.users || []).some(u => u.id === id));
@@ -952,6 +957,7 @@ window.H = {
             status: p.status || 'active',
             joinedAt: p.created_at ? new Date(p.created_at).getTime() : Date.now()
           });
+          changed = true;
         });
       }
       for (const c of convs) {
@@ -959,50 +965,77 @@ window.H = {
         if (!local) {
           local = { id: c.id, members: c.members, listingId: c.listing_id, messages: [] };
           H.state.conversations.push(local);
+          changed = true;
+        } else {
+          const members = Array.isArray(c.members) ? c.members : [];
+          if (JSON.stringify(local.members || []) !== JSON.stringify(members)) { local.members = members; changed = true; }
+          if ((local.listingId || null) !== (c.listing_id || null)) { local.listingId = c.listing_id || null; changed = true; }
         }
-        const { data: msgs } = await sb.from('messages')
+        if (!Array.isArray(local.messages)) { local.messages = []; changed = true; }
+        const { data: msgs, error: msgError } = await sb.from('messages')
           .select('id, sender_id, sender_name, text, read, created_at')
           .eq('conversation_id', c.id)
           .order('created_at', { ascending: true })
           .limit(200);
+        if (msgError) { console.warn('syncConversation messages:', msgError.message); continue; }
         if (msgs) {
-          const existing = new Set(local.messages.map(m => m.id));
+          const existing = new Map(local.messages.map(m => [m.id, m]));
           msgs.forEach(m => {
-            if (!existing.has(m.id)) {
+            const t = m.created_at ? new Date(m.created_at).getTime() : Date.now();
+            const found = existing.get(m.id);
+            const read = found && found.read ? true : !!m.read;
+            if (!found) {
               local.messages.push({
                 id: m.id, from: m.sender_id, senderName: m.sender_name || '',
-                text: m.text, t: new Date(m.created_at).getTime(), read: m.read
+                text: m.text, t, read
               });
+              changed = true;
+            } else if (found.text !== m.text || found.read !== read || found.from !== m.sender_id || found.t !== t) {
+              found.from = m.sender_id;
+              found.senderName = m.sender_name || found.senderName || '';
+              found.text = m.text;
+              found.t = t;
+              found.read = read;
+              changed = true;
             }
           });
+          const beforeOrder = local.messages.map(m => m.id).join('|');
+          local.messages.sort((a,b) => (a.t || 0) - (b.t || 0));
+          if (beforeOrder !== local.messages.map(m => m.id).join('|')) changed = true;
         }
       }
-      H.saveState();
+      if (changed) H.saveState();
+      return changed;
     } catch(e) { console.warn('syncConversations:', e.message); }
+    return false;
   },
 
   async saveMessageToCloud(convId, msg) {
     try {
       const sb = window.supabase;
-      if (!sb || typeof sb.from !== 'function') return;
-      await sb.from('messages').upsert({
+      if (!sb || typeof sb.from !== 'function') return { ok:false, error:'Connection unavailable' };
+      const { error } = await sb.from('messages').upsert({
         id: msg.id, conversation_id: convId,
         sender_id: msg.from, sender_name: msg.senderName || '',
         text: msg.text, read: msg.read || false,
         created_at: new Date(msg.t || Date.now()).toISOString()
       });
-    } catch(e) { console.warn('saveMessageToCloud:', e.message); }
+      if (error) { console.warn('saveMessageToCloud:', error.message); return { ok:false, error:error.message }; }
+      return { ok:true };
+    } catch(e) { console.warn('saveMessageToCloud:', e.message); return { ok:false, error:e.message }; }
   },
 
   async ensureConversationInCloud(conv) {
     try {
       const sb = window.supabase;
-      if (!sb || typeof sb.from !== 'function') return;
-      await sb.from('conversations').upsert({
+      if (!sb || typeof sb.from !== 'function') return { ok:false, error:'Connection unavailable' };
+      const { error } = await sb.from('conversations').upsert({
         id: conv.id, members: conv.members,
         listing_id: conv.listingId || null
       });
-    } catch(e) { console.warn('ensureConversationInCloud:', e.message); }
+      if (error) { console.warn('ensureConversationInCloud:', error.message); return { ok:false, error:error.message }; }
+      return { ok:true };
+    } catch(e) { console.warn('ensureConversationInCloud:', e.message); return { ok:false, error:e.message }; }
   },
 
   _registerCategoryView() {

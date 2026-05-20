@@ -25,6 +25,48 @@
     return H.state.users;
   }
 
+  function conversationSignature() {
+    const u = currentUser();
+    if (!u) return '';
+    return conversations()
+      .filter(c => Array.isArray(c.members) && c.members.includes(u.id))
+      .map(c => {
+        const msgs = Array.isArray(c.messages) ? c.messages : [];
+        const last = msgs[msgs.length - 1] || {};
+        const unread = msgs.filter(m => m.from !== u.id && !m.read).length;
+        const otherId = Array.isArray(c.members) ? c.members.find(m => m !== u.id) : '';
+        const other = otherId ? users().find(x => x.id === otherId) : null;
+        return [c.id, msgs.length, last.id || '', last.t || 0, unread, (other && other.name) || '', (other && other.avatar) || ''].join(':');
+      })
+      .sort()
+      .join('|');
+  }
+
+  function otherAvatarFor(c, u) {
+    const otherId = c && Array.isArray(c.members) ? c.members.find(m => m !== u.id) : null;
+    const other = otherId ? users().find(x => x.id === otherId) : null;
+    const ini = initials((other && other.name) || 'U');
+    return (other && other.avatar)
+      ? '<img src="' + escHtml(other.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+      : '<div style="width:100%;height:100%;background:linear-gradient(135deg,#1A3A8F,#2952cc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">' + ini + '</div>';
+  }
+
+  function appendThemMessage(thread, avatarHtml, m) {
+    if (!thread || !m || thread.querySelector('[data-msg-id="' + escHtml(m.id) + '"]')) return;
+    const wrap = document.createElement('div');
+    wrap.setAttribute('data-msg-id', m.id);
+    wrap.style.cssText = 'display:flex;align-items:flex-end;gap:6px';
+    const avaEl = document.createElement('div');
+    avaEl.style.cssText = 'width:28px;height:28px;flex-shrink:0';
+    avaEl.innerHTML = avatarHtml;
+    const div = document.createElement('div');
+    div.className = 'chat-bubble them';
+    div.innerHTML = escHtml(m.text) + '<div style="font-size:10px;opacity:.6;margin-top:3px">' + timeAgo(m.t) + '</div>';
+    wrap.appendChild(avaEl);
+    wrap.appendChild(div);
+    thread.appendChild(wrap);
+  }
+
   // ---------------------------------------------------
   // MESSAGES LIST
   // ---------------------------------------------------
@@ -94,12 +136,12 @@
     const msgs = c.messages.map(function(m) {
       const mine = m.from === u.id;
       if (mine) {
-        return '<div class="chat-bubble me">'
+        return '<div class="chat-bubble me" data-msg-id="' + escHtml(m.id) + '">'
           + escHtml(m.text)
           + '<div style="font-size:10px;opacity:.6;margin-top:3px;text-align:right">' + timeAgo(m.t) + '</div>'
           + '</div>';
       }
-      return '<div style="display:flex;align-items:flex-end;gap:6px">'
+      return '<div data-msg-id="' + escHtml(m.id) + '" style="display:flex;align-items:flex-end;gap:6px">'
         + '<div style="width:28px;height:28px;flex-shrink:0">' + otherAvatar + '</div>'
         + '<div class="chat-bubble them">'
         + escHtml(m.text)
@@ -123,6 +165,7 @@
   };
 
   pages.Chat_after = function () {
+    if (window._messagesPoll) { clearInterval(window._messagesPoll); window._messagesPoll = null; }
     const t = document.getElementById('chatThread');
     if (t) t.scrollTop = t.scrollHeight;
     setTimeout(() => document.getElementById('chatIn')?.focus(), 200);
@@ -151,10 +194,33 @@
   };
 
   pages.Messages_after = function () {
-    if (H._syncingMessagesPage || typeof H.syncConversations !== 'function' || !H.currentUser()) return;
-    H._syncingMessagesPage = true;
-    H.syncConversations().then(function () {
+    if (window._chatPoll) { clearInterval(window._chatPoll); window._chatPoll = null; }
+    if (window._messagesPoll) clearInterval(window._messagesPoll);
+    H._refreshMessagesPage();
+    window._messagesPoll = setInterval(function () {
+      if (H.currentPageName !== 'Messages') {
+        clearInterval(window._messagesPoll);
+        window._messagesPoll = null;
+        return;
+      }
+      H._refreshMessagesPage();
+    }, 5000);
+  };
+
+  H._refreshMessagesPage = function (opts) {
+    opts = opts || {};
+    if (H._syncingMessagesPage || !H.currentUser()) return Promise.resolve(false);
+    if (opts.skipSync) {
       if (H.currentPageName === 'Messages') H.renderPage('Messages');
+      return Promise.resolve(true);
+    }
+    if (typeof H.syncConversations !== 'function') return Promise.resolve(false);
+    H._syncingMessagesPage = true;
+    const before = conversationSignature();
+    return H.syncConversations().then(function () {
+      const after = conversationSignature();
+      if (H.currentPageName === 'Messages' && after !== before) H.renderPage('Messages');
+      return after !== before;
     }).finally(function () {
       H._syncingMessagesPage = false;
     });
@@ -168,42 +234,48 @@
         return;
       }
       const conv = conversations().find(c => c.id === convId);
-      const countBefore = conv ? conv.messages.length : 0;
+      const idsBefore = new Set(((conv && conv.messages) || []).map(m => m.id));
       if (typeof H.syncConversations === 'function') {
         await H.syncConversations();
       }
       const convAfter = conversations().find(c => c.id === convId);
-      if (!convAfter || convAfter.messages.length <= countBefore) return;
+      if (!convAfter) return;
       // Append only the new messages without a full page re-render
       const thread = document.getElementById('chatThread');
       if (!thread) return;
       const u = H.currentUser();
-      const activeConv = conversations().find(c => c.id === convId);
-      const otherId2 = activeConv ? activeConv.members.find(m => m !== u.id) : null;
-      const other2 = otherId2 ? users().find(x => x.id === otherId2) : null;
-      const otherIni2 = initials((other2 && other2.name) || 'U');
-      const ava2 = (other2 && other2.avatar)
-        ? '<img src="' + escHtml(other2.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
-        : '<div style="width:100%;height:100%;background:linear-gradient(135deg,#1A3A8F,#2952cc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">' + otherIni2 + '</div>';
-      const newMsgs = convAfter.messages.slice(countBefore);
+      if (!u) return;
+      const ava2 = otherAvatarFor(convAfter, u);
+      const newMsgs = (convAfter.messages || []).filter(m => !idsBefore.has(m.id));
       newMsgs.forEach(function(m) {
         if (m.from === u.id) return;
         m.read = true;
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'display:flex;align-items:flex-end;gap:6px';
-        const avaEl = document.createElement('div');
-        avaEl.style.cssText = 'width:28px;height:28px;flex-shrink:0';
-        avaEl.innerHTML = ava2;
-        const div = document.createElement('div');
-        div.className = 'chat-bubble them';
-        div.innerHTML = escHtml(m.text) + '<div style="font-size:10px;opacity:.6;margin-top:3px">' + timeAgo(m.t) + '</div>';
-        wrap.appendChild(avaEl);
-        wrap.appendChild(div);
-        thread.appendChild(wrap);
+        appendThemMessage(thread, ava2, m);
       });
       thread.scrollTop = thread.scrollHeight;
       H.saveState();
     }, 4000);
+  };
+
+  H._appendChatMessages = function (convId, msgs) {
+    if (H.currentPageName !== 'Chat' || !H.currentPageParams || H.currentPageParams.id !== convId) return false;
+    const thread = document.getElementById('chatThread');
+    const u = H.currentUser();
+    const conv = conversations().find(c => c.id === convId);
+    if (!thread || !u || !conv) return false;
+    const ava = otherAvatarFor(conv, u);
+    let appended = false;
+    (msgs || []).forEach(function(m) {
+      if (!m || m.from === u.id) return;
+      m.read = true;
+      appendThemMessage(thread, ava, m);
+      appended = true;
+    });
+    if (appended) {
+      thread.scrollTop = thread.scrollHeight;
+      H.saveState();
+    }
+    return appended;
   };
 
 
@@ -228,13 +300,21 @@
     if (thread) {
       const div = document.createElement('div');
       div.className = 'chat-bubble me';
+      div.setAttribute('data-msg-id', msgId);
       div.innerHTML = escHtml(text) + '<div style="font-size:10px;opacity:.6;margin-top:3px">just now</div>';
       thread.appendChild(div);
       thread.scrollTop = thread.scrollHeight;
     }
     try {
-      if (typeof H.ensureConversationInCloud === 'function') await H.ensureConversationInCloud(c);
-      if (typeof H.saveMessageToCloud === 'function') await H.saveMessageToCloud(c.id, c.messages[c.messages.length - 1]);
+      var cloudResult = { ok: true };
+      if (typeof H.ensureConversationInCloud === 'function') {
+        cloudResult = await H.ensureConversationInCloud(c);
+        if (cloudResult && cloudResult.ok === false) throw new Error(cloudResult.error || 'Conversation sync failed');
+      }
+      if (typeof H.saveMessageToCloud === 'function') {
+        cloudResult = await H.saveMessageToCloud(c.id, c.messages[c.messages.length - 1]);
+        if (cloudResult && cloudResult.ok === false) throw new Error(cloudResult.error || 'Message sync failed');
+      }
       else if (window.supabase && typeof window.supabase.from === 'function') {
         var r = await window.supabase.from('messages').insert({
           id: msgId, conversation_id: c.id,
@@ -245,7 +325,10 @@
       }
       var otherId = c.members.find(function(m){ return m !== u.id; });
       if (otherId && typeof H.pushNotif === 'function') H.pushNotif(otherId, 'New Message', (u.name || 'Someone') + ': ' + text.slice(0, 80), 'message');
-    } catch(e) { console.warn('Msg cloud error:', e.message); }
+    } catch(e) {
+      console.warn('Msg cloud error:', e.message);
+      H.toast('Message sent here, but could not sync. Check your connection and sign in again.', 5000, true);
+    }
   };
 
 })(window.H);
