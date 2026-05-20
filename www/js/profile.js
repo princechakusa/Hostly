@@ -184,7 +184,7 @@
     const btn = (label, fn, c, bg, bo) =>
       `<button onclick="${fn}" style="flex:1;padding:8px 2px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:${bg};color:${c};border:1.5px solid ${bo};font-family:inherit;white-space:nowrap">${label}</button>`;
     const actionBars = {
-      active:   (id) => btn('Edit',`H._myListings.edit('${id}')`,'#1A3A8F','#EFF6FF','#BFDBFE')+btn('Mark Sold',`H._myListings.markSold('${id}')`,'#16a34a','#dcfce7','#bbf7d0')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'),
+      active:   (id) => { const l=(H.state.listings||[]).find(x=>x.id===id); const isJob=l&&l.cat==='jobs'; return btn('Edit',`H._myListings.edit('${id}')`,'#1A3A8F','#EFF6FF','#BFDBFE')+btn(isJob?'Mark Filled':'Mark Sold',`H._myListings.markSold('${id}')`,'#16a34a','#dcfce7','#bbf7d0')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'); },
       pending:  (id) => btn('Edit',`H._myListings.edit('${id}')`,'#1A3A8F','#EFF6FF','#BFDBFE')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'),
       sold:     (id) => btn('Post Again',`H._myListings.reactivate('${id}')`,'#1A3A8F','#EFF6FF','#BFDBFE')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'),
       rejected: (id) => btn('Edit & Resubmit',`H._myListings.edit('${id}')`,'#D97706','#FFFBEB','#FDE68A')+btn('Delete',`H._myListings.del('${id}')`,'#ef4444','#fef2f2','#fecaca'),
@@ -560,12 +560,19 @@
         u.cv.certs    = (document.getElementById('cvCerts')?.value || '').split('\n').map(s => s.trim()).filter(Boolean);
         u.cv.expectedSalary = parseFloat(document.getElementById('cvSalary')?.value) || null;
         u.cv.location = (document.getElementById('cvLocation')?.value || '').trim();
-        u.cv.visible  = document.getElementById('cvVisible')?.checked !== false;
+        u.cv.visible  = document.getElementById('cvVisible')?.checked ?? true;
+        // Make visible in HireTalent if they have a headline or experience
+        if (u.cv.visible && (u.cv.headline || (u.cv.experience && u.cv.experience.length))) {
+          u.openToWork = true;
+        }
         H.saveState();
         const sb = window.supabase;
         if (sb && typeof sb.from === 'function') {
-          sb.from('profiles').upsert({ id: u.id, cv: u.cv, updated_at: new Date().toISOString() })
-            .then(r => { if (r && r.error) console.warn('CV sync:', r.error.message); });
+          sb.from('profiles').upsert({
+            id: u.id, cv: u.cv,
+            open_to_work: u.openToWork || false,
+            updated_at: new Date().toISOString()
+          }).then(r => { if (r && r.error) console.warn('CV sync:', r.error.message); });
         }
         H.toast('Job profile saved!');
         H.goBack();

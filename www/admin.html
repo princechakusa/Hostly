@@ -1289,38 +1289,74 @@ async function rejectTopup(reqId){
 // ── Reports Panel ─────────────────────────────────────────────
 function renderReports(){
   if(!DATA.reportsExist){
-    document.getElementById("reportContent").innerHTML = '<div class="empty-msg"><div style="font-size:28px;margin-bottom:10px">&#128681;</div>No reports table yet. Reports will appear here once users start flagging content.</div>';
+    document.getElementById("reportContent").innerHTML = '<div class="empty-msg"><div style="font-size:28px;margin-bottom:10px">&#128681;</div>No reports yet. Reports will appear here once users start flagging content or sending support messages.</div>';
     return;
   }
   var q = (document.getElementById("reportSearch").value||"").toLowerCase();
   var f = document.getElementById("reportFilter").value;
-  var r = DATA.reports.filter(function(x){
+
+  // Split support messages from content reports
+  var allReports = DATA.reports || [];
+  var supportMsgs = allReports.filter(function(x){ return x.target_type==="support"; });
+  var contentReports = allReports.filter(function(x){ return x.target_type!=="support"; });
+
+  var filtered = allReports.filter(function(x){
+    var match = !q || (x.reason||"").toLowerCase().includes(q) || (x.target_type||"").toLowerCase().includes(q);
+    return match && (!f || x.status===f);
+  });
+
+  var html = "";
+
+  // Support messages section
+  if(supportMsgs.length){
+    html += '<div style="font-size:12px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding:8px 12px;background:#1c1917;border-radius:8px;border-left:3px solid #f59e0b">💬 Support Messages ('+supportMsgs.length+')</div>';
+    var supportRows = supportMsgs.filter(function(x){
+      return !q || (x.reason||"").toLowerCase().includes(q);
+    }).map(function(x){
+      var bc = x.status==="open"?"b-open":"b-resolved";
+      var preview = (x.reason||"").replace(/^\[Support\]\s*/,"").slice(0,80);
+      return "<tr>"+
+        "<td style='max-width:300px;word-break:break-word'>"+esc(preview)+"…</td>"+
+        "<td>"+fmtDate(x.created_at)+"</td>"+
+        "<td><span class='b "+bc+"'>"+esc(x.status||"open")+"</span></td>"+
+        "<td><div class='actions'>"+
+          "<button class='ab ab-view' onclick='viewReport(\""+x.id+"\")'>Read</button>"+
+          (x.status==="open" ? "<button class='ab ab-resolve' onclick='resolveReport(\""+x.id+"\")'>Mark Done</button>" : "")+
+          "<button class='ab ab-delete' onclick='deleteReport(\""+x.id+"\")'>Delete</button>"+
+        "</div></td>"+
+      "</tr>";
+    }).join("");
+    html += "<div class='tbl-wrap' style='margin-bottom:20px'><table><thead><tr><th>Message Preview</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>"+supportRows+"</tbody></table></div>";
+  }
+
+  // Content reports section
+  var filteredContent = contentReports.filter(function(x){
     var match = !q || (x.reason||"").toLowerCase().includes(q) || (x.target_type||"").toLowerCase().includes(q) || (x.target_id||"").toLowerCase().includes(q);
     return match && (!f || x.status===f);
   });
-  if(!r.length){
-    document.getElementById("reportContent").innerHTML = '<div class="empty"><div class="empty-icon">&#128681;</div>No reports found.</div>';
-    return;
+
+  if(filteredContent.length){
+    html += '<div style="font-size:12px;font-weight:700;color:#f87171;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding:8px 12px;background:#1c0909;border-radius:8px;border-left:3px solid #ef4444">🚩 Content Reports ('+filteredContent.length+')</div>';
+    var rows = filteredContent.map(function(x){
+      var bc = x.status==="open"?"b-open":"b-resolved";
+      return "<tr>"+
+        "<td><span class='b b-blue'>"+esc(x.target_type||"—")+"</span></td>"+
+        "<td><span style='font-size:11px;color:#475569'>"+esc(x.target_id||"—")+"</span></td>"+
+        "<td>"+esc((x.reason||"—").slice(0,80))+"</td>"+
+        "<td>"+fmtDate(x.created_at)+"</td>"+
+        "<td><span class='b "+bc+"'>"+esc(x.status||"open")+"</span></td>"+
+        "<td><div class='actions'>"+
+          "<button class='ab ab-view' onclick='viewReport(\""+x.id+"\")'>View</button>"+
+          (x.status==="open" ? "<button class='ab ab-resolve' onclick='resolveReport(\""+x.id+"\")'>Resolve</button>" : "")+
+          "<button class='ab ab-delete' onclick='deleteReport(\""+x.id+"\")'>Delete</button>"+
+        "</div></td>"+
+      "</tr>";
+    }).join("");
+    html += "<div class='tbl-wrap'><table><thead><tr><th>Type</th><th>Target</th><th>Reason</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>"+rows+"</tbody></table></div>";
   }
-  var rows = r.map(function(x){
-    var bc = x.status==="open"?"b-open":"b-resolved";
-    return "<tr>"+
-      "<td><span class='b b-blue'>"+esc(x.target_type||"—")+"</span></td>"+
-      "<td><span style='font-size:11px;color:#475569'>"+esc(x.target_id||"—")+"</span></td>"+
-      "<td>"+esc(x.reason||"—")+"</td>"+
-      "<td>"+fmtDate(x.created_at)+"</td>"+
-      "<td><span class='b "+bc+"'>"+esc(x.status||"open")+"</span></td>"+
-      "<td><div class='actions'>"+
-        "<button class='ab ab-view' onclick='viewReport(\""+x.id+"\")'>View</button>"+
-        (x.status==="open" ? "<button class='ab ab-resolve' onclick='resolveReport(\""+x.id+"\")'>Resolve</button>" : "")+
-        "<button class='ab ab-delete' onclick='deleteReport(\""+x.id+"\")'>Delete</button>"+
-      "</div></td>"+
-    "</tr>";
-  }).join("");
-  document.getElementById("reportContent").innerHTML =
-    "<div class='tbl-wrap'><table><thead><tr>"+
-    "<th>Type</th><th>Target ID</th><th>Reason</th><th>Date</th><th>Status</th><th>Actions</th>"+
-    "</tr></thead><tbody>"+rows+"</tbody></table></div>";
+
+  if(!html) html = '<div class="empty"><div class="empty-icon">&#128681;</div>No reports found.</div>';
+  document.getElementById("reportContent").innerHTML = html;
 }
 
 function viewReport(id){
@@ -1328,18 +1364,36 @@ function viewReport(id){
   var bc = x.status==="open"?"b-open":"b-resolved";
   var targetListing = x.target_type==="listing" ? DATA.listings.find(function(l){ return l.id===x.target_id; }) : null;
   var targetUser    = x.target_type==="user"    ? DATA.users.find(function(u){ return u.id===x.target_id; })    : null;
-  var body =
-    row("Type", "<span class='b b-blue'>"+esc(x.target_type||"—")+"</span>")+
-    row("Target ID", "<span style='font-size:10px;color:#475569'>"+esc(x.target_id||"—")+"</span>")+
-    (targetListing ? row("Target Listing", "<b>"+esc(targetListing.title)+"</b> ("+esc(targetListing.status)+")"): "")+
-    (targetUser    ? row("Target User",    "<b>"+esc(targetUser.name||"—")+"</b> | "+esc(targetUser.phone||"—")): "")+
-    row("Reason", esc(x.reason||"—"))+
-    row("Reported By", "<span style='font-size:10px;color:#475569'>"+esc(x.reported_by||"—")+"</span>")+
-    row("Status", "<span class='b "+bc+"'>"+esc(x.status||"open")+"</span>")+
-    row("Reported On", fmtDT(x.created_at));
+  var isSupport = x.target_type === "support";
+  var reporter = x.reporter_id ? DATA.users.find(function(u){ return u.id===x.reporter_id; }) : null;
+  var body = "";
+
+  if(isSupport){
+    var msgText = (x.reason||"").replace(/^\[Support\]\s*/,"");
+    body =
+      row("From", reporter ? "<b>"+esc(reporter.name||"User")+"</b> | "+esc(reporter.email||"—")+" | "+esc(reporter.phone||"—") : "<span style='color:#64748b'>Anonymous / Guest</span>")+
+      row("Date", fmtDT(x.created_at))+
+      row("Status", "<span class='b "+bc+"'>"+esc(x.status||"open")+"</span>")+
+      "<tr><td colspan='2' style='padding:12px 0'><div style='white-space:pre-wrap;background:#0f172a;padding:14px;border-radius:8px;font-size:13px;line-height:1.6;color:#e2e8f0;border:1px solid #334155'>"+esc(msgText)+"</div></td></tr>";
+  } else {
+    body =
+      row("Type", "<span class='b b-blue'>"+esc(x.target_type||"—")+"</span>")+
+      row("Target ID", "<span style='font-size:10px;color:#475569'>"+esc(x.target_id||"—")+"</span>")+
+      (targetListing ? row("Target Listing", "<b>"+esc(targetListing.title)+"</b> ("+esc(targetListing.status)+")"): "")+
+      (targetUser    ? row("Target User",    "<b>"+esc(targetUser.name||"—")+"</b> | "+esc(targetUser.phone||"—")): "")+
+      row("Reason", esc(x.reason||"—"))+
+      row("Reported By", "<span style='font-size:10px;color:#475569'>"+esc(x.reported_by||"—")+"</span>")+
+      row("Status", "<span class='b "+bc+"'>"+esc(x.status||"open")+"</span>")+
+      row("Reported On", fmtDT(x.created_at));
+  }
 
   var extraBtns = "";
-  if(x.status==="open"){
+  if(isSupport && reporter && reporter.email){
+    var subject = encodeURIComponent("Re: Your PaMarket Support Request");
+    var body_ = encodeURIComponent("Hi "+reporter.name+",\n\nThank you for contacting PaMarket support.\n\n[Your reply here]\n\nKind regards,\nPaMarket Team");
+    extraBtns += '<button class="btn-save" onclick="window.location.href=\'mailto:'+esc(reporter.email)+'?subject='+subject+'&body='+body_+'\'">Reply via Email</button>';
+  }
+  if(!isSupport && x.status==="open"){
     if(targetListing && targetListing.status==="active"){
       extraBtns += '<button class="btn-danger" onclick="closeModal();resolveReportAndRemoveListing(\''+id+'\',\''+x.target_id+'\')">Resolve + Remove Listing</button>';
     }
@@ -1730,12 +1784,12 @@ function openAdForm(id){
     '</div>'+
     // Client
     '<div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid #334155">Client</div>'+
-    '<div class="mfg"><label class="mfl">Customer (select to auto-fill their details &amp; listings)</label>'+
+    '<div class="mfg"><label class="mfl">App User / Client (optional — auto-fills name &amp; contact below)</label>'+
       '<select class="mfi-sel" id="adUserPicker" onchange="onAdUserPick(this.value)">'+userOpts+'</select>'+
     '</div>'+
-    '<div class="mfg"><label class="mfl">Link to Listing (tap opens this listing inside the app)</label>'+
+    '<div class="mfg"><label class="mfl">In-App Listing Link (optional — tapping the ad in the app opens this listing)</label>'+
       '<select class="mfi-sel" id="adListingPicker">'+
-        '<option value="">-- Select customer first, then choose their listing --</option>'+
+        '<option value="">-- None / Use URL above instead --</option>'+
         (a && a.client_user_id
           ? (DATA.listings||[]).filter(function(l){ return l.seller_id===a.client_user_id||l.sellerId===a.client_user_id; })
               .map(function(l){ return '<option value="'+esc(l.id)+'"'+(a.listing_id===l.id?' selected':'')+'>'+esc(l.title||'Untitled')+(l.price?' · $'+l.price:'')+'</option>'; }).join('')

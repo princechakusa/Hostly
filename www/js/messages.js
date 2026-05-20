@@ -56,16 +56,35 @@
     c.messages.forEach(m => { if (m.from !== u.id) m.read = true; });
     saveState();
     H._activeChat = id;
+
+    const otherIni = initials(other.name || 'U');
+    const otherAvatar = other.avatar
+      ? '<img src="' + escHtml(other.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+      : '<div style="width:100%;height:100%;background:linear-gradient(135deg,#1A3A8F,#2952cc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">' + otherIni + '</div>';
+
     const msgs = c.messages.map(function(m) {
       const mine = m.from === u.id;
-      return '<div class="chat-bubble ' + (mine ? 'me' : 'them') + '">'
+      if (mine) {
+        return '<div class="chat-bubble me">'
+          + escHtml(m.text)
+          + '<div style="font-size:10px;opacity:.6;margin-top:3px;text-align:right">' + timeAgo(m.t) + '</div>'
+          + '</div>';
+      }
+      return '<div style="display:flex;align-items:flex-end;gap:6px">'
+        + '<div style="width:28px;height:28px;flex-shrink:0">' + otherAvatar + '</div>'
+        + '<div class="chat-bubble them">'
         + escHtml(m.text)
         + '<div style="font-size:10px;opacity:.6;margin-top:3px">' + timeAgo(m.t) + '</div>'
-        + '</div>';
+        + '</div></div>';
     }).join('');
+
     return '<div class="page active" style="display:flex;flex-direction:column;overflow:hidden">'
       + '<div class="det-topbar" style="flex-shrink:0"><button class="back" onclick="H.goBack()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>'
-      + '<div class="det-topbar-title">' + escHtml(other.name) + '</div></div>'
+      + '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">'
+      + '<div style="width:34px;height:34px;flex-shrink:0">' + otherAvatar + '</div>'
+      + '<div style="min-width:0"><div class="det-topbar-title" style="margin:0;text-align:left">' + escHtml(other.name) + '</div>'
+      + (other.verified ? '<div style="font-size:10px;color:#22c55e;font-weight:600">✓ Verified</div>' : '') + '</div>'
+      + '</div></div>'
       + (listing ? '<div style="flex-shrink:0;padding:8px 14px;background:var(--card);border-bottom:1px solid var(--border);font-size:13px;color:var(--sub)">Re: ' + escHtml(listing.title) + '</div>' : '')
       + '<div class="chat-thread" id="chatThread" style="flex:1;min-height:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">' + (msgs || '<div style="text-align:center;color:var(--sub);padding:40px 20px;font-size:14px">No messages yet. Say hello! 👋</div>') + '</div>'
       + '<div class="chat-input-bar" style="flex-shrink:0">'
@@ -119,14 +138,28 @@
       const thread = document.getElementById('chatThread');
       if (!thread) return;
       const u = H.currentUser();
+      const conv = (H.state.conversations || []).find(c => c.id === convId);
+      const otherId2 = conv ? conv.members.find(m => m !== u.id) : null;
+      const other2 = otherId2 ? (H.state.users || []).find(x => x.id === otherId2) : null;
+      const otherIni2 = initials((other2 && other2.name) || 'U');
+      const ava2 = (other2 && other2.avatar)
+        ? '<img src="' + escHtml(other2.avatar) + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">'
+        : '<div style="width:100%;height:100%;background:linear-gradient(135deg,#1A3A8F,#2952cc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">' + otherIni2 + '</div>';
       const newMsgs = convAfter.messages.slice(countBefore);
       newMsgs.forEach(function(m) {
-        if (m.from === u.id) return; // we already added our own
+        if (m.from === u.id) return;
         m.read = true;
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex;align-items:flex-end;gap:6px';
+        const avaEl = document.createElement('div');
+        avaEl.style.cssText = 'width:28px;height:28px;flex-shrink:0';
+        avaEl.innerHTML = ava2;
         const div = document.createElement('div');
         div.className = 'chat-bubble them';
         div.innerHTML = escHtml(m.text) + '<div style="font-size:10px;opacity:.6;margin-top:3px">' + timeAgo(m.t) + '</div>';
-        thread.appendChild(div);
+        wrap.appendChild(avaEl);
+        wrap.appendChild(div);
+        thread.appendChild(wrap);
       });
       thread.scrollTop = thread.scrollHeight;
       saveState();

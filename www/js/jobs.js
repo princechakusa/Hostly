@@ -542,15 +542,17 @@
     H.toast('Application submitted! The employer will be in touch.');
     H.renderPage('JobDetail', {id: jobId});
     H.state.conversations = H.state.conversations || [];
-    var ids = [u.id, l.sellerId].sort();
     var convId = 'job_' + app.id.slice(-8);
     if (!H.state.conversations.find(function(c){ return c.id === convId; })) {
-      H.state.conversations.push({
+      var conv = {
         id: convId, members: [u.id, l.sellerId], listingId: jobId,
         appId: app.id, isJobThread: true,
-        messages: message ? [{id: H.uid(), senderId: u.id, text: message, t: Date.now()}] : []
-      });
+        messages: message ? [{id: H.uid(), from: u.id, senderName: u.name||'', text: message, t: Date.now(), read: false}] : []
+      };
+      H.state.conversations.push(conv);
       H.saveState();
+      if (typeof H.ensureConversationInCloud === 'function') H.ensureConversationInCloud(conv);
+      if (message && typeof H.saveMessageToCloud === 'function') H.saveMessageToCloud(convId, conv.messages[0]);
     }
   };
 
