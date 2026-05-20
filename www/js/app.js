@@ -936,126 +936,104 @@ window.H = {
       const u = H.currentUser(); if (!u) return false;
       if (!Array.isArray(H.state.conversations)) H.state.conversations = [];
       let changed = false;
-      const { data: convs, error } = await sb.from('conversations')
-        .select('id, members, listing_id, created_at, updated_at')
-        .contains('members', [u.id])
-        .order('updated_at', { ascending: false })
-        .limit(100);
-      if (error) console.warn('syncConversations (conversations table):', error.message);
-      const cloudConvs = (!error && Array.isArray(convs)) ? convs : [];
-      const memberIds = new Set();
-      cloudConvs.forEach(c => (c.members || []).forEach(id => memberIds.add(id)));
-      const missingIds = Array.from(memberIds).filter(id => !(H.state.users || []).some(u => u.id === id));
-      if (missingIds.length) {
-        const { data: profiles } = await sb.from('profiles')
-          .select('id,name,phone,email,avatar,verified,role,status,created_at')
-          .in('id', missingIds);
-        (profiles || []).forEach(p => {
-          (H.state.users = H.state.users || []).push({
-            id: p.id, name: p.name || 'User', phone: p.phone || '',
-            email: p.email || '', avatar: p.avatar || null,
-            verified: !!p.verified, role: p.role || 'user',
-            status: p.status || 'active',
-            joinedAt: p.created_at ? new Date(p.created_at).getTime() : Date.now()
-          });
-          changed = true;
-        });
-      }
-      for (const c of cloudConvs) {
-        let local = H.state.conversations.find(x => x.id === c.id);
-        if (!local) {
-          local = { id: c.id, members: c.members, listingId: c.listing_id, messages: [] };
-          H.state.conversations.push(local);
-          changed = true;
-        } else {
-          const members = Array.isArray(c.members) ? c.members : [];
-          if (JSON.stringify(local.members || []) !== JSON.stringify(members)) { local.members = members; changed = true; }
-          if ((local.listingId || null) !== (c.listing_id || null)) { local.listingId = c.listing_id || null; changed = true; }
-        }
-        if (!Array.isArray(local.messages)) { local.messages = []; changed = true; }
-        const { data: msgs, error: msgError } = await sb.from('messages')
-          .select('id, sender_id, sender_name, text, read, created_at')
-          .eq('conversation_id', c.id)
-          .order('created_at', { ascending: true })
-          .limit(200);
-        if (msgError) { console.warn('syncConversation messages:', msgError.message); continue; }
-        if (msgs) {
-          const existing = new Map(local.messages.map(m => [m.id, m]));
-          msgs.forEach(m => {
-            const t = m.created_at ? new Date(m.created_at).getTime() : Date.now();
-            const found = existing.get(m.id);
-            const read = found && found.read ? true : !!m.read;
-            if (!found) {
-              local.messages.push({
-                id: m.id, from: m.sender_id, senderName: m.sender_name || '',
-                text: m.text, t, read
-              });
-              changed = true;
-            } else if (found.text !== m.text || found.read !== read || found.from !== m.sender_id || found.t !== t) {
-              found.from = m.sender_id;
-              found.senderName = m.sender_name || found.senderName || '';
-              found.text = m.text;
-              found.t = t;
-              found.read = read;
-              changed = true;
-            }
-          });
-          const beforeOrder = local.messages.map(m => m.id).join('|');
-          local.messages.sort((a,b) => (a.t || 0) - (b.t || 0));
-          if (beforeOrder !== local.messages.map(m => m.id).join('|')) changed = true;
-        }
-      }
-      // Also sync messages for locally-known conversations not returned by the cloud query
-      const cloudIds = new Set(cloudConvs.map(c => c.id));
-      // Discovery: find conversations via messages table (works even without conversations table)
-      // conv IDs are deterministic: conv_<uid1_last6>_<uid2_last6>_<listing_last6>
-      // so querying messages by conversation_id LIKE %userSuffix% discovers the receiver's side
-      const uidSuffix = u.id.slice(-6);
+
+      // Phase 1: discover from conversations table (may not exist — silent fail)
+      const knownIds = new Set(H.state.conversations.map(c => c.id));
       try {
-        const [sentRes, recvRes] = await Promise.all([
-          sb.from('messages').select('conversation_id,sender_id,sender_name').eq('sender_id', u.id).order('created_at',{ascending:false}).limit(200),
-          sb.from('messages').select('conversation_id,sender_id,sender_name').like('conversation_id', `%${uidSuffix}%`).neq('sender_id', u.id).order('created_at',{ascending:false}).limit(200)
-        ]);
-        const discovered = new Map();
-        for (const row of [...(sentRes.data||[]), ...(recvRes.data||[])]) {
-          if (!row.conversation_id || cloudIds.has(row.conversation_id)) continue;
-          if (!discovered.has(row.conversation_id)) discovered.set(row.conversation_id, row.sender_id);
-        }
-        for (const [convId, senderId] of discovered) {
-          let local = H.state.conversations.find(x => x.id === convId);
-          if (!local) {
-            const otherId = senderId === u.id ? null : senderId;
-            const members = otherId ? [u.id, otherId] : [u.id];
-            local = { id: convId, members, listingId: null, messages: [] };
-            H.state.conversations.push(local);
-            changed = true;
+        const { data: convs, error } = await sb.from('conversations')
+          .select('id, members, listing_id')
+          .contains('members', [u.id])
+          .limit(100);
+        if (!error && convs) {
+          for (const c of convs) {
+            knownIds.add(c.id);
+            let local = H.state.conversations.find(x => x.id === c.id);
+            if (!local) {
+              local = { id: c.id, members: c.members || [], listingId: c.listing_id || null, messages: [] };
+              H.state.conversations.push(local);
+              changed = true;
+            } else {
+              const m = Array.isArray(c.members) ? c.members : [];
+              if (JSON.stringify(local.members||[]) !== JSON.stringify(m)) { local.members = m; changed = true; }
+            }
           }
-          cloudIds.add(convId);
+        }
+      } catch(e) { /* conversations table may not exist */ }
+
+      // Phase 2: discover from messages table — works without conversations table.
+      // Conv IDs embed the last 6 chars of each member UUID, so LIKE finds them.
+      try {
+        const uidSuffix = u.id.slice(-6);
+        const [sentRes, recvRes] = await Promise.all([
+          sb.from('messages').select('conversation_id,sender_id,sender_name').eq('sender_id', u.id).order('created_at',{ascending:false}).limit(300),
+          sb.from('messages').select('conversation_id,sender_id,sender_name').like('conversation_id',`%${uidSuffix}%`).neq('sender_id', u.id).order('created_at',{ascending:false}).limit(300)
+        ]);
+        for (const row of [...(sentRes.data||[]), ...(recvRes.data||[])]) {
+          if (!row.conversation_id || knownIds.has(row.conversation_id)) continue;
+          knownIds.add(row.conversation_id);
+          const otherId = row.sender_id !== u.id ? row.sender_id : null;
+          const members = otherId ? [u.id, otherId] : [u.id];
+          H.state.conversations.push({ id: row.conversation_id, members, listingId: null, messages: [] });
+          changed = true;
         }
       } catch(e) { /* messages table scan failed */ }
-      for (const local of H.state.conversations.filter(c => !cloudIds.has(c.id))) {
+
+      // Phase 3: fetch profiles for all unknown conversation members (fixes "User" name)
+      const allMemberIds = new Set();
+      H.state.conversations.forEach(c => (c.members||[]).forEach(id => allMemberIds.add(id)));
+      const missingProfiles = Array.from(allMemberIds).filter(id => id !== u.id && !(H.state.users||[]).some(x => x.id === id));
+      if (missingProfiles.length) {
+        try {
+          const { data: profiles } = await sb.from('profiles')
+            .select('id,name,phone,email,avatar,verified,role,status,created_at')
+            .in('id', missingProfiles);
+          (profiles||[]).forEach(p => {
+            if ((H.state.users||[]).some(x => x.id === p.id)) return;
+            (H.state.users = H.state.users||[]).push({
+              id: p.id, name: p.name||'', phone: p.phone||'',
+              email: p.email||'', avatar: p.avatar||null,
+              verified: !!p.verified, role: p.role||'user',
+              status: p.status||'active',
+              joinedAt: p.created_at ? new Date(p.created_at).getTime() : Date.now()
+            });
+            changed = true;
+          });
+        } catch(e) {}
+      }
+
+      // Phase 4: sync messages for EVERY known conversation
+      for (const local of H.state.conversations) {
         if (!Array.isArray(local.messages)) { local.messages = []; changed = true; }
-        const { data: lmsgs, error: lmErr } = await sb.from('messages')
+        const { data: msgs, error: msgErr } = await sb.from('messages')
           .select('id, sender_id, sender_name, text, read, created_at')
           .eq('conversation_id', local.id)
           .order('created_at', { ascending: true })
           .limit(200);
-        if (lmErr || !lmsgs) continue;
-        const lexist = new Map(local.messages.map(m => [m.id, m]));
-        lmsgs.forEach(m => {
+        if (msgErr || !msgs) continue;
+        const existing = new Map(local.messages.map(m => [m.id, m]));
+        msgs.forEach(m => {
           const t = m.created_at ? new Date(m.created_at).getTime() : Date.now();
-          if (!lexist.has(m.id)) {
-            local.messages.push({ id: m.id, from: m.sender_id, senderName: m.sender_name || '', text: m.text, t, read: !!m.read });
+          const found = existing.get(m.id);
+          const read = found && found.read ? true : !!m.read;
+          if (!found) {
+            local.messages.push({ id: m.id, from: m.sender_id, senderName: m.sender_name||'', text: m.text, t, read });
+            changed = true;
+          } else if (found.read !== read || found.from !== m.sender_id || found.senderName !== (m.sender_name||'')) {
+            found.from = m.sender_id;
+            found.senderName = m.sender_name || found.senderName || '';
+            found.read = read;
             changed = true;
           }
         });
-        local.messages.sort((a, b) => (a.t || 0) - (b.t || 0));
+        local.messages.sort((a,b) => (a.t||0) - (b.t||0));
       }
+
       if (changed) H.saveState();
       return changed;
     } catch(e) { console.warn('syncConversations:', e.message); }
     return false;
   },
+
 
   async saveMessageToCloud(convId, msg) {
     try {
