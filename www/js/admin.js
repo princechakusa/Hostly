@@ -58,6 +58,7 @@
       ['analytics',     'Analytics'],
       ['verifications',  `Verify (${(H.state.users||[]).filter(u=>u.verificationPending&&!u.verified).length})`],
       ['settings',      'Settings'],
+      ['ads',           `Ads (${((H.state.paidAds||[]).filter(a=>a.active&&a.endsAt>Date.now())).length} live)`],
       ['notifications', 'Notify'],
       ['support',       `Support (${(H.state.supportTickets||[]).filter(t=>t.status!=='closed').length})`],
       ['logs',          `Logs (${(H.state.adminLogs||[]).length})`]
@@ -81,6 +82,7 @@
       case 'analytics':      return renderAnalytics();
       case 'verifications':  return renderVerifications();
       case 'settings':       return renderSettings();
+      case 'ads':            return renderAds();
       case 'notifications':  return renderNotifications();
       case 'support':        return renderSupport();
       case 'logs':           return renderLogs();
@@ -549,6 +551,46 @@
       </div>`;
   }
 
+  // ── ADS MANAGEMENT ───────────────────────────────────────
+  const CATS = ['property','vehicles','electronics','furniture','fashion','services','agriculture','pets','kids','other','rooms','jobs'];
+
+  function renderAds() {
+    var now = Date.now();
+    var ads = H.state.paidAds || [];
+    var live = ads.filter(function(a){ return a.active && a.endsAt > now; });
+    return `
+      <div class="stats" style="margin:0 0 14px">
+        <div class="stat"><div class="stat-n">${live.length}</div><div class="stat-l">Live</div></div>
+        <div class="stat"><div class="stat-n">${ads.filter(function(a){return a.type==='banner';}).length}</div><div class="stat-l">Banners</div></div>
+        <div class="stat"><div class="stat-n">${ads.filter(function(a){return a.type==='spotlight';}).length}</div><div class="stat-l">Spotlights</div></div>
+      </div>
+      <div style="padding:0 4px">
+        <button class="btn-submit" onclick="H._admin.showAdForm()" style="width:100%;margin-bottom:14px">+ Create New Ad</button>
+        ${ads.length ? ads.map(function(a){ return renderAdRow(a, now); }).join('') : '<div style="text-align:center;padding:30px 16px;color:var(--sub)">No paid ads yet.<br>Create one to start showing businesses on the app.</div>'}
+      </div>`;
+  }
+
+  function renderAdRow(a, now) {
+    var isLive = a.active && a.endsAt > now;
+    var endDate = new Date(a.endsAt).toLocaleDateString('en-ZW', {day:'numeric',month:'short',year:'numeric'});
+    var typeLabel = a.type === 'banner' ? '🖼 Banner' : ('⭐ Spotlight · ' + (a.targetCat || ''));
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        ${a.imageUrl ? '<img src="'+escHtml(a.imageUrl)+'" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0">' : '<div style="width:44px;height:44px;border-radius:10px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+(a.type==='banner'?'🖼':'⭐')+'</div>'}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(a.businessName)}</div>
+          <div style="font-size:11px;color:var(--sub);margin-top:2px">${typeLabel} · ends ${endDate}</div>
+        </div>
+        <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;flex-shrink:0;${isLive?'background:#F0FDF4;color:#00A651':'background:var(--border);color:var(--sub)'}">${isLive?'LIVE':'OFF'}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="ml-act-btn" onclick="H._admin.toggleAd('${a.id}')">${isLive ? 'Pause' : 'Activate'}</button>
+        <button class="ml-act-btn" onclick="H._admin.showAdForm('${a.id}')">Edit</button>
+        <button class="ml-act-btn red" onclick="H._admin.deleteAd('${a.id}')">Delete</button>
+      </div>
+    </div>`;
+  }
+
   // ── ADMIN ACTIONS ─────────────────────────────────────────
   H._admin = {
     setTab(t) {
@@ -906,6 +948,85 @@
         onConfirm: () => {
           H.state.adminLogs = [];
           saveState(); toast('Logs cleared'); this.setTab('logs');
+        }
+      });
+    },
+
+    showAdForm(id) {
+      const ad = id ? (H.state.paidAds||[]).find(a=>a.id===id) : null;
+      const today = new Date().toISOString().slice(0,10);
+      const inAMonth = new Date(Date.now()+30*86400000).toISOString().slice(0,10);
+      const catOptions = CATS.map(c=>`<option value="${c}" ${ad&&ad.targetCat===c?'selected':''}>${c}</option>`).join('');
+      H.modal({
+        title: ad ? 'Edit Ad' : 'Create Paid Ad',
+        body: `
+          <div class="fg" style="margin-top:8px"><div class="fl">Ad Type</div>
+            <select class="fi" id="_adType" onchange="document.getElementById('_spotlightRow').style.display=this.value==='spotlight'?'':'none'">
+              <option value="banner" ${!ad||ad.type==='banner'?'selected':''}>🖼 Home Banner</option>
+              <option value="spotlight" ${ad&&ad.type==='spotlight'?'selected':''}>⭐ Category Spotlight</option>
+            </select></div>
+          <div class="fg"><div class="fl">Business Name</div><input class="fi" id="_adBiz" value="${escHtml(ad?ad.businessName:'')}" placeholder="e.g. Mega Furniture Harare"></div>
+          <div class="fg"><div class="fl">Headline / Tagline</div><input class="fi" id="_adHead" value="${escHtml(ad?ad.headline||'':'')}" placeholder="e.g. Best prices in Harare!"></div>
+          <div class="fg"><div class="fl">Sub-tagline (optional)</div><input class="fi" id="_adTag" value="${escHtml(ad?ad.tagline||'':'')}" placeholder="e.g. Free delivery on orders over $50"></div>
+          <div class="fg"><div class="fl">Image URL (optional)</div><input class="fi" id="_adImg" value="${escHtml(ad?ad.imageUrl||'':'')}" placeholder="https://... or leave blank for colour card"></div>
+          <div class="fg"><div class="fl">Background Colour</div><div style="display:flex;align-items:center;gap:8px"><input type="color" id="_adColor" value="${ad?ad.bgColor||'#1A3A8F':'#1A3A8F'}" style="width:44px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer"><span id="_adColorHex" style="font-size:13px;color:var(--sub)">${ad?ad.bgColor||'#1A3A8F':'#1A3A8F'}</span></div></div>
+          <div class="fg"><div class="fl">Tap Destination URL (optional)</div><input class="fi" id="_adLink" value="${escHtml(ad?ad.linkUrl||'':'')}" placeholder="https://wa.me/2637... or leave blank"></div>
+          <div class="fg" id="_spotlightRow" style="display:${ad&&ad.type==='spotlight'?'':'none'}"><div class="fl">Target Category</div><select class="fi" id="_adCat">${catOptions}</select></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="fg"><div class="fl">Start Date</div><input class="fi" type="date" id="_adStart" value="${ad?new Date(ad.startsAt).toISOString().slice(0,10):today}"></div>
+            <div class="fg"><div class="fl">End Date</div><input class="fi" type="date" id="_adEnd" value="${ad?new Date(ad.endsAt).toISOString().slice(0,10):inAMonth}"></div>
+          </div>`,
+        confirmText: ad ? 'Save Changes' : 'Create Ad',
+        onConfirm: () => H._admin.saveAd(id)
+      });
+      setTimeout(()=>{
+        const colorInput = document.getElementById('_adColor');
+        if (colorInput) colorInput.oninput = function(){ const hex=document.getElementById('_adColorHex'); if(hex) hex.textContent=this.value; };
+      }, 100);
+    },
+
+    saveAd(id) {
+      const type  = (document.getElementById('_adType')||{}).value || 'banner';
+      const biz   = ((document.getElementById('_adBiz')||{}).value||'').trim();
+      const head  = ((document.getElementById('_adHead')||{}).value||'').trim();
+      const tag   = ((document.getElementById('_adTag')||{}).value||'').trim();
+      const img   = ((document.getElementById('_adImg')||{}).value||'').trim();
+      const color = ((document.getElementById('_adColor')||{}).value||'#1A3A8F');
+      const link  = ((document.getElementById('_adLink')||{}).value||'').trim();
+      const cat   = ((document.getElementById('_adCat')||{}).value)||'';
+      const start = new Date(((document.getElementById('_adStart')||{}).value)||new Date().toISOString().slice(0,10)).getTime();
+      const end   = new Date(((document.getElementById('_adEnd')||{}).value)||new Date(Date.now()+30*86400000).toISOString().slice(0,10)).getTime();
+      if (!biz) { toast('Enter business name', 4000, true); return false; }
+      if (end <= start) { toast('End date must be after start date', 4000, true); return false; }
+      H.state.paidAds = H.state.paidAds || [];
+      if (id) {
+        const ad = H.state.paidAds.find(a=>a.id===id);
+        if (ad) Object.assign(ad, {type,businessName:biz,headline:head,tagline:tag,imageUrl:img,bgColor:color,linkUrl:link,targetCat:cat,startsAt:start,endsAt:end});
+        alog(`Updated ad: ${biz}`);
+      } else {
+        H.state.paidAds.unshift({id:uid(),type,businessName:biz,headline:head,tagline:tag,imageUrl:img,bgColor:color,linkUrl:link,targetCat:cat,startsAt:start,endsAt:end,active:true,createdAt:Date.now()});
+        alog(`Created ad: ${biz} (${type})`);
+      }
+      saveState(); toast('Ad saved!'); this.setTab('ads');
+    },
+
+    toggleAd(id) {
+      const ad = (H.state.paidAds||[]).find(a=>a.id===id); if (!ad) return;
+      ad.active = !ad.active;
+      alog(`${ad.active?'Activated':'Paused'} ad: ${ad.businessName}`);
+      saveState(); this.setTab('ads');
+    },
+
+    deleteAd(id) {
+      const ad = (H.state.paidAds||[]).find(a=>a.id===id); if (!ad) return;
+      modal({
+        title: 'Delete Ad',
+        body: `Remove the ad for <strong>${escHtml(ad.businessName)}</strong>? This cannot be undone.`,
+        confirmText: 'Delete', danger: true,
+        onConfirm: () => {
+          H.state.paidAds = (H.state.paidAds||[]).filter(a=>a.id!==id);
+          alog(`Deleted ad: ${ad.businessName}`);
+          saveState(); toast('Ad deleted'); this.setTab('ads');
         }
       });
     }

@@ -141,6 +141,26 @@
           </button>
         </div>
 
+        <!-- PAID BANNER ADS -->
+        ${(function(){
+          var now = Date.now();
+          var banners = (H.state.paidAds||[]).filter(function(a){ return a.type==='banner' && a.active && a.endsAt > now; });
+          if (!banners.length) return '';
+          var a = banners[Math.floor(Date.now() / 8000) % banners.length];
+          var tap = a.linkUrl ? 'window.open(' + JSON.stringify(a.linkUrl) + ')' : '';
+          return '<div style="margin:12px 12px 0">'
+            + '<div onclick="' + escHtml(tap) + '" style="border-radius:16px;overflow:hidden;cursor:' + (tap ? 'pointer' : 'default') + ';position:relative;border:1px solid var(--border)">'
+            + (a.imageUrl ? '<img src="' + escHtml(a.imageUrl) + '" style="width:100%;height:140px;object-fit:cover;display:block" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\'">' : '')
+            + '<div style="background:' + escHtml(a.bgColor||'#1A3A8F') + ';padding:16px 18px;' + (a.imageUrl ? 'display:none' : '') + '">'
+            + '<div style="font-size:17px;font-weight:900;color:#fff">' + escHtml(a.headline||a.businessName) + '</div>'
+            + (a.tagline ? '<div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:3px">' + escHtml(a.tagline) + '</div>' : '')
+            + '</div>'
+            + '<span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:.5px">SPONSORED</span>'
+            + '</div>'
+            + (banners.length > 1 ? '<div style="text-align:center;font-size:10px;color:var(--sub);margin-top:5px">' + banners.indexOf(a) + '/' + banners.length + ' sponsors</div>' : '')
+            + '</div>';
+        })()}
+
         <!-- FEATURED -->
         ${featured.length ? `
         <div style="padding:20px 0 0">

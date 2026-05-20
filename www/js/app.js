@@ -69,7 +69,7 @@ window.H = {
     users:[], listings:[], conversations:[], reports:[], txns:[],
     saves:{}, notifs:{}, currentUserId:null, cityFilter:'All Zimbabwe',
     _sortMode:'newest', _priceMin:'', _priceMax:'',
-    adminLogs:[], supportTickets:[], adminSession:null, topupRequests:[]
+    adminLogs:[], supportTickets:[], adminSession:null, topupRequests:[], paidAds:[]
   },
 
   loadState() {
