@@ -432,6 +432,7 @@ var currentTab = 1;
 var TOTAL_TABS = 11;
 var APP_KEY = 'pamarket_state';
 var AD_CATS = ['property','vehicles','electronics','furniture','fashion','services','agriculture','pets','kids','rooms','other','jobs'];
+var _editAdId = null; // tracks which ad is being edited in the modal
 
 // ── Helpers ───────────────────────────────────────────────────
 function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -1645,13 +1646,13 @@ function renderAds(){
         "<td>"+ctr+"</td>"+
         "<td>"+fmtDate(a.ends_at)+"</td>"+
         "<td><div class='actions'>"+
-          "<button class='ab ab-edit' onclick='openAdForm(\""+esc(a.id)+"\")'>Edit</button>"+
-          "<button class='"+(isLive?"ab ab-remove":"ab ab-approve")+"' onclick='toggleAd(\""+esc(a.id)+"\")'>"+
+          "<button class='ab ab-edit' data-adid='"+esc(a.id)+"' onclick='openAdForm(this.dataset.adid)'>Edit</button>"+
+          "<button class='"+(isLive?"ab ab-remove":"ab ab-approve")+"' data-adid='"+esc(a.id)+"' onclick='toggleAd(this.dataset.adid)'>"+
             (a.active?"Pause":"Activate")+
           "</button>"+
-          "<button class='ab ab-view' onclick='renewAd(\""+esc(a.id)+"\")'>+30d</button>"+
-          "<button class='ab ab-edit' style='background:#1c2a5e' onclick='duplicateAd(\""+esc(a.id)+"\")'>Clone</button>"+
-          "<button class='ab ab-delete' onclick='deleteAd(\""+esc(a.id)+"\")'>Delete</button>"+
+          "<button class='ab ab-view' data-adid='"+esc(a.id)+"' onclick='renewAd(this.dataset.adid)'>+30d</button>"+
+          "<button class='ab ab-edit' style='background:#1c2a5e' data-adid='"+esc(a.id)+"' onclick='duplicateAd(this.dataset.adid)'>Clone</button>"+
+          "<button class='ab ab-delete' data-adid='"+esc(a.id)+"' onclick='deleteAd(this.dataset.adid)'>Delete</button>"+
         "</div></td>"+
         "</tr>";
     });
@@ -1662,6 +1663,7 @@ function renderAds(){
 }
 
 function openAdForm(id){
+  _editAdId = id || null;
   var a = id ? (DATA.ads||[]).find(function(x){ return x.id===id; }) : null;
   var today = new Date().toISOString().slice(0,10);
   var inMonth = new Date(Date.now()+30*86400000).toISOString().slice(0,10);
@@ -1670,13 +1672,20 @@ function openAdForm(id){
     return '<option value="'+c+'"'+(a&&a.target_cat===c?" selected":"")+">"+c+"</option>";
   }).join("");
 
+  // User picker — select a registered platform user as client (or leave blank for external)
+  var userOpts = '<option value="">-- External / No platform user --</option>'+
+    (DATA.users||[]).map(function(u){
+      var sel = (a && a.client_user_id && a.client_user_id===u.id) ? " selected" : "";
+      return '<option value="'+esc(u.id)+'"'+sel+'>'+esc(u.name||"User")+(u.phone?" · "+esc(u.phone):"")+'</option>';
+    }).join("");
+
   var body =
     // Live preview
     '<div id="adPreviewWrap" style="background:#0f172a;border-radius:12px;padding:14px;margin-bottom:16px;border:1px solid #334155">'+
       '<div style="font-size:10px;color:#475569;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Live Preview</div>'+
       '<div id="adPreview"></div>'+
     '</div>'+
-    // Section: Ad type & content
+    // Ad type & content
     '<div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #334155">Ad Content</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
       '<div class="mfg"><label class="mfl">Ad Type</label>'+
@@ -1694,19 +1703,22 @@ function openAdForm(id){
       '<div class="mfg"><label class="mfl">Headline</label><input class="mfi" id="adHead" oninput="updateAdPreview()" value="'+esc(a?a.headline||"":"")+'" placeholder="Best prices in Harare!"></div>'+
       '<div class="mfg"><label class="mfl">Tagline</label><input class="mfi" id="adTag" oninput="updateAdPreview()" value="'+esc(a?a.tagline||"":"")+'" placeholder="Free delivery on $50+"></div>'+
     '</div>'+
-    '<div class="mfg"><label class="mfl">Image URL (optional — leave blank for colour card)</label><input class="mfi" id="adImg" oninput="updateAdPreview()" value="'+esc(a?a.image_url||"":"")+'" placeholder="https://..."></div>'+
+    '<div class="mfg"><label class="mfl">Image URL (optional)</label><input class="mfi" id="adImg" oninput="updateAdPreview()" value="'+esc(a?a.image_url||"":"")+'" placeholder="https://..."></div>'+
     '<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-bottom:14px">'+
       '<div><label class="mfl" style="display:block;margin-bottom:5px">BG Colour</label>'+
         '<input type="color" id="adColor" oninput="updateAdPreview()" value="'+(a?a.bg_color||"#1A3A8F":"#1A3A8F")+'" style="width:52px;height:38px;border:1.5px solid #334155;border-radius:8px;cursor:pointer;background:none"></div>'+
-      '<div class="mfg" style="margin-bottom:0"><label class="mfl">Tap Destination URL</label><input class="mfi" id="adLink" value="'+esc(a?a.link_url||"":"")+'" placeholder="https://wa.me/263... or leave blank"></div>'+
+      '<div class="mfg" style="margin-bottom:0"><label class="mfl">Tap Destination URL (WhatsApp / website)</label><input class="mfi" id="adLink" value="'+esc(a?a.link_url||"":"")+'" placeholder="https://wa.me/263..."></div>'+
     '</div>'+
     // Dates
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
       '<div class="mfg"><label class="mfl">Start Date</label><input class="mfi" type="date" id="adStart" value="'+(a&&a.starts_at?a.starts_at.slice(0,10):today)+'"></div>'+
       '<div class="mfg"><label class="mfl">End Date *</label><input class="mfi" type="date" id="adEnd" value="'+(a&&a.ends_at?a.ends_at.slice(0,10):inMonth)+'"></div>'+
     '</div>'+
-    // Client & Revenue
-    '<div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid #334155">Client & Revenue</div>'+
+    // Client
+    '<div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid #334155">Client</div>'+
+    '<div class="mfg"><label class="mfl">Platform User (optional — select to auto-fill details)</label>'+
+      '<select class="mfi-sel" id="adUserPicker" onchange="onAdUserPick(this.value)">'+userOpts+'</select>'+
+    '</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
       '<div class="mfg"><label class="mfl">Client Name</label><input class="mfi" id="adClientName" value="'+esc(a?a.client_name||"":"")+'" placeholder="John Moyo"></div>'+
       '<div class="mfg"><label class="mfl">Client Phone</label><input class="mfi" id="adClientPhone" value="'+esc(a?a.client_phone||"":"")+'" placeholder="+263..."></div>'+
@@ -1718,12 +1730,25 @@ function openAdForm(id){
       '<div class="mfg"><label class="mfl">Payment Reference</label><input class="mfi" id="adPayRef" value="'+esc(a?a.payment_ref||"":"")+'" placeholder="ECO-12345..."></div>'+
     '</div>';
 
+  // Footer uses onclick without ID string — reads _editAdId global instead
   var footer =
     '<button class="btn-cancel" onclick="closeModal()">Cancel</button>'+
-    '<button class="btn-save" onclick="saveAd('+(id?'"'+id+'"':"null")+')">'+( id?"Save Changes":"Create Ad")+'</button>';
+    '<button class="btn-save" onclick="saveAd()">'+(_editAdId?"Save Changes":"Create Ad")+'</button>';
 
-  openModal((id?"Edit Ad":"Create Paid Ad"), body, footer);
+  openModal((_editAdId?"Edit Ad":"Create Paid Ad"), body, footer);
   setTimeout(updateAdPreview, 50);
+}
+
+function onAdUserPick(userId){
+  if(!userId) return;
+  var u = (DATA.users||[]).find(function(x){ return x.id===userId; });
+  if(!u) return;
+  var nm = document.getElementById('adClientName');
+  var ph = document.getElementById('adClientPhone');
+  var em = document.getElementById('adClientEmail');
+  if(nm && !nm.value) nm.value = u.name||'';
+  if(ph && !ph.value) ph.value = u.phone||'';
+  if(em && !em.value) em.value = u.email||'';
 }
 
 function onAdTypeChange(){
@@ -1766,7 +1791,8 @@ function updateAdPreview(){
   }
 }
 
-async function saveAd(id){
+async function saveAd(){
+  var id = _editAdId; // set by openAdForm
   var type      = ((document.getElementById("adType")||{}).value||"banner");
   var biz       = ((document.getElementById("adBiz")||{}).value||"").trim();
   var head      = ((document.getElementById("adHead")||{}).value||"").trim();
@@ -1789,6 +1815,8 @@ async function saveAd(id){
   if(!endVal){ toast("End date is required.","error"); return; }
   if(startVal && endVal && endVal <= startVal){ toast("End date must be after start date.","error"); return; }
 
+  var clientUserId = ((document.getElementById("adUserPicker")||{}).value)||"";
+
   var payload = {
     type:type, business_name:biz, headline:head, tagline:tag,
     image_url:img||null, bg_color:color, link_url:link||null,
@@ -1796,6 +1824,7 @@ async function saveAd(id){
     starts_at:startVal?new Date(startVal).toISOString():new Date().toISOString(),
     ends_at:new Date(endVal+"T23:59:59").toISOString(),
     client_name:cName||null, client_phone:cPhone||null, client_email:cEmail||null,
+    client_user_id:clientUserId||null,
     price_paid:pricePaid, payment_method:payMeth, payment_ref:payRef||null,
     updated_at:new Date().toISOString()
   };

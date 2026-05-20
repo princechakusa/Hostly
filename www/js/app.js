@@ -747,7 +747,10 @@ window.H = {
       const a = (H.state.paidAds||[]).find(x=>x.id===id);
       if(a){ a.clicks=(a.clicks||0)+1; window.supabase.from('paid_ads').update({clicks:a.clicks}).eq('id',id).then(()=>{}); }
     }
-    if(url) window.open(url,'_blank','noopener');
+    if(url) { window.open(url,'_blank','noopener'); return; }
+    // No URL — show a brief info toast so tap gives feedback
+    const a = (H.state.paidAds||[]).find(x=>x.id===id);
+    if(a) H.toast((a.businessName||'Sponsored') + (a.tagline ? ' · ' + a.tagline : ''), 3000);
   },
 
   async fetchListingsFromSupabase() {

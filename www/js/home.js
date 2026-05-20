@@ -155,9 +155,9 @@
           var idx = Math.floor(Date.now() / 8000) % banners.length;
           var a = banners[idx];
           if(H.trackAdImpression) H.trackAdImpression(a.id);
-          var clickFn = a.linkUrl ? 'H.trackAdClick(' + JSON.stringify(a.id) + ',' + JSON.stringify(a.linkUrl) + ')' : '';
+          var clickFn = 'H.trackAdClick(' + JSON.stringify(a.id) + ',' + JSON.stringify(a.linkUrl||'') + ')';
           return '<div style="margin:12px 12px 0">'
-            + '<div onclick="' + escHtml(clickFn) + '" style="border-radius:16px;overflow:hidden;cursor:' + (clickFn ? 'pointer' : 'default') + ';position:relative;border:1px solid var(--border)">'
+            + '<div onclick="' + escHtml(clickFn) + '" style="border-radius:16px;overflow:hidden;cursor:pointer;position:relative;border:1px solid var(--border)">'
             + (a.imageUrl ? '<img src="' + escHtml(a.imageUrl) + '" style="width:100%;height:140px;object-fit:cover;display:block" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\'">' : '')
             + '<div style="background:' + escHtml(a.bgColor||'#1A3A8F') + ';padding:16px 18px">'
             + '<div style="font-size:17px;font-weight:900;color:#fff">' + escHtml(a.headline||a.businessName) + '</div>'
