@@ -408,6 +408,18 @@
     document.getElementById('modalBox').addEventListener('touchmove', function(e) {
       e.stopPropagation();
     }, { passive: true });
+
+    // ── Keyboard: Escape closes modals / sheets / doc sheet ──
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      var ds = document.getElementById('docSheet');
+      if (ds && ds.classList.contains('open')) { if (typeof H !== 'undefined' && H.closeDocSheet) H.closeDocSheet(); return; }
+      var mb = document.getElementById('modalBg');
+      if (mb && mb.classList.contains('show')) { if (typeof H !== 'undefined' && H.closeModal) H.closeModal(); return; }
+      var sheet = document.getElementById('actionSheet');
+      if (sheet && sheet.classList.contains('open')) { if (typeof H !== 'undefined' && H.closeSheet) H.closeSheet(); return; }
+      if (typeof H !== 'undefined' && H.closeLoginModal) H.closeLoginModal();
+    });
   </script>
 </body>
 </html>

@@ -16,13 +16,13 @@
   };
 
   function renderHCard(l) {
-    const photo = (l.photos && l.photos[0]) || ('https://picsum.photos/seed/' + l.id + '/300/200');
+    const photo = (l.photos && l.photos[0]) || '';
     const price = l.price ? ('$' + Number(l.price).toLocaleString()) : 'Free';
     const title = escHtml((l.title || '').slice(0, 38));
     const loc   = escHtml(l.suburb || l.city || l.prov || '');
     return `<div onclick="openListing('${l.id}')" style="width:155px;flex-shrink:0;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.07)">
       <div style="height:108px;overflow:hidden;background:#f0f0f0;position:relative">
-        <img src="${photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.src='https://picsum.photos/seed/${l.id}/300/200'">
+        ${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.onerror=null;this.style.display='none'">` : ''}
         ${l.negotiable ? '<span style="position:absolute;top:6px;right:6px;background:#F5A623;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px">NEG</span>' : ''}
       </div>
       <div style="padding:9px 10px 11px">

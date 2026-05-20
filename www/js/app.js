@@ -383,6 +383,12 @@ window.H = {
     if(this.state.currentUserId&&this.checkBan()) return;
     document.getElementById('bottomNav').style.display='flex';
     await this.navTo('Home');
+    // Handle deep links: ?listing=ID  or  ?action=post|browse
+    const _qs = new URLSearchParams(window.location.search);
+    const _lid = _qs.get('listing'), _act = _qs.get('action');
+    if (_lid) { setTimeout(()=>this.openListing(_lid), 200); }
+    else if (_act === 'post')   { if(this.currentUser()) setTimeout(()=>this.navTo('Post',null), 200); }
+    else if (_act === 'browse') { setTimeout(()=>this.navTo('Browse',null), 200); }
     try {
       await this.fetchListingsFromSupabase();
       await this.renderPage(this.currentPageName, this.currentPageParams);
@@ -706,7 +712,8 @@ window.H = {
         .eq('status','active')
         .order('created_at',{ascending:false})
         .limit(200);
-      if(error||!data||!data.length) return;
+      if(error) { if(!navigator.onLine) H.toast('No internet — showing saved listings', 4000, true); return; }
+      if(!data||!data.length) return;
       const cloud=data.map(r=>({
         id:r.id, sellerId:r.seller_id, sellerName:r.seller_name||'',
         sellerPhone:r.seller_phone||'', title:r.title, desc:r.description,
