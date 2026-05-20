@@ -1590,11 +1590,16 @@ async function sendAlert(){
 // ── Paid Ads Panel (Supabase-backed) ──────────────────────────
 function initAdsTab(){
   document.getElementById("adsContent").innerHTML = '<p class="loading-msg">Loading ads...</p>';
-  sb.from("paid_ads").select("*").order("created_at",{ascending:false})
-    .then(function(res){
-      DATA.ads = (!res.error && res.data) ? res.data : [];
-      renderAds();
-    });
+  // Load ads + users in parallel so the user picker is always populated
+  Promise.all([
+    sb.from("paid_ads").select("*").order("created_at",{ascending:false}),
+    DATA.users.length ? Promise.resolve(null) : sb.from("profiles").select("id,name,phone,email,role,status,verified,wallet_usd,verification_pending,ban_reason,ban_until,created_at").order("created_at",{ascending:false}).limit(500)
+  ]).then(function(results){
+    var adsRes = results[0], usersRes = results[1];
+    DATA.ads = (!adsRes.error && adsRes.data) ? adsRes.data : [];
+    if(usersRes && !usersRes.error && usersRes.data) DATA.users = usersRes.data;
+    renderAds();
+  });
 }
 
 function renderAds(){
@@ -1673,7 +1678,7 @@ function openAdForm(id){
   }).join("");
 
   // User picker — select a registered platform user as client (or leave blank for external)
-  var userOpts = '<option value="">-- External / No platform user --</option>'+
+  var userOpts = '<option value="">-- Choose a registered customer --</option>'+
     (DATA.users||[]).map(function(u){
       var sel = (a && a.client_user_id && a.client_user_id===u.id) ? " selected" : "";
       return '<option value="'+esc(u.id)+'"'+sel+'>'+esc(u.name||"User")+(u.phone?" · "+esc(u.phone):"")+'</option>';
@@ -1725,12 +1730,12 @@ function openAdForm(id){
     '</div>'+
     // Client
     '<div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid #334155">Client</div>'+
-    '<div class="mfg"><label class="mfl">Platform User (select to auto-fill details &amp; listings)</label>'+
+    '<div class="mfg"><label class="mfl">Customer (select to auto-fill their details &amp; listings)</label>'+
       '<select class="mfi-sel" id="adUserPicker" onchange="onAdUserPick(this.value)">'+userOpts+'</select>'+
     '</div>'+
-    '<div class="mfg"><label class="mfl">Link to Listing (ad taps open this listing in the app)</label>'+
+    '<div class="mfg"><label class="mfl">Link to Listing (tap opens this listing inside the app)</label>'+
       '<select class="mfi-sel" id="adListingPicker">'+
-        '<option value="">-- No listing / use URL instead --</option>'+
+        '<option value="">-- Select customer first, then choose their listing --</option>'+
         (a && a.client_user_id
           ? (DATA.listings||[]).filter(function(l){ return l.seller_id===a.client_user_id||l.sellerId===a.client_user_id; })
               .map(function(l){ return '<option value="'+esc(l.id)+'"'+(a.listing_id===l.id?' selected':'')+'>'+esc(l.title||'Untitled')+(l.price?' · $'+l.price:'')+'</option>'; }).join('')
@@ -1810,7 +1815,7 @@ function onAdUserPick(userId){
   var lp = document.getElementById('adListingPicker');
   if(lp){
     var userListings = (DATA.listings||[]).filter(function(l){ return l.seller_id===userId||l.sellerId===userId; });
-    lp.innerHTML = '<option value="">-- No listing / use URL instead --</option>'
+    lp.innerHTML = '<option value="">-- No listing (use URL or leave blank) --</option>'
       + userListings.map(function(l){
           var label = esc(l.title||'Untitled') + (l.price ? ' · $'+l.price : '') + (l.city ? ' · '+esc(l.city) : '');
           return '<option value="'+esc(l.id)+'">'+label+'</option>';
