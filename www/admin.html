@@ -266,6 +266,7 @@ tr:hover td{background:rgba(59,130,246,.03);}
       <button class="tab" data-tab="5">Reports</button>
       <button class="tab" data-tab="6">Error Logs</button>
       <button class="tab" data-tab="7">Send Alert</button>
+      <button class="tab" data-tab="8">Ads</button>
     </div>
 
     <!-- ── Panel 1: Overview ── -->
@@ -330,6 +331,11 @@ tr:hover td{background:rgba(59,130,246,.03);}
       <div id="alertContent"></div>
     </div>
 
+    <!-- ── Panel 8: Paid Ads ── -->
+    <div class="pnl" id="pnl8">
+      <div id="adsContent"><p class="loading-msg">Loading ads...</p></div>
+    </div>
+
   </div><!-- /body -->
 </div><!-- /dash -->
 
@@ -373,11 +379,13 @@ var sb = supabase.createClient(
 );
 
 // ── App state ─────────────────────────────────────────────────
-var DATA = { listings:[], users:[], reports:[], errorLogs:[], reportsExist:true };
+var DATA = { listings:[], users:[], reports:[], errorLogs:[], reportsExist:true, ads:[] };
 var confirmResolver = null;
 var confirmInputResolver = null;
 var currentTab = 1;
-var TOTAL_TABS = 7;
+var TOTAL_TABS = 8;
+var APP_KEY = 'pamarket_state';
+var AD_CATS = ['property','vehicles','electronics','furniture','fashion','services','agriculture','pets','kids','rooms','other','jobs'];
 
 // ── Helpers ───────────────────────────────────────────────────
 function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -454,6 +462,7 @@ function showTab(n){
   if(n===4) renderTopups();
   if(n===6) renderErrorLogs();
   if(n===7) renderAlertPanel();
+  if(n===8) renderAds();
 }
 
 // ── Auth ──────────────────────────────────────────────────────
@@ -1343,6 +1352,162 @@ async function sendAlert(){
     document.getElementById("alertBody").value = "";
     updateAlertCount();
   }
+}
+
+// ── Paid Ads Panel ────────────────────────────────────────────
+function loadAdsFromStorage(){
+  try {
+    var raw = localStorage.getItem(APP_KEY);
+    if(!raw) return [];
+    var state = JSON.parse(raw);
+    return Array.isArray(state.paidAds) ? state.paidAds : [];
+  } catch(e){ return []; }
+}
+
+function saveAdsToStorage(ads){
+  try {
+    var raw = localStorage.getItem(APP_KEY);
+    var state = raw ? JSON.parse(raw) : {};
+    state.paidAds = ads;
+    localStorage.setItem(APP_KEY, JSON.stringify(state));
+  } catch(e){ toast("Storage error: "+e.message,"error"); }
+}
+
+function renderAds(){
+  var ads = loadAdsFromStorage();
+  DATA.ads = ads;
+  var now = Date.now();
+  var live = ads.filter(function(a){ return a.active && new Date(a.endsAt).getTime() > now; });
+
+  var html =
+    '<div class="stats-grid" style="margin-bottom:16px">'+
+    scard(ads.length,"Total Ads","")+
+    scard(live.length,"Live Now",live.length>0?"":"")+
+    scard(ads.filter(function(a){return a.type==="banner";}).length,"Banners","")+
+    scard(ads.filter(function(a){return a.type==="spotlight";}).length,"Spotlights","")+
+    '</div>';
+
+  html += '<div style="margin-bottom:14px"><button class="btn-send" onclick="openAdForm(null)">+ Create New Ad</button></div>';
+
+  if(!ads.length){
+    html += '<div class="empty-msg"><div style="font-size:32px;margin-bottom:10px">📢</div>No paid ads yet.<br>Create one to start displaying sponsored content in the app.</div>';
+  } else {
+    html += '<div class="tbl-wrap"><table><thead><tr><th>Business</th><th>Type</th><th>Status</th><th>End Date</th><th>Actions</th></tr></thead><tbody>';
+    ads.forEach(function(a){
+      var isLive = a.active && new Date(a.endsAt).getTime() > now;
+      var statusBadge = isLive
+        ? '<span class="b b-active">LIVE</span>'
+        : (a.active ? '<span class="b b-pending">EXPIRED</span>' : '<span class="b b-removed">PAUSED</span>');
+      var typeLabel = a.type==="banner" ? "🖼 Home Banner" : ("⭐ Spotlight · "+esc(a.targetCat||""));
+      var endDate = a.endsAt ? new Date(a.endsAt).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+      html +=
+        "<tr>"+
+        "<td><b>"+esc(a.businessName||"—")+"</b>"+(a.headline?"<br><span style='font-size:11px;color:#64748b'>"+esc(a.headline)+"</span>":"")+"</td>"+
+        "<td>"+typeLabel+"</td>"+
+        "<td>"+statusBadge+"</td>"+
+        "<td>"+endDate+"</td>"+
+        "<td><div class='actions'>"+
+          "<button class='ab ab-edit' onclick='openAdForm(\""+esc(a.id)+"\")'>Edit</button>"+
+          "<button class='"+(isLive?"ab ab-remove":"ab ab-approve")+"' onclick='toggleAd(\""+esc(a.id)+"\")'>"+
+            (a.active?"Pause":"Activate")+
+          "</button>"+
+          "<button class='ab ab-delete' onclick='deleteAd(\""+esc(a.id)+"\")'>Delete</button>"+
+        "</div></td>"+
+        "</tr>";
+    });
+    html += "</tbody></table></div>";
+  }
+
+  document.getElementById("adsContent").innerHTML = html;
+}
+
+function openAdForm(id){
+  var ads = loadAdsFromStorage();
+  var a = id ? ads.find(function(x){ return x.id===id; }) : null;
+  var today = new Date().toISOString().slice(0,10);
+  var inMonth = new Date(Date.now()+30*86400000).toISOString().slice(0,10);
+
+  var catOpts = AD_CATS.map(function(c){
+    return '<option value="'+c+'"'+(a&&a.targetCat===c?" selected":"")+">"+c+"</option>";
+  }).join("");
+
+  var body =
+    '<div class="mfg"><label class="mfl">Ad Type</label>'+
+    '<select class="mfi-sel" id="adType" onchange="document.getElementById(\'adSpotRow\').style.display=this.value===\'spotlight\'?\'block\':\'none\'">'+
+      '<option value="banner"'+((!a||a.type==="banner")?" selected":"")+'>🖼 Home Screen Banner</option>'+
+      '<option value="spotlight"'+(a&&a.type==="spotlight"?" selected":"")+'>⭐ Category Spotlight</option>'+
+    '</select></div>'+
+    '<div class="mfg"><label class="mfl">Business Name *</label><input class="mfi" id="adBiz" value="'+esc(a?a.businessName||"":"")+'" placeholder="e.g. Mega Furniture Harare"></div>'+
+    '<div class="mfg"><label class="mfl">Headline</label><input class="mfi" id="adHead" value="'+esc(a?a.headline||"":"")+'" placeholder="e.g. Best prices in Harare!"></div>'+
+    '<div class="mfg"><label class="mfl">Tagline</label><input class="mfi" id="adTag" value="'+esc(a?a.tagline||"":"")+'" placeholder="e.g. Free delivery on orders over $50"></div>'+
+    '<div class="mfg"><label class="mfl">Image URL (optional — leave blank for colour card)</label><input class="mfi" id="adImg" value="'+esc(a?a.imageUrl||"":"")+'" placeholder="https://..."></div>'+
+    '<div class="mfg"><label class="mfl">Background Colour</label>'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<input type="color" id="adColor" value="'+(a?a.bgColor||"#1A3A8F":"#1A3A8F")+'" style="width:48px;height:36px;border:1.5px solid #334155;border-radius:8px;cursor:pointer;background:none">'+
+        '<span style="font-size:13px;color:#94a3b8">Choose brand colour for the card background</span>'+
+      '</div></div>'+
+    '<div class="mfg"><label class="mfl">Tap Destination URL (optional)</label><input class="mfi" id="adLink" value="'+esc(a?a.linkUrl||"":"")+'" placeholder="https://wa.me/263... or leave blank"></div>'+
+    '<div class="mfg" id="adSpotRow" style="display:'+(a&&a.type==="spotlight"?"block":"none")+'"><label class="mfl">Target Category</label>'+
+      '<select class="mfi-sel" id="adCat">'+catOpts+'</select></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+      '<div class="mfg"><label class="mfl">Start Date</label><input class="mfi" type="date" id="adStart" value="'+(a&&a.startsAt?new Date(a.startsAt).toISOString().slice(0,10):today)+'"></div>'+
+      '<div class="mfg"><label class="mfl">End Date *</label><input class="mfi" type="date" id="adEnd" value="'+(a&&a.endsAt?new Date(a.endsAt).toISOString().slice(0,10):inMonth)+'"></div>'+
+    '</div>';
+
+  var footer =
+    '<button class="btn-cancel" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn-save" onclick="saveAd('+(id?'"'+id+'"':"null")+')">'+( id?"Save Changes":"Create Ad")+'</button>';
+
+  openModal((id?"Edit Ad":"Create Paid Ad"), body, footer);
+}
+
+function saveAd(id){
+  var type   = (document.getElementById("adType")||{}).value||"banner";
+  var biz    = ((document.getElementById("adBiz")||{}).value||"").trim();
+  var head   = ((document.getElementById("adHead")||{}).value||"").trim();
+  var tag    = ((document.getElementById("adTag")||{}).value||"").trim();
+  var img    = ((document.getElementById("adImg")||{}).value||"").trim();
+  var color  = ((document.getElementById("adColor")||{}).value)||"#1A3A8F";
+  var link   = ((document.getElementById("adLink")||{}).value||"").trim();
+  var cat    = ((document.getElementById("adCat")||{}).value)||"";
+  var start  = new Date(((document.getElementById("adStart")||{}).value)||new Date().toISOString().slice(0,10)).getTime();
+  var end    = new Date(((document.getElementById("adEnd")||{}).value)||"").getTime();
+
+  if(!biz){ toast("Business name is required.","error"); return; }
+  if(!end || end <= start){ toast("End date must be after start date.","error"); return; }
+
+  var ads = loadAdsFromStorage();
+  if(id){
+    var idx = ads.findIndex(function(a){ return a.id===id; });
+    if(idx!==-1) ads[idx] = Object.assign(ads[idx], {type:type,businessName:biz,headline:head,tagline:tag,imageUrl:img,bgColor:color,linkUrl:link,targetCat:cat,startsAt:start,endsAt:end});
+  } else {
+    var uid2 = 'ad_'+(Date.now().toString(36))+'_'+(Math.random().toString(36).slice(2,7));
+    ads.unshift({id:uid2,type:type,businessName:biz,headline:head,tagline:tag,imageUrl:img,bgColor:color,linkUrl:link,targetCat:cat,startsAt:start,endsAt:end,active:true,createdAt:Date.now()});
+  }
+  saveAdsToStorage(ads);
+  closeModal();
+  renderAds();
+  toast((id?"Ad updated!":"Ad created — it will show in the app immediately."),"success");
+}
+
+function toggleAd(id){
+  var ads = loadAdsFromStorage();
+  var a = ads.find(function(x){ return x.id===id; }); if(!a) return;
+  a.active = !a.active;
+  saveAdsToStorage(ads);
+  renderAds();
+  toast(a.active?"Ad activated — now showing in app.":"Ad paused.","success");
+}
+
+async function deleteAd(id){
+  var ads = loadAdsFromStorage();
+  var a = ads.find(function(x){ return x.id===id; });
+  var ok = await confirm2("Delete Ad","Remove the ad for \""+(a?esc(a.businessName||"this ad"):"this ad")+"\"? Cannot be undone.","🗑️","Delete");
+  if(!ok) return;
+  var updated = ads.filter(function(x){ return x.id!==id; });
+  saveAdsToStorage(updated);
+  renderAds();
+  toast("Ad deleted.","");
 }
 
 // ── Row helper ────────────────────────────────────────────────
