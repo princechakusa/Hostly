@@ -87,6 +87,10 @@
         <button onclick="H.logout()" style="width:100%;padding:14px;background:#FFF1F0;color:#EF4444;border:1.5px solid #FECACA;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif">
           Sign Out
         </button>
+        <div style="text-align:center;margin-top:20px;font-size:11px;color:var(--sub);line-height:1.8">
+          © ${new Date().getFullYear()} PaMarket · Made in Zimbabwe 🇿🇼<br>
+          <span style="font-size:10px;color:var(--sub2,#bbb)">All rights reserved · <span onclick="H.openInner('Terms')" style="cursor:pointer;text-decoration:underline">Terms</span> · <span onclick="H.openInner('Privacy')" style="cursor:pointer;text-decoration:underline">Privacy</span></span>
+        </div>
       </div>
     </div>`;
   };
