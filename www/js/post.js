@@ -197,20 +197,25 @@
       if (H.checkBan && H.checkBan()) return;
       const s = postState;
       const u = H.currentUser();
+      const needsApproval = !!(H.state.requireListingApproval && !(H.state.autoApproveVerified && u.verified));
       const l = {
         id: H.uid(), sellerId: u.id, sellerName: u.name || '', sellerPhone: u.phone || '', title: s.title, desc: s.desc,
         price: s.price, currency: s.currency, cat: s.cat,
         prov: s.prov, city: s.city, suburb: s.suburb,
         photos: s.photos, createdAt: Date.now(),
-        status: (H.state.requireListingApproval && !(H.state.autoApproveVerified && u.verified)) ? 'pending' : 'active',
+        status: needsApproval ? 'pending' : 'active',
         boost: null, views: 0
       };
       H.state.listings.unshift(l);
       H.saveState();
       if (typeof H.saveListingToCloud === "function") H.saveListingToCloud(l);
-      const needsApproval = H.state.requireListingApproval && !(H.state.autoApproveVerified && u.verified);
-      H.toast(needsApproval ? 'Ad submitted for admin approval' : 'Your ad is live!');
-      H.navTo('Home', document.querySelector('[data-nav="Home"]'));
+      if (needsApproval) {
+        H.toast('Ad submitted! It will go live after admin review.', 5000);
+        H.openInner('MyListings');
+      } else {
+        H.toast('Your ad is live! 🎉');
+        H.navTo('Home', document.querySelector('[data-nav="Home"]'));
+      }
     }
   };
 

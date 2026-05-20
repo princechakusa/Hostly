@@ -296,15 +296,15 @@
   <!-- ── Pages ────────────────────────────────────────── -->
   <script src="js/browse.js"></script>
   <script src="js/detail.js"></script>
-  <script src="js/post.js?v=2"></script>
+  <script src="js/post.js?v=3"></script>
   <script src="js/saved.js"></script>
-  <script src="js/messages.js"></script>
+  <script src="js/messages.js?v=2"></script>
   <script src="js/notifications.js"></script>
   <script src="js/profile.js"></script>
   <script src="js/account.js"></script>
   <script src="js/settings.js"></script>
-  <script src="js/security_pages.js"></script>
-  <script src="js/help.js"></script>
+  <script src="js/security_pages.js?v=2"></script>
+  <script src="js/help.js?v=2"></script>
   <script src="js/wallet.js"></script>
   <script src="js/verify.js"></script>
   <script src="js/admin.js?v=2"></script>
@@ -406,7 +406,7 @@
 
     // ── Prevent rubber-band scroll on iOS ────────────────
     document.addEventListener('touchmove', function(e) {
-      if (e.target.closest('#mainArea, .action-sheet, #docSheetBody, .modal-body-scroll, .login-modal, .modal')) return;
+      if (e.target.closest('#mainArea, .action-sheet, #docSheet, .modal-body-scroll, .login-modal, .modal')) return;
       e.preventDefault();
     }, { passive: false });
 

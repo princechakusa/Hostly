@@ -201,40 +201,65 @@
         </a>
 
         <div class="section-title">Send us a message</div>
-        <div class="fg">
-          <div class="fl">Subject</div>
-          <input class="fi" id="supportSubject" placeholder="What's your issue?">
+        <div id="contactSupportForm">
+          <div class="fg">
+            <div class="fl">Subject</div>
+            <input class="fi" id="supportSubject" placeholder="What's your issue?">
+          </div>
+          <div class="fg">
+            <div class="fl">Message</div>
+            <textarea class="fi" rows="5" id="supportMsg" placeholder="Describe your issue in detail..."></textarea>
+          </div>
+          <button class="btn-pri" onclick="H._support.send()">Send Message</button>
+          <div style="text-align:center;font-size:12px;color:var(--sub);margin-top:8px">We respond within 24 hours</div>
         </div>
-
-        <div class="fg">
-          <div class="fl">Message</div>
-          <textarea class="fi" rows="5" id="supportMsg" placeholder="Describe your issue in detail..."></textarea>
-        </div>
-
-        <button class="btn-pri" onclick="H._support.send()">Send Message</button>
-        <div style="text-align:center;font-size:12px;color:var(--sub);margin-top:8px">We respond within 24 hours</div>
       </div>
     </div>`;
   };
 
   pages.ContactSupport_after = function () {
     H._support = {
-      send: () => {
-        const subject = document.getElementById('supportSubject')?.value?.trim();
-        const msg = document.getElementById('supportMsg')?.value?.trim();
-        if (!subject || !msg) { H.toast('Please fill in all fields'); return; }
-        
+      send: async () => {
+        const btn     = document.querySelector('#contactSupportForm .btn-pri');
+        const subject = (document.getElementById('supportSubject')?.value || '').trim();
+        const msg     = (document.getElementById('supportMsg')?.value || '').trim();
+        if (!subject) { H.toast('Please enter a subject'); return; }
+        if (!msg)     { H.toast('Please describe your issue'); return; }
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+        const u  = H.currentUser();
+        const id = H.uid();
+
+        // Save locally
         H.state.supportTickets = H.state.supportTickets || [];
-        H.state.supportTickets.push({
-          id: H.uid(),
-          userId: H.state.currentUserId,
-          subject,
-          message: msg,
-          createdAt: Date.now(),
-          status: 'open'
-        });
+        H.state.supportTickets.push({ id, userId: H.state.currentUserId, subject, message: msg, createdAt: Date.now(), status: 'open' });
         H.saveState();
-        H.toast('Support ticket created! We\'ll respond within 24h.');
+
+        // Save to Supabase reports table so admin can see it
+        try {
+          if (window.supabase && typeof window.supabase.from === 'function') {
+            await window.supabase.from('reports').insert({
+              id,
+              reporter_id: H.state.currentUserId || null,
+              target_type: 'support',
+              target_id: H.state.currentUserId || 'guest',
+              reason: '[Support] ' + subject + '\n\n' + msg + (u ? '\n\nFrom: ' + (u.name || '') + ' | ' + (u.email || '') : ''),
+              status: 'open',
+              created_at: new Date().toISOString()
+            });
+          }
+        } catch(e) { console.warn('support ticket cloud save:', e.message); }
+
+        if (btn) { btn.disabled = false; btn.textContent = 'Send Message'; }
+        H.toast('Message sent! We'll respond within 24 hours.');
+
+        // Clear form
+        const subEl = document.getElementById('supportSubject');
+        const msgEl = document.getElementById('supportMsg');
+        if (subEl) subEl.value = '';
+        if (msgEl) msgEl.value = '';
+
         H.goBack();
       }
     };

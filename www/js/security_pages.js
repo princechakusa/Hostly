@@ -149,30 +149,58 @@
       u._pendingTwoFactorSecret = setup;
       H.saveState();
     }
+    const email       = H.escHtml(u ? (u.email || u.name || 'user') : 'user');
+    const secretClean = setup.replace(/\s/g, '');
+    const totpUri     = 'otpauth://totp/PaMarket:' + encodeURIComponent(email) + '?secret=' + secretClean + '&issuer=PaMarket';
+    const qrUrl       = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(totpUri);
+
     return `<div class="page active">
       ${H.innerTopbar('Two-Factor Authentication')}
       <div class="form-wrap">
-        <div class="section-box" style="text-align:center">
-          <div class="verify-title">${enabled ? '2FA Enabled' : 'Set Up Two-Factor Authentication'}</div>
-          <div class="verify-sub">${enabled ? 'Your account requires an authenticator code at login.' : 'Use an authenticator app to generate a secure 6-digit login code.'}</div>
-        </div>
         ${enabled ? `
+          <div class="section-box" style="text-align:center;background:linear-gradient(135deg,#dcfce7,#bbf7d0);border:1.5px solid #86efac">
+            <div style="font-size:32px;margin-bottom:8px">🔐</div>
+            <div style="font-size:17px;font-weight:800;color:#15803d;margin-bottom:4px">2FA is Active</div>
+            <div style="font-size:13px;color:#166534;line-height:1.5">Your account is protected with two-factor authentication. You'll need your authenticator app every time you log in.</div>
+          </div>
           <div class="section-box">
-            <div class="section-title">Disable 2FA</div>
+            <div class="section-title">Disable Two-Factor Authentication</div>
+            <div style="font-size:13px;color:var(--text-sub);margin-bottom:12px;line-height:1.5">Open your authenticator app and enter the 6-digit code to confirm you want to disable 2FA.</div>
             <div class="fg">
               <div class="fl">Authenticator code</div>
               <input class="fi" id="twoFactorCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" onkeydown="if(event.key==='Enter')H._twoFactor.disable()">
             </div>
-            <button class="btn-pri" style="background:var(--red)" onclick="H._twoFactor.disable()">Disable 2FA</button>
+            <button class="btn-pri" style="background:#dc2626" onclick="H._twoFactor.disable()">Disable 2FA</button>
           </div>
         ` : `
-          <div class="section-box">
-            <div class="section-title">Manual setup key</div>
-            <div style="font-size:12px;color:var(--text-sub);line-height:1.55;margin-bottom:10px">Add a new account in Google Authenticator, Microsoft Authenticator, 1Password, or any TOTP app, then enter the 6-digit code below.</div>
-            <div style="font-family:monospace;font-size:16px;font-weight:800;letter-spacing:1px;color:var(--blue);background:var(--blue-light);border:1.5px solid rgba(26,58,143,.18);border-radius:12px;padding:14px;text-align:center;word-break:break-all">${H.escHtml(setup)}</div>
+          <div class="section-box" style="text-align:center">
+            <div style="font-size:32px;margin-bottom:8px">🔒</div>
+            <div style="font-size:17px;font-weight:800;color:var(--text-primary);margin-bottom:4px">Set Up Two-Factor Authentication</div>
+            <div style="font-size:13px;color:var(--text-sub);line-height:1.5">Add an extra layer of security. After setup, every login will require a 6-digit code from your authenticator app.</div>
           </div>
+
           <div class="section-box">
-            <div class="section-title">Verify setup</div>
+            <div class="section-title">Step 1 — Install an Authenticator App</div>
+            <div style="font-size:13px;color:var(--text-sub);line-height:1.6">Download one of these free apps on your phone:<br>
+              <strong>Google Authenticator</strong>, <strong>Microsoft Authenticator</strong>, or <strong>Authy</strong>
+            </div>
+          </div>
+
+          <div class="section-box">
+            <div class="section-title">Step 2 — Scan the QR Code</div>
+            <div style="font-size:13px;color:var(--text-sub);margin-bottom:14px;line-height:1.5">Open your authenticator app, tap <strong>+</strong> or <strong>Add account</strong>, then scan this code:</div>
+            <div style="display:flex;justify-content:center;margin-bottom:12px">
+              <img src="${H.escHtml(qrUrl)}" width="180" height="180" alt="2FA QR Code" style="border-radius:12px;border:2px solid var(--border);padding:8px;background:#fff">
+            </div>
+            <div style="font-size:12px;color:var(--text-sub);text-align:center;margin-bottom:8px">Can't scan? Use this manual key instead:</div>
+            <div style="font-family:monospace;font-size:15px;font-weight:800;letter-spacing:2px;color:var(--blue);background:var(--blue-light,#EFF6FF);border:1.5px solid rgba(26,58,143,.2);border-radius:10px;padding:12px;text-align:center;word-break:break-all;cursor:pointer" onclick="
+              navigator.clipboard && navigator.clipboard.writeText('${H.escHtml(secretClean)}').then(()=>H.toast('Key copied!')).catch(()=>{});
+            ">${H.escHtml(setup)} <span style="font-size:11px;opacity:.6">(tap to copy)</span></div>
+          </div>
+
+          <div class="section-box">
+            <div class="section-title">Step 3 — Enter the 6-Digit Code</div>
+            <div style="font-size:13px;color:var(--text-sub);margin-bottom:12px;line-height:1.5">After scanning, your app will show a 6-digit code. Enter it below to confirm the setup.</div>
             <div class="fg">
               <div class="fl">Authenticator code</div>
               <input class="fi" id="twoFactorCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" onkeydown="if(event.key==='Enter')H._twoFactor.enable()">

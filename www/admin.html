@@ -504,14 +504,17 @@ function showTab(n){
     if(tab) tab.classList.toggle("on", i===n);
     if(pnl) pnl.classList.toggle("on", i===n);
   }
-  // Lazy render panels
+  // Lazy render panels — use cached DATA, re-fetch only when stale
+  if(n===2) renderListings();
+  if(n===3) renderUsers();
   if(n===4) renderTopups();
+  if(n===5) renderReports();
   if(n===6) renderErrorLogs();
   if(n===7) renderAlertPanel();
   if(n===8) initAdsTab();
   if(n===9) renderVerifications();
   if(n===10) {
-    sb.from("paid_ads").select("*").order("created_at",{ascending:false}).then(function(res){
+    sb.from("paid_ads").select("id,type,business_name,headline,tagline,image_url,bg_color,link_url,target_cat,starts_at,ends_at,active,priority,impressions,clicks,price_paid,client_name").order("created_at",{ascending:false}).limit(200).then(function(res){
       if(!res.error && res.data) DATA.ads = res.data;
       renderAnalytics();
     });
@@ -623,11 +626,11 @@ async function refreshAll(){
 }
 
 async function loadAllData(){
+  // Load stats-critical data first (fast queries with limits)
   await Promise.all([
     loadListings(),
     loadUsers(),
     loadReports(),
-    loadErrorLogs(),
     loadTopupRequests()
   ]);
   renderStats();
@@ -637,28 +640,29 @@ async function loadAllData(){
   if(currentTab===3) renderUsers();
   if(currentTab===4) renderTopups();
   if(currentTab===5) renderReports();
-  if(currentTab===6) renderErrorLogs();
   if(currentTab===9) renderVerifications();
   if(currentTab===10) renderAnalytics();
+  // Load error logs in background (not needed for stats)
+  loadErrorLogs().then(function(){ if(currentTab===6) renderErrorLogs(); });
 }
 
 async function loadListings(){
   try {
-    var {data, error} = await sb.from("listings").select("*").order("created_at",{ascending:false});
+    var {data, error} = await sb.from("listings").select("id,title,description,price,currency,category,province,city,status,seller_id,seller_name,seller_phone,photos,boost,views,created_at").order("created_at",{ascending:false}).limit(500);
     if(!error && data) DATA.listings = data;
   } catch(e){}
 }
 
 async function loadUsers(){
   try {
-    var {data, error} = await sb.from("profiles").select("*").order("created_at",{ascending:false});
+    var {data, error} = await sb.from("profiles").select("id,name,phone,email,role,status,verified,wallet_usd,verification_pending,ban_reason,ban_until,created_at").order("created_at",{ascending:false}).limit(500);
     if(!error && data) DATA.users = data;
   } catch(e){}
 }
 
 async function loadReports(){
   try {
-    var {data, error} = await sb.from("reports").select("*").order("created_at",{ascending:false});
+    var {data, error} = await sb.from("reports").select("*").order("created_at",{ascending:false}).limit(300);
     if(error){
       DATA.reports = [];
       DATA.reportsExist = false;
