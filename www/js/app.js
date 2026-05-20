@@ -1007,6 +1007,32 @@ window.H = {
       }
       // Also sync messages for locally-known conversations not returned by the cloud query
       const cloudIds = new Set(cloudConvs.map(c => c.id));
+      // Discovery: find conversations via messages table (works even without conversations table)
+      // conv IDs are deterministic: conv_<uid1_last6>_<uid2_last6>_<listing_last6>
+      // so querying messages by conversation_id LIKE %userSuffix% discovers the receiver's side
+      const uidSuffix = u.id.slice(-6);
+      try {
+        const [sentRes, recvRes] = await Promise.all([
+          sb.from('messages').select('conversation_id,sender_id,sender_name').eq('sender_id', u.id).order('created_at',{ascending:false}).limit(200),
+          sb.from('messages').select('conversation_id,sender_id,sender_name').like('conversation_id', `%${uidSuffix}%`).neq('sender_id', u.id).order('created_at',{ascending:false}).limit(200)
+        ]);
+        const discovered = new Map();
+        for (const row of [...(sentRes.data||[]), ...(recvRes.data||[])]) {
+          if (!row.conversation_id || cloudIds.has(row.conversation_id)) continue;
+          if (!discovered.has(row.conversation_id)) discovered.set(row.conversation_id, row.sender_id);
+        }
+        for (const [convId, senderId] of discovered) {
+          let local = H.state.conversations.find(x => x.id === convId);
+          if (!local) {
+            const otherId = senderId === u.id ? null : senderId;
+            const members = otherId ? [u.id, otherId] : [u.id];
+            local = { id: convId, members, listingId: null, messages: [] };
+            H.state.conversations.push(local);
+            changed = true;
+          }
+          cloudIds.add(convId);
+        }
+      } catch(e) { /* messages table scan failed */ }
       for (const local of H.state.conversations.filter(c => !cloudIds.has(c.id))) {
         if (!Array.isArray(local.messages)) { local.messages = []; changed = true; }
         const { data: lmsgs, error: lmErr } = await sb.from('messages')
