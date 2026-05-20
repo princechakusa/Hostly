@@ -24,15 +24,17 @@
   function renderHCard(l) {
     const photo = (l.photos && l.photos[0]) || '';
     const price = l.price ? ('$' + Number(l.price).toLocaleString()) : 'Free';
-    const title = escHtml((l.title || '').slice(0, 38));
+    const title = escHtml((l.title || '').slice(0, 36));
     const loc   = escHtml(l.suburb || l.city || l.prov || '');
-    return `<div onclick="openListing('${l.id}')" style="width:155px;flex-shrink:0;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.07)">
-      <div style="height:108px;overflow:hidden;background:#f0f0f0;position:relative">
-        ${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.onerror=null;this.style.display='none'">` : ''}
+    return `<div onclick="openListing('${l.id}')" style="background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border);cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,0.07)">
+      <div style="aspect-ratio:4/3;overflow:hidden;background:#f0f0f0;position:relative">
+        ${photo
+          ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.onerror=null;this.style.display='none'">`
+          : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:34px;color:#ccc">📦</div>'}
         ${l.negotiable ? '<span style="position:absolute;top:6px;right:6px;background:#F5A623;color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px">NEG</span>' : ''}
       </div>
-      <div style="padding:9px 10px 11px">
-        <div style="font-size:15px;font-weight:800;color:#1A3A8F;margin-bottom:2px">${price}</div>
+      <div style="padding:8px 10px 11px">
+        <div style="font-size:14px;font-weight:800;color:#1A3A8F;margin-bottom:2px">${price}</div>
         <div style="font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">${title}</div>
         <div style="font-size:11px;color:var(--sub)">${loc}</div>
       </div>
@@ -49,7 +51,7 @@
     const featured       = filtered.filter(l => l.boost && l.boost.until > Date.now()).slice(0, 6);
 
     const catSections = CATEGORIES.map(c => ({
-      ...c, items: filtered.filter(l => l.cat === c.id).slice(0, 10)
+      ...c, items: filtered.filter(l => l.cat === c.id).slice(0, 4)
     })).filter(s => s.items.length > 0);
 
     return `<div class="page active" style="background:var(--bg)">
@@ -169,6 +171,35 @@
             + '</div>';
         })()}
 
+        <!-- HOT ON PAMARKET -->
+        <div style="padding:24px 16px 0">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:#1A3A8F;text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Discover</div>
+              <span style="font-size:17px;font-weight:800;color:var(--text)">Hot on PaMarket</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            ${[
+              { emoji:'💼', label:'Find a Job', sub:'Browse openings in Zimbabwe', color1:'#1A3A8F', color2:'#2952cc', action:"H.openInner('Jobs')", badge:'' },
+              { emoji:'🏠', label:'Rooms & Property', sub:'Find your perfect space', color1:'#00897B', color2:'#00695C', action:"H.filterByCat('rooms')", badge:'' },
+              { emoji:'✅', label:'Verify Your Business', sub:'Get the trusted seller badge', color1:'#e53935', color2:'#b71c1c', action:"H.openInner('Verify')", badge:'' },
+              { emoji:'🛒', label:'Post a Free Ad', sub:'Sell anything in seconds', color1:'#F5A623', color2:'#e08800', action:"H.navTo('Post',null)", badge:'' },
+            ].map(c => `<div onclick="${c.action}" style="cursor:pointer;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--border);box-shadow:0 2px 10px rgba(0,0,0,.06)">
+              <div style="height:110px;background:linear-gradient(135deg,${c.color1},${c.color2});display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+                <div style="position:absolute;right:-18px;top:-18px;width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.12)"></div>
+                <div style="position:absolute;left:-10px;bottom:-10px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
+                <span style="font-size:44px;position:relative">${c.emoji}</span>
+                ${c.badge ? `<span style="position:absolute;top:8px;left:8px;background:#F5A623;color:#1A3A8F;font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px">${c.badge}</span>` : ''}
+              </div>
+              <div style="padding:10px 12px 13px">
+                <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px">${c.label}</div>
+                <div style="font-size:11px;color:var(--sub);line-height:1.4">${c.sub}</div>
+              </div>
+            </div>`).join('')}
+          </div>
+        </div>
+
         <!-- FEATURED -->
         ${featured.length ? `
         <div style="padding:20px 0 0">
@@ -201,7 +232,7 @@
                 </div>
                 <span onclick="H.filterByCat('${s.id}')" style="font-size:13px;font-weight:600;color:#1A3A8F;cursor:pointer">See all</span>
               </div>
-              <div style="display:flex;gap:12px;padding:0 16px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px">
                 ${s.items.map(l => renderHCard(l)).join('')}
               </div>
             </div>
