@@ -529,7 +529,7 @@ select.fi {
 .blocked-user-item { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; background: var(--card); border-radius: var(--r-md); box-shadow: var(--shadow-xs); border: .5px solid var(--border); margin-bottom: 8px; }
 .user-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .user-detail { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
-.btn-unblock { padding: 7px 14px; background: var(--red-light); color: var(--red); border: 1px solid rgba(217,45,32,.15); border-radius: var(--r-pill); font-size: 12px; font-weight: 700; cursor: pointer; }
+.btn-unblock { padding: 10px 14px; background: var(--red-light); color: var(--red); border: 1px solid rgba(217,45,32,.15); border-radius: var(--r-pill); font-size: 12px; font-weight: 700; cursor: pointer; min-height: 44px; }
 
 /* ── HELP & SUPPORT ──────────────────────────────────────────── */
 .help-section { padding: 0 16px; margin-bottom: 14px; }
@@ -644,7 +644,7 @@ select.fi {
 .ml-price { font-size: 16px; font-weight: 800; color: var(--blue); margin-top: 2px; }
 .ml-meta { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
 .ml-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-.ml-act-btn { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: var(--r-pill); border: 1.5px solid var(--border); background: var(--bg); cursor: pointer; transition: all .15s; font-family: var(--font); color: var(--text-mid); display: inline-flex; align-items: center; gap: 4px; }
+.ml-act-btn { font-size: 12px; font-weight: 700; padding: 10px 12px; border-radius: var(--r-pill); border: 1.5px solid var(--border); background: var(--bg); cursor: pointer; transition: all .15s; font-family: var(--font); color: var(--text-mid); display: inline-flex; align-items: center; gap: 4px; min-height: 44px; }
 .ml-act-btn:active { background: var(--border); }
 .ml-act-btn.red { border-color: rgba(217,45,32,.2); color: var(--red); background: var(--red-light); }
 
