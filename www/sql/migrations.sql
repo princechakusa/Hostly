@@ -80,3 +80,18 @@ drop policy if exists "anon read verifications"  on verifications;
 drop policy if exists "anon write verifications" on verifications;
 create policy "anon read verifications"  on verifications for select using (true);
 create policy "anon write verifications" on verifications for all    using (true);
+
+-- ── 4. Storage bucket for ad images ──
+-- Run this ONCE in Supabase SQL Editor:
+insert into storage.buckets (id, name, public)
+values ('ad-images', 'ad-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "ad images public read"   on storage.objects;
+drop policy if exists "ad images anon upload"   on storage.objects;
+drop policy if exists "ad images anon update"   on storage.objects;
+drop policy if exists "ad images anon delete"   on storage.objects;
+create policy "ad images public read"   on storage.objects for select using (bucket_id = 'ad-images');
+create policy "ad images anon upload"   on storage.objects for insert with check (bucket_id = 'ad-images');
+create policy "ad images anon update"   on storage.objects for update using (bucket_id = 'ad-images');
+create policy "ad images anon delete"   on storage.objects for delete using (bucket_id = 'ad-images');

@@ -1703,7 +1703,16 @@ function openAdForm(id){
       '<div class="mfg"><label class="mfl">Headline</label><input class="mfi" id="adHead" oninput="updateAdPreview()" value="'+esc(a?a.headline||"":"")+'" placeholder="Best prices in Harare!"></div>'+
       '<div class="mfg"><label class="mfl">Tagline</label><input class="mfi" id="adTag" oninput="updateAdPreview()" value="'+esc(a?a.tagline||"":"")+'" placeholder="Free delivery on $50+"></div>'+
     '</div>'+
-    '<div class="mfg"><label class="mfl">Image URL (optional)</label><input class="mfi" id="adImg" oninput="updateAdPreview()" value="'+esc(a?a.image_url||"":"")+'" placeholder="https://..."></div>'+
+    '<div class="mfg"><label class="mfl">Image URL (optional)</label>'+
+      '<div style="display:flex;gap:8px;align-items:center">'+
+        '<input class="mfi" id="adImg" oninput="updateAdPreview()" value="'+esc(a?a.image_url||"":'')+'\" placeholder="https://... or upload below" style="flex:1;margin-bottom:0">'+
+        '<label style="flex-shrink:0;cursor:pointer;background:#1A3A8F;color:#fff;font-size:12px;font-weight:700;padding:9px 14px;border-radius:8px;white-space:nowrap" title="Upload image to Supabase Storage">'+
+          '📷 Upload'+
+          '<input type="file" accept="image/*" onchange="uploadAdImage(this)" style="display:none">'+
+        '</label>'+
+      '</div>'+
+      '<div id="adImgStatus" style="font-size:11px;color:#64748b;margin-top:4px"></div>'+
+    '</div>'+
     '<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-bottom:14px">'+
       '<div><label class="mfl" style="display:block;margin-bottom:5px">BG Colour</label>'+
         '<input type="color" id="adColor" oninput="updateAdPreview()" value="'+(a?a.bg_color||"#1A3A8F":"#1A3A8F")+'" style="width:52px;height:38px;border:1.5px solid #334155;border-radius:8px;cursor:pointer;background:none"></div>'+
@@ -1737,6 +1746,45 @@ function openAdForm(id){
 
   openModal((_editAdId?"Edit Ad":"Create Paid Ad"), body, footer);
   setTimeout(updateAdPreview, 50);
+}
+
+async function uploadAdImage(input){
+  var file = input.files && input.files[0];
+  if(!file) return;
+  var status = document.getElementById('adImgStatus');
+  var imgField = document.getElementById('adImg');
+  if(status) status.textContent = 'Uploading…';
+  // Resize to max 1200px wide before upload to keep file small
+  var canvas = document.createElement('canvas');
+  var img = new Image();
+  img.onload = async function(){
+    var maxW = 1200, maxH = 800;
+    var w = img.width, h = img.height;
+    if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+    if(h > maxH){ w = Math.round(w * maxH / h); h = maxH; }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    canvas.toBlob(async function(blob){
+      var ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+      var path = 'ads/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+      var { data, error } = await sb.storage.from('ad-images').upload(path, blob, { upsert: true, contentType: blob.type });
+      if(error){
+        if(status) status.innerHTML = '<span style="color:#ef4444">Upload failed: ' + error.message + '</span>';
+        if(error.message && error.message.includes('Bucket not found')){
+          if(status) status.innerHTML += '<br><span style="color:#f59e0b">Run the storage SQL in Supabase first (see migrations.sql)</span>';
+        }
+        return;
+      }
+      var { data: urlData } = sb.storage.from('ad-images').getPublicUrl(path);
+      if(imgField && urlData && urlData.publicUrl){
+        imgField.value = urlData.publicUrl;
+        updateAdPreview();
+        if(status) status.innerHTML = '<span style="color:#22c55e">✓ Uploaded successfully</span>';
+      }
+    }, 'image/jpeg', 0.88);
+  };
+  img.onerror = function(){ if(status) status.innerHTML = '<span style="color:#ef4444">Could not read image file</span>'; };
+  img.src = URL.createObjectURL(file);
 }
 
 function onAdUserPick(userId){
