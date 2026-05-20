@@ -162,23 +162,29 @@
             + '<span style="font-size:17px;font-weight:800;color:var(--text)">Hot on PaMarket</span>'
             + '</div>'
             + '</div>'
-            + '<div style="display:flex;gap:12px;padding:0 16px 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none">'
+            + '<div style="display:flex;gap:12px;padding:0 16px 8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none">'
             + ads.map(function(a){
                 var clickFn = 'H.trackAdClick(' + JSON.stringify(a.id) + ',' + JSON.stringify(a.linkUrl||'') + ')';
-                var title = escHtml(a.headline || a.businessName || 'Sponsored');
-                var sub   = escHtml(a.tagline || a.businessName || '');
-                var bg    = escHtml(a.bgColor || '#1A3A8F');
+                var title    = escHtml(a.headline || a.businessName || 'Sponsored');
+                var sub      = escHtml(a.tagline || '');
+                var bg       = escHtml(a.bgColor || '#1A3A8F');
                 var initials = (a.businessName||'AD').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
-                return '<div onclick="' + escHtml(clickFn) + '" style="width:162px;flex-shrink:0;border-radius:16px;overflow:hidden;cursor:pointer;border:1px solid var(--border);box-shadow:0 2px 10px rgba(0,0,0,.07);background:var(--card)">'
-                  + '<div style="height:115px;background:' + bg + ';position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">'
-                  + (a.imageUrl
-                      ? '<img src="' + escHtml(a.imageUrl) + '" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\'">'
-                      : '<div style="font-size:32px;font-weight:900;color:rgba(255,255,255,0.45);letter-spacing:-1px">' + escHtml(initials) + '</div>')
-                  + '<span style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,0.45);color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:5px;letter-spacing:.4px">AD</span>'
+                /* Image is positioned absolute over the initials fallback.
+                   If it fails to load, onerror removes it and the initials show through. */
+                return '<div onclick="' + escHtml(clickFn) + '" style="width:170px;flex-shrink:0;border-radius:18px;overflow:hidden;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.12);background:var(--card)">'
+                  + '<div style="height:130px;background:' + bg + ';position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">'
+                  /* initials always rendered as the base layer */
+                  + '<span style="font-size:38px;font-weight:900;color:rgba(255,255,255,0.35);letter-spacing:-1px;position:relative;z-index:1">' + escHtml(initials) + '</span>'
+                  /* image sits on top via absolute — removed on error so initials show */
+                  + (a.imageUrl ? '<img src="' + escHtml(a.imageUrl) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:2" loading="lazy" onerror="this.parentNode.removeChild(this)">' : '')
+                  /* AD badge always on top */
+                  + '<span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;font-size:8px;font-weight:700;padding:2px 7px;border-radius:6px;letter-spacing:.5px;z-index:3">AD</span>'
+                  /* gradient overlay at bottom for text legibility when image is shown */
+                  + (a.imageUrl ? '<div style="position:absolute;bottom:0;left:0;right:0;height:56px;background:linear-gradient(to top,rgba(0,0,0,0.55),transparent);z-index:2"></div>' : '')
                   + '</div>'
-                  + '<div style="padding:9px 11px 12px">'
+                  + '<div style="padding:10px 12px 13px">'
                   + '<div style="font-size:13px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">' + title + '</div>'
-                  + '<div style="font-size:11px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + sub + '</div>'
+                  + (sub ? '<div style="font-size:11px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + sub + '</div>' : '')
                   + '</div>'
                   + '</div>';
               }).join('')
