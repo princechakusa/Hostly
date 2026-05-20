@@ -706,7 +706,7 @@ window.H = {
       if(!window.supabase||typeof window.supabase.from!=='function') return;
       const {data,error} = await window.supabase
         .from('paid_ads')
-        .select('id,type,business_name,headline,tagline,image_url,bg_color,link_url,target_cat,starts_at,ends_at,active,priority,impressions,clicks')
+        .select('id,type,business_name,headline,tagline,image_url,bg_color,link_url,target_cat,starts_at,ends_at,active,priority,impressions,clicks,listing_id')
         .eq('active',true)
         .order('priority',{ascending:false});
       if(error||!data) return;
@@ -718,7 +718,8 @@ window.H = {
         startsAt:r.starts_at?new Date(r.starts_at).getTime():0,
         endsAt:r.ends_at?new Date(r.ends_at).getTime():0,
         active:r.active, priority:r.priority||0,
-        impressions:r.impressions||0, clicks:r.clicks||0
+        impressions:r.impressions||0, clicks:r.clicks||0,
+        listingId:r.listing_id||null
       }));
     } catch(e){ console.warn('fetchAdsFromSupabase:',e.message); }
   },
@@ -747,9 +748,10 @@ window.H = {
       const a = (H.state.paidAds||[]).find(x=>x.id===id);
       if(a){ a.clicks=(a.clicks||0)+1; window.supabase.from('paid_ads').update({clicks:a.clicks}).eq('id',id).then(()=>{}); }
     }
-    if(url) { window.open(url,'_blank','noopener'); return; }
-    // No URL — show a brief info toast so tap gives feedback
     const a = (H.state.paidAds||[]).find(x=>x.id===id);
+    // Listing link takes priority over external URL
+    if(a && a.listingId) { H.openListing(a.listingId); return; }
+    if(url) { window.open(url,'_blank','noopener'); return; }
     if(a) H.toast((a.businessName||'Sponsored') + (a.tagline ? ' · ' + a.tagline : ''), 3000);
   },
 

@@ -1725,8 +1725,17 @@ function openAdForm(id){
     '</div>'+
     // Client
     '<div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid #334155">Client</div>'+
-    '<div class="mfg"><label class="mfl">Platform User (optional — select to auto-fill details)</label>'+
+    '<div class="mfg"><label class="mfl">Platform User (select to auto-fill details &amp; listings)</label>'+
       '<select class="mfi-sel" id="adUserPicker" onchange="onAdUserPick(this.value)">'+userOpts+'</select>'+
+    '</div>'+
+    '<div class="mfg"><label class="mfl">Link to Listing (ad taps open this listing in the app)</label>'+
+      '<select class="mfi-sel" id="adListingPicker">'+
+        '<option value="">-- No listing / use URL instead --</option>'+
+        (a && a.client_user_id
+          ? (DATA.listings||[]).filter(function(l){ return l.seller_id===a.client_user_id||l.sellerId===a.client_user_id; })
+              .map(function(l){ return '<option value="'+esc(l.id)+'"'+(a.listing_id===l.id?' selected':'')+'>'+esc(l.title||'Untitled')+(l.price?' · $'+l.price:'')+'</option>'; }).join('')
+          : '')
+      +'</select>'+
     '</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
       '<div class="mfg"><label class="mfl">Client Name</label><input class="mfi" id="adClientName" value="'+esc(a?a.client_name||"":"")+'" placeholder="John Moyo"></div>'+
@@ -1797,6 +1806,16 @@ function onAdUserPick(userId){
   if(nm && !nm.value) nm.value = u.name||'';
   if(ph && !ph.value) ph.value = u.phone||'';
   if(em && !em.value) em.value = u.email||'';
+  // Populate listing picker with this user's listings
+  var lp = document.getElementById('adListingPicker');
+  if(lp){
+    var userListings = (DATA.listings||[]).filter(function(l){ return l.seller_id===userId||l.sellerId===userId; });
+    lp.innerHTML = '<option value="">-- No listing / use URL instead --</option>'
+      + userListings.map(function(l){
+          var label = esc(l.title||'Untitled') + (l.price ? ' · $'+l.price : '') + (l.city ? ' · '+esc(l.city) : '');
+          return '<option value="'+esc(l.id)+'">'+label+'</option>';
+        }).join('');
+  }
 }
 
 function onAdTypeChange(){
@@ -1864,6 +1883,7 @@ async function saveAd(){
   if(startVal && endVal && endVal <= startVal){ toast("End date must be after start date.","error"); return; }
 
   var clientUserId = ((document.getElementById("adUserPicker")||{}).value)||"";
+  var listingId    = ((document.getElementById("adListingPicker")||{}).value)||"";
 
   var payload = {
     type:type, business_name:biz, headline:head, tagline:tag,
@@ -1873,6 +1893,7 @@ async function saveAd(){
     ends_at:new Date(endVal+"T23:59:59").toISOString(),
     client_name:cName||null, client_phone:cPhone||null, client_email:cEmail||null,
     client_user_id:clientUserId||null,
+    listing_id:listingId||null,
     price_paid:pricePaid, payment_method:payMeth, payment_ref:payRef||null,
     updated_at:new Date().toISOString()
   };

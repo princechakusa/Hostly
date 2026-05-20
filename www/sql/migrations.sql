@@ -55,8 +55,9 @@ drop policy if exists "anon write settings" on app_settings;
 create policy "anon read settings"  on app_settings for select using (true);
 create policy "anon write settings" on app_settings for all    using (true);
 
--- ── 2a. Paid Ads: add client_user_id column (added when user-picker feature was built) ──
+-- ── 2a. Paid Ads: extra columns added after initial table creation ──
 alter table paid_ads add column if not exists client_user_id uuid;
+alter table paid_ads add column if not exists listing_id uuid;
 
 -- ── 3a. Profiles: ensure verification columns exist ──
 alter table profiles add column if not exists verification_pending boolean default false;
