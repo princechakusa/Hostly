@@ -1,3 +1,9 @@
+/*!
+ * PaMarket — Zimbabwe's Free Marketplace
+ * © 2026 PaMarket. All rights reserved.
+ * Unauthorised copying, modification, distribution or use of this
+ * software without written permission from the owner is strictly prohibited.
+ */
 // supabase.js "” safe Supabase client initialisation
 (function () {
   // Make sure the CDN loaded
