@@ -528,15 +528,14 @@
 
   // ── NOTIFICATIONS ─────────────────────────────────────────
   function renderNotifications() {
-    const users = H.state.users || [];
     return `<div class="section-card" style="padding:14px">
       <div class="menu-group-label" style="padding:0 0 14px">Send Broadcast</div>
       <div class="fg">
         <div class="fl">Target Audience</div>
         <select class="fi" id="bcastTarget">
-          <option value="all">All Users (${users.length})</option>
-          <option value="verified">Verified Users Only (${users.filter(u=>u.verified).length})</option>
-          <option value="unverified">Unverified Only (${users.filter(u=>!u.verified).length})</option>
+          <option value="all">All Users</option>
+          <option value="verified">Verified Users Only</option>
+          <option value="unverified">Unverified Users Only</option>
           <option value="sellers">Users with Listings</option>
           <option value="inactive">Users with No Listings</option>
         </select>
@@ -547,9 +546,9 @@
       </div>
       <div class="fg">
         <div class="fl">Message</div>
-        <textarea class="fi" rows="4" id="bcastMsg" placeholder="Write your message..."></textarea>
+        <textarea class="fi" rows="4" id="bcastMsg" placeholder="Write your message to all selected users..."></textarea>
       </div>
-      <button class="btn-pri" onclick="H._admin.broadcast()">${S.broadcast} Send Broadcast</button>
+      <button class="btn-pri" id="bcastSendBtn" onclick="H._admin.broadcast()">${S.broadcast} Send Broadcast</button>
     </div>`;
   }
 
@@ -883,29 +882,78 @@
     toggleSetting(k) {
       H.state[k] = !H.state[k];
       alog(`Toggled setting: ${k} = ${H.state[k]}`);
-      saveState(); toast('Setting updated'); this.setTab('settings');
+      saveState(); toast('Setting updated');
+      // Persist to Supabase so settings survive page reloads
+      const sb = window.supabase;
+      if (sb && typeof sb.from === 'function') {
+        const KEYS = ['requireListingApproval','autoApproveVerified','allowImageUploads',
+                      'signupPaused','requirePhoneVerification','enablePremiumListings','freeOnly'];
+        const settingsObj = {};
+        KEYS.forEach(key => { settingsObj[key] = !!H.state[key]; });
+        sb.from('app_settings').upsert({ id: 1, settings: settingsObj, updated_at: new Date().toISOString() })
+          .then(r => { if (r && r.error) console.warn('settings save:', r.error.message); });
+      }
+      this.setTab('settings');
     },
 
-    broadcast() {
-      const title  = document.getElementById('bcastTitle')?.value?.trim();
-      const msg    = document.getElementById('bcastMsg')?.value?.trim();
-      const target = document.getElementById('bcastTarget')?.value || 'all';
+    async broadcast() {
+      const title  = (document.getElementById('bcastTitle')?.value  || '').trim();
+      const msg    = (document.getElementById('bcastMsg')?.value    || '').trim();
+      const target = document.getElementById('bcastTarget')?.value  || 'all';
       if (!title || !msg) { toast('Enter title and message'); return; }
-      const allUsers = H.state.users||[];
-      const sellerIds = new Set((H.state.listings||[]).map(l=>l.sellerId));
-      const targets = allUsers.filter(u => {
-        if (target==='verified')   return u.verified;
-        if (target==='unverified') return !u.verified;
-        if (target==='sellers')    return sellerIds.has(u.id);
-        if (target==='inactive')   return !sellerIds.has(u.id);
-        return true;
-      });
-      targets.forEach(u => pushNotif(u.id, title, msg));
-      alog(`Broadcast (${target}) to ${targets.length} users: ${msg.slice(0,50)}`);
+
+      const btn = document.getElementById('bcastSendBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+      const c = window.supabase && typeof window.supabase.from === 'function' ? window.supabase : null;
+      let userIds = [];
+      try {
+        if (c && target !== 'sellers' && target !== 'inactive') {
+          let q = c.from('profiles').select('id');
+          if (target === 'verified')   q = q.eq('verified', true);
+          if (target === 'unverified') q = q.eq('verified', false);
+          const res = await q.limit(5000);
+          if (res.data) userIds = res.data.map(p => p.id).filter(Boolean);
+        } else if (c) {
+          const [uRes, lRes] = await Promise.all([
+            c.from('profiles').select('id').limit(5000),
+            c.from('listings').select('seller_id').neq('status','banned').limit(10000)
+          ]);
+          const sellerSet = new Set((lRes.data||[]).map(l => l.seller_id).filter(Boolean));
+          const allIds    = (uRes.data||[]).map(p => p.id).filter(Boolean);
+          userIds = allIds.filter(id => target === 'sellers' ? sellerSet.has(id) : !sellerSet.has(id));
+        } else {
+          // Fallback to local state when Supabase unavailable
+          const localUsers = H.state.users || [];
+          const localSellers = new Set((H.state.listings||[]).map(l=>l.sellerId));
+          userIds = localUsers.filter(u => {
+            if (target==='verified')   return u.verified;
+            if (target==='unverified') return !u.verified;
+            if (target==='sellers')    return localSellers.has(u.id);
+            if (target==='inactive')   return !localSellers.has(u.id);
+            return true;
+          }).map(u => u.id);
+        }
+      } catch(e) {
+        console.warn('broadcast fetch error:', e);
+        toast('Failed to fetch users. Please try again.');
+        if (btn) { btn.disabled = false; btn.textContent = 'Send Broadcast'; }
+        return;
+      }
+
+      if (!userIds.length) {
+        toast('No users found for this filter');
+        if (btn) { btn.disabled = false; btn.textContent = 'Send Broadcast'; }
+        return;
+      }
+
+      userIds.forEach(id => H.pushNotif(id, title, msg, 'system'));
+      alog(`Broadcast (${target}) to ${userIds.length} users: ${msg.slice(0,50)}`);
       saveState();
-      toast(`Broadcast sent to ${targets.length} user${targets.length!==1?'s':''}`);
+      toast(`✓ Broadcast sent to ${userIds.length} user${userIds.length!==1?'s':''}`);
       document.getElementById('bcastTitle').value = '';
       document.getElementById('bcastMsg').value = '';
+      if (btn) { btn.disabled = false; btn.textContent = 'Send Broadcast'; }
     },
 
     respondToTicket(tid) {
